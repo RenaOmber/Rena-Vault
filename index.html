@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rena Omber — Internal Vault</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0e0e0e;
+      --bg2: #161616;
+      --bg3: #1e1e1e;
+      --border: rgba(255,255,255,0.08);
+      --border-hover: rgba(255,255,255,0.16);
+      --text: #f0ede8;
+      --text2: #888;
+      --text3: #555;
+      --red: #e03a2f;
+      --red-dim: rgba(224,58,47,0.12);
+    }
+
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* --- GATE --- */
+    #gate {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+    }
+    .gate-mark {
+      width: 40px;
+      height: 4px;
+      background: var(--red);
+      border-radius: 2px;
+      margin-bottom: 8px;
+    }
+    .gate-title {
+      font-size: 18px;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+    }
+    .gate-sub {
+      font-size: 12px;
+      color: var(--text3);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .gate-form {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .gate-form input {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+      padding: 10px 14px;
+      width: 220px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .gate-form input:focus { border-color: var(--border-hover); }
+    .gate-form button {
+      background: var(--red);
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 10px 18px;
+      transition: opacity 0.15s;
+    }
+    .gate-form button:hover { opacity: 0.85; }
+    .gate-error {
+      font-size: 12px;
+      color: var(--red);
+      min-height: 16px;
+      text-align: center;
+    }
+
+    /* --- MAIN --- */
+    #main { display: none; }
+    #main.visible { display: block; }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 32px;
+      border-bottom: 1px solid var(--border);
+    }
+    .top-left { display: flex; align-items: center; gap: 12px; }
+    .top-mark { width: 24px; height: 3px; background: var(--red); border-radius: 2px; }
+    .top-name { font-size: 13px; font-weight: 500; letter-spacing: 0.02em; }
+    .top-sub { font-size: 11px; color: var(--text3); letter-spacing: 0.06em; text-transform: uppercase; }
+    .logout-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text3);
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+      padding: 6px 12px;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .logout-btn:hover { border-color: var(--border-hover); color: var(--text2); }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      min-height: calc(100vh - 61px);
+    }
+
+    /* --- SIDEBAR --- */
+    .sidebar {
+      border-right: 1px solid var(--border);
+      padding: 24px 0;
+    }
+    .sidebar-label {
+      font-size: 10px;
+      color: var(--text3);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0 20px;
+      margin-bottom: 8px;
+    }
+    .cat-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      cursor: pointer;
+      border-left: 2px solid transparent;
+      transition: background 0.1s, border-color 0.1s;
+    }
+    .cat-item:hover { background: var(--bg2); }
+    .cat-item.active {
+      border-left-color: var(--red);
+      background: var(--bg2);
+    }
+    .cat-item-left { display: flex; align-items: center; gap: 10px; }
+    .cat-icon { font-size: 15px; color: var(--text2); }
+    .cat-item.active .cat-icon { color: var(--red); }
+    .cat-name-text { font-size: 13px; }
+    .cat-badge {
+      font-size: 10px;
+      color: var(--text3);
+      background: var(--bg3);
+      border-radius: 10px;
+      padding: 2px 7px;
+      min-width: 20px;
+      text-align: center;
+    }
+    .cat-item.active .cat-badge { background: var(--red-dim); color: var(--red); }
+
+    /* --- CONTENT --- */
+    .content { padding: 32px 40px; }
+    .content-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 28px;
+    }
+    .content-title { font-size: 20px; font-weight: 500; }
+    .content-sub { font-size: 12px; color: var(--text3); margin-top: 3px; }
+
+    .upload-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text2);
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+      padding: 8px 14px;
+      transition: border-color 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+    .upload-btn:hover { border-color: var(--border-hover); color: var(--text); }
+    .upload-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+    /* --- DOC LIST --- */
+    .doc-grid { display: flex; flex-direction: column; gap: 8px; }
+    .doc-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      padding: 14px 16px;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .doc-row:hover { border-color: var(--border-hover); background: var(--bg3); }
+    .doc-file-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--red-dim);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .doc-file-icon svg { width: 16px; height: 16px; color: var(--red); }
+    .doc-info { flex: 1; min-width: 0; }
+    .doc-name {
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .doc-meta { font-size: 11px; color: var(--text3); margin-top: 2px; }
+    .doc-arrow { color: var(--text3); font-size: 16px; flex-shrink: 0; }
+
+    .empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text3);
+    }
+    .empty svg { width: 32px; height: 32px; margin: 0 auto 12px; display: block; opacity: 0.4; }
+    .empty p { font-size: 13px; }
+
+    .placeholder-msg {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--text3);
+      font-size: 13px;
+    }
+
+    /* --- VIEWER MODAL --- */
+    .modal-bg {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      padding: 20px;
+    }
+    .modal-box {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      width: 100%;
+      max-width: 860px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .modal-title { font-size: 13px; font-weight: 500; }
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text3);
+      cursor: pointer;
+      font-size: 20px;
+      line-height: 1;
+      padding: 0;
+      transition: color 0.15s;
+    }
+    .modal-close:hover { color: var(--text); }
+    .modal-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      background: var(--bg);
+    }
+    #pdf-canvas-wrap { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+    #pdf-canvas-wrap canvas { max-width: 100%; border-radius: 4px; }
+    .pdf-loading { text-align: center; color: var(--text3); font-size: 13px; padding: 40px; }
+    .pdf-nav {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      justify-content: center;
+      padding: 12px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+      font-size: 12px;
+      color: var(--text2);
+    }
+    .pdf-nav button {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--text2);
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+      padding: 5px 12px;
+      transition: border-color 0.15s;
+    }
+    .pdf-nav button:hover:not(:disabled) { border-color: var(--border-hover); color: var(--text); }
+    .pdf-nav button:disabled { opacity: 0.3; cursor: default; }
+
+    /* --- UPLOAD MODAL --- */
+    .upload-modal-box {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      width: 100%;
+      max-width: 420px;
+      padding: 24px;
+    }
+    .upload-modal-title { font-size: 15px; font-weight: 500; margin-bottom: 16px; }
+    .drop-zone {
+      border: 1px dashed var(--border-hover);
+      border-radius: 8px;
+      padding: 32px 20px;
+      text-align: center;
+      cursor: pointer;
+      color: var(--text3);
+      font-size: 13px;
+      transition: border-color 0.15s, background 0.15s;
+      margin-bottom: 12px;
+    }
+    .drop-zone:hover, .drop-zone.drag { border-color: var(--red); background: var(--red-dim); }
+    .drop-zone svg { width: 28px; height: 28px; margin: 0 auto 10px; display: block; opacity: 0.5; }
+    .selected-fname { font-size: 11px; color: var(--text2); margin-bottom: 14px; min-height: 16px; }
+    .upload-progress { height: 2px; background: var(--border); border-radius: 1px; margin-bottom: 14px; overflow: hidden; display: none; }
+    .upload-progress-bar { height: 100%; background: var(--red); width: 0; transition: width 0.2s; border-radius: 1px; }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+    .btn-cancel {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text3);
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 13px;
+      padding: 8px 16px;
+    }
+    .btn-confirm {
+      background: var(--red);
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 8px 16px;
+      opacity: 0.5;
+      transition: opacity 0.15s;
+    }
+    .btn-confirm.ready { opacity: 1; }
+    .btn-confirm:disabled { cursor: default; }
+
+    @media (max-width: 640px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { border-right: none; border-bottom: 1px solid var(--border); padding: 12px 0; }
+      .content { padding: 20px; }
+      .top-bar { padding: 16px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- GATE -->
+<div id="gate">
+  <div style="text-align:center;">
+    <div class="gate-mark" style="margin: 0 auto 16px;"></div>
+    <div class="gate-title">Rena Omber</div>
+    <div class="gate-sub" style="margin-top:4px;">Internal Vault</div>
+  </div>
+  <div>
+    <div class="gate-form">
+      <input type="password" id="pw-input" placeholder="Password" onkeydown="if(event.key==='Enter')checkPw()" autocomplete="current-password" />
+      <button onclick="checkPw()">Masuk</button>
+    </div>
+    <div class="gate-error" id="pw-error"></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div class="top-bar">
+    <div class="top-left">
+      <div class="top-mark"></div>
+      <div>
+        <div class="top-name">Rena Omber</div>
+        <div class="top-sub">Internal Vault</div>
+      </div>
+    </div>
+    <button class="logout-btn" onclick="logout()">Keluar</button>
+  </div>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-label">Kategori</div>
+      <div id="sidebar-cats"></div>
+    </aside>
+    <main class="content">
+      <div id="content-area">
+        <div class="placeholder-msg">Pilih kategori untuk melihat dokumen</div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- VIEWER MODAL -->
+<div class="modal-bg" id="viewer-modal" style="display:none;" onclick="if(event.target===this)closeViewer()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title" id="viewer-title">—</div>
+      <button class="modal-close" onclick="closeViewer()">×</button>
+    </div>
+    <div class="modal-body" id="pdf-canvas-wrap">
+      <div class="pdf-loading">Memuat dokumen...</div>
+    </div>
+    <div class="pdf-nav" id="pdf-nav" style="display:none;">
+      <button id="prev-btn" onclick="changePage(-1)" disabled>← Prev</button>
+      <span id="page-info">1 / 1</span>
+      <button id="next-btn" onclick="changePage(1)">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- UPLOAD MODAL -->
+<div class="modal-bg" id="upload-modal" style="display:none;" onclick="if(event.target===this)closeUpload()">
+  <div class="upload-modal-box">
+    <div class="upload-modal-title" id="upload-modal-title">Upload dokumen</div>
+    <div class="drop-zone" id="drop-zone"
+      onclick="document.getElementById('file-input').click()"
+      ondragover="onDragOver(event)"
+      ondragleave="onDragLeave()"
+      ondrop="onDrop(event)">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+      Klik atau drag file ke sini<br/>
+      <span style="font-size:11px; color: var(--text3); margin-top:4px; display:block;">PDF, PNG, JPG, DOCX — maks 50MB</span>
+    </div>
+    <input type="file" id="file-input" accept=".pdf,.png,.jpg,.jpeg,.docx" style="display:none;" onchange="onFileSelect(event)" />
+    <div class="selected-fname" id="selected-fname"></div>
+    <div class="upload-progress" id="upload-progress">
+      <div class="upload-progress-bar" id="upload-bar"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeUpload()">Batal</button>
+      <button class="btn-confirm" id="confirm-btn" onclick="doUpload()" disabled>Upload</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+
+  // ─── CONFIG ────────────────────────────────────────────────
+  const SUPABASE_URL    = 'https://fqvfnohhilkzvijqukfg.supabase.co';
+  const SUPABASE_ANON   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxdmZub2hoaWxrenZpanF1a2ZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDU4NjAsImV4cCI6MjA5ODEyMTg2MH0.er10SEsmDlnx1yRLGJK2fKtLhQR40vFOXVJzH9yakCg';
+  const BUCKET          = 'vault-docs';
+  const PASSWORD_HASH   = '123456'; // ganti dengan hash sha256 dari password kamu
+
+  const CATEGORIES = [
+    { id: 'lore',       label: 'Lore',         icon: '🌐' },
+    { id: 'design',     label: 'Design',        icon: '🎨' },
+    { id: 'marketing',  label: 'Marketing',     icon: '📢' },
+    { id: 'social',     label: 'Social Media',  icon: '📱' },
+    { id: 'finance',    label: 'Finance',       icon: '💰' },
+    { id: 'ops',        label: 'Operasional',   icon: '⚙️'  },
+  ];
+  // ───────────────────────────────────────────────────────────
+
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+  let activeCategory = null;
+  let pdfDoc = null;
+  let pdfPage = 1;
+  let pendingFile = null;
+
+  // ─── AUTH ───────────────────────────────────────────────────
+  async function sha256(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+
+  async function checkPw() {
+    const val = document.getElementById('pw-input').value.trim();
+    const hash = await sha256(val);
+    if (hash === PASSWORD_HASH) {
+      sessionStorage.setItem('ro_auth', '1');
+      showMain();
+    } else {
+      document.getElementById('pw-error').textContent = 'Password salah.';
+      document.getElementById('pw-input').value = '';
+    }
+  }
+
+  function logout() {
+    sessionStorage.removeItem('ro_auth');
+    location.reload();
+  }
+
+  function showMain() {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+    renderSidebar();
+  }
+
+  // Auto-login jika sudah auth di sesi yang sama
+  if (sessionStorage.getItem('ro_auth') === '1') showMain();
+
+  // ─── SIDEBAR ────────────────────────────────────────────────
+  function renderSidebar() {
+    const el = document.getElementById('sidebar-cats');
+    el.innerHTML = CATEGORIES.map(c => `
+      <div class="cat-item" id="cat-${c.id}" onclick="selectCat('${c.id}')">
+        <div class="cat-item-left">
+          <span class="cat-icon">${c.icon}</span>
+          <span class="cat-name-text">${c.label}</span>
+        </div>
+        <span class="cat-badge" id="badge-${c.id}">—</span>
+      </div>`).join('');
+    CATEGORIES.forEach(c => loadCount(c.id));
+  }
+
+  async function loadCount(catId) {
+    const { data } = await sb.storage.from(BUCKET).list(catId);
+    const count = data ? data.filter(f => f.name !== '.keep').length : 0;
+    const badge = document.getElementById(`badge-${catId}`);
+    if (badge) badge.textContent = count;
+  }
+
+  async function selectCat(id) {
+    activeCategory = id;
+    document.querySelectorAll('.cat-item').forEach(el => el.classList.remove('active'));
+    document.getElementById(`cat-${id}`).classList.add('active');
+    await renderContent(id);
+  }
+
+  // ─── CONTENT ────────────────────────────────────────────────
+  async function renderContent(catId) {
+    const cat = CATEGORIES.find(c => c.id === catId);
+    const area = document.getElementById('content-area');
+    area.innerHTML = `
+      <div class="content-header">
+        <div>
+          <div class="content-title">${cat.label}</div>
+          <div class="content-sub" id="doc-count-sub">Memuat...</div>
+        </div>
+        <button class="upload-btn" onclick="openUpload()">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+          Upload
+        </button>
+      </div>
+      <div id="doc-list"></div>`;
+
+    const { data, error } = await sb.storage.from(BUCKET).list(catId, { sortBy: { column: 'created_at', order: 'desc' } });
+    const docs = (data || []).filter(f => f.name !== '.keep');
+    document.getElementById('doc-count-sub').textContent = `${docs.length} dokumen`;
+
+    const list = document.getElementById('doc-list');
+    if (!docs.length) {
+      list.innerHTML = `
+        <div class="empty">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+          <p>Belum ada dokumen. Upload yang pertama.</p>
+        </div>`;
+      return;
+    }
+
+    list.innerHTML = `<div class="doc-grid">${docs.map(d => {
+      const kb = d.metadata?.size ? (d.metadata.size / 1024).toFixed(0) + ' KB' : '';
+      const date = d.created_at ? new Date(d.created_at).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' }) : '';
+      return `
+        <div class="doc-row" onclick="openDoc('${catId}', '${d.name}')">
+          <div class="doc-file-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+          </div>
+          <div class="doc-info">
+            <div class="doc-name">${d.name}</div>
+            <div class="doc-meta">${[date, kb].filter(Boolean).join(' · ')}</div>
+          </div>
+          <span class="doc-arrow">›</span>
+        </div>`;
+    }).join('')}</div>`;
+  }
+
+  // ─── VIEWER ─────────────────────────────────────────────────
+  async function openDoc(catId, filename) {
+    document.getElementById('viewer-title').textContent = filename;
+    document.getElementById('pdf-canvas-wrap').innerHTML = '<div class="pdf-loading">Memuat dokumen...</div>';
+    document.getElementById('pdf-nav').style.display = 'none';
+    document.getElementById('viewer-modal').style.display = 'flex';
+
+    const { data } = await sb.storage.from(BUCKET).createSignedUrl(`${catId}/${filename}`, 3600);
+    if (!data?.signedUrl) {
+      document.getElementById('pdf-canvas-wrap').innerHTML = '<div class="pdf-loading">Gagal memuat dokumen.</div>';
+      return;
+    }
+
+    const ext = filename.split('.').pop().toLowerCase();
+    if (['png','jpg','jpeg','gif','webp'].includes(ext)) {
+      document.getElementById('pdf-canvas-wrap').innerHTML = `<img src="${data.signedUrl}" style="max-width:100%;border-radius:4px;" />`;
+      return;
+    }
+
+    if (ext !== 'pdf') {
+      document.getElementById('pdf-canvas-wrap').innerHTML = `
+        <div class="pdf-loading">
+          Format ini tidak bisa di-preview.<br/>
+          <a href="${data.signedUrl}" download style="color:var(--red);text-decoration:none;margin-top:8px;display:inline-block;">Download file</a>
+        </div>`;
+      return;
+    }
+
+    pdfPage = 1;
+    pdfDoc = await pdfjsLib.getDocument(data.signedUrl).promise;
+    await renderPdfPage();
+  }
+
+  async function renderPdfPage() {
+    const wrap = document.getElementById('pdf-canvas-wrap');
+    wrap.innerHTML = '';
+    const page = await pdfDoc.getPage(pdfPage);
+    const vp = page.getViewport({ scale: window.devicePixelRatio > 1 ? 1.6 : 1.2 });
+    const canvas = document.createElement('canvas');
+    canvas.width = vp.width; canvas.height = vp.height;
+    canvas.style.width = Math.round(vp.width / (window.devicePixelRatio > 1 ? 1.6 : 1.2)) + 'px';
+    wrap.appendChild(canvas);
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+
+    const nav = document.getElementById('pdf-nav');
+    if (pdfDoc.numPages > 1) {
+      nav.style.display = 'flex';
+      document.getElementById('page-info').textContent = `${pdfPage} / ${pdfDoc.numPages}`;
+      document.getElementById('prev-btn').disabled = pdfPage <= 1;
+      document.getElementById('next-btn').disabled = pdfPage >= pdfDoc.numPages;
+    }
+  }
+
+  async function changePage(dir) {
+    pdfPage = Math.max(1, Math.min(pdfDoc.numPages, pdfPage + dir));
+    await renderPdfPage();
+  }
+
+  function closeViewer() {
+    document.getElementById('viewer-modal').style.display = 'none';
+    pdfDoc = null; pdfPage = 1;
+  }
+
+  // ─── UPLOAD ─────────────────────────────────────────────────
+  function openUpload() {
+    const cat = CATEGORIES.find(c => c.id === activeCategory);
+    document.getElementById('upload-modal-title').textContent = `Upload ke ${cat.label}`;
+    document.getElementById('selected-fname').textContent = '';
+    document.getElementById('upload-progress').style.display = 'none';
+    document.getElementById('upload-bar').style.width = '0';
+    document.getElementById('confirm-btn').disabled = true;
+    document.getElementById('confirm-btn').classList.remove('ready');
+    pendingFile = null;
+    document.getElementById('file-input').value = '';
+    document.getElementById('upload-modal').style.display = 'flex';
+  }
+
+  function closeUpload() {
+    document.getElementById('upload-modal').style.display = 'none';
+    pendingFile = null;
+  }
+
+  function onDragOver(e) { e.preventDefault(); document.getElementById('drop-zone').classList.add('drag'); }
+  function onDragLeave() { document.getElementById('drop-zone').classList.remove('drag'); }
+  function onDrop(e) {
+    e.preventDefault();
+    document.getElementById('drop-zone').classList.remove('drag');
+    setFile(e.dataTransfer.files[0]);
+  }
+  function onFileSelect(e) { setFile(e.target.files[0]); }
+
+  function setFile(f) {
+    if (!f) return;
+    pendingFile = f;
+    document.getElementById('selected-fname').textContent = `${f.name} (${(f.size/1024).toFixed(0)} KB)`;
+    document.getElementById('confirm-btn').disabled = false;
+    document.getElementById('confirm-btn').classList.add('ready');
+  }
+
+  async function doUpload() {
+    if (!pendingFile || !activeCategory) return;
+    const btn = document.getElementById('confirm-btn');
+    btn.disabled = true; btn.textContent = 'Uploading...';
+    document.getElementById('upload-progress').style.display = 'block';
+
+    let prog = 0;
+    const interval = setInterval(() => {
+      prog = Math.min(prog + 8, 85);
+      document.getElementById('upload-bar').style.width = prog + '%';
+    }, 120);
+
+    const path = `${activeCategory}/${Date.now()}_${pendingFile.name}`;
+    const { error } = await sb.storage.from(BUCKET).upload(path, pendingFile, { upsert: true });
+
+    clearInterval(interval);
+    document.getElementById('upload-bar').style.width = '100%';
+
+    setTimeout(async () => {
+      closeUpload();
+      btn.textContent = 'Upload';
+      if (!error) {
+        await renderContent(activeCategory);
+        await loadCount(activeCategory);
+      } else {
+        alert('Upload gagal: ' + error.message);
+      }
+    }, 400);
+  }
+</script>
+</body>
+</html>
