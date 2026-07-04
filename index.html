@@ -86,6 +86,15 @@
     .doc-delete-btn:hover { background: var(--red-dim); border-color: var(--red); }
     .doc-delete-btn svg { width: 12px; height: 12px; color: var(--red); pointer-events: none; }
 
+    /* LANDING CARDS */
+    .landing-grid { display: flex; gap: 16px; flex-wrap: wrap; }
+    .landing-card { display: flex; flex-direction: column; gap: 12px; background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; cursor: pointer; padding: 24px 20px; width: 180px; transition: border-color 0.15s, background 0.15s; }
+    .landing-card:hover { border-color: var(--border-hover); background: var(--bg3); }
+    .landing-card-icon { width: 40px; height: 40px; background: var(--red-dim); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+    .landing-card-icon svg { width: 20px; height: 20px; color: var(--red); }
+    .landing-card-name { font-size: 14px; font-weight: 500; color: var(--text); }
+    .landing-card-sub { font-size: 12px; color: var(--text3); }
+
     /* EMPTY */
     .empty { text-align: center; padding: 60px 20px; color: var(--text3); }
     .empty svg { width: 32px; height: 32px; margin: 0 auto 12px; display: block; opacity: 0.4; }
@@ -247,10 +256,10 @@
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
 
   // ─── CONFIG ────────────────────────────────────────────────
-  const SUPABASE_URL  = 'https://fqvfnohhilkzvijqukfg.supabase.co';
-  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxdmZub2hoaWxrenZpanF1a2ZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDU4NjAsImV4cCI6MjA5ODEyMTg2MH0.er10SEsmDlnx1yRLGJK2fKtLhQR40vFOXVJzH9yakCg';
+  const SUPABASE_URL  = 'YOUR_SUPABASE_URL';
+  const SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY';
   const BUCKET        = 'vault-docs';
-  const PASSWORD_HASH = '3f0e57f3e719957119f0ba621629a3ae0ed1ec95d1ad8a91bd980b2896b679e4';
+  const PASSWORD_HASH = 'YOUR_PASSWORD_HASH';
 
   const CATEGORIES = [
     { id: 'lore',      label: 'Lore',        icon: '🌐' },
@@ -322,11 +331,48 @@
   }
   async function selectCat(id) {
     activeCategory = id;
-    activeTab = 'dokumen';
+    activeTab = null;
     document.querySelectorAll('.cat-item').forEach(el => el.classList.remove('active'));
     document.getElementById(`cat-${id}`).classList.add('active');
-    renderShell(id);
-    await renderDokumenTab(id);
+    renderLanding(id);
+  }
+
+  // ─── LANDING (pilih subsection) ──────────────────────────────
+  function renderLanding(catId) {
+    const cat = CATEGORIES.find(c => c.id === catId);
+    document.getElementById('content-area').innerHTML = `
+      <div class="content-header" style="margin-bottom:32px;">
+        <div>
+          <div class="content-title">${cat.label}</div>
+          <div class="content-sub">Pilih bagian</div>
+        </div>
+      </div>
+      <div class="landing-grid">
+        <div class="landing-card" onclick="enterSection('dokumen')">
+          <div class="landing-card-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+          </div>
+          <div class="landing-card-name">Dokumen</div>
+          <div class="landing-card-sub">Upload & baca file</div>
+        </div>
+        <div class="landing-card" onclick="enterSection('create')">
+          <div class="landing-card-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/></svg>
+          </div>
+          <div class="landing-card-name">Create</div>
+          <div class="landing-card-sub">Buat prompt untuk Claude</div>
+        </div>
+      </div>`;
+  }
+
+  async function enterSection(section) {
+    activeTab = section;
+    renderShell(activeCategory);
+    if (section === 'dokumen') {
+      await renderDokumenTab(activeCategory);
+    } else {
+      renderCreateTab(activeCategory);
+    }
   }
 
   // ─── SHELL (header + tabs) ───────────────────────────────────
@@ -334,15 +380,18 @@
     const cat = CATEGORIES.find(c => c.id === catId);
     document.getElementById('content-area').innerHTML = `
       <div class="content-header">
-        <div>
-          <div class="content-title">${cat.label}</div>
-          <div class="content-sub" id="doc-count-sub"> </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button onclick="renderLanding('${catId}')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:18px;line-height:1;padding:0;transition:color 0.15s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text3)'">←</button>
+          <div>
+            <div class="content-title">${cat.label}</div>
+            <div class="content-sub" id="doc-count-sub"> </div>
+          </div>
         </div>
         <div id="header-actions"></div>
       </div>
       <div class="tab-bar">
-        <button class="tab-btn active" id="tab-dokumen" onclick="switchTab('dokumen')">Dokumen</button>
-        <button class="tab-btn" id="tab-create" onclick="switchTab('create')">Create</button>
+        <button class="tab-btn ${activeTab==='dokumen'?'active':''}" id="tab-dokumen" onclick="switchTab('dokumen')">Dokumen</button>
+        <button class="tab-btn ${activeTab==='create'?'active':''}" id="tab-create" onclick="switchTab('create')">Create</button>
       </div>
       <div id="tab-content"></div>`;
   }
