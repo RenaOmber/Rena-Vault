@@ -68,22 +68,23 @@
     .upload-btn:hover { border-color: var(--border-hover); color: var(--text); }
     .upload-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
 
-    /* DOC GRID */
-    .doc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
-    .doc-row { position: relative; display: flex; flex-direction: column; background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; overflow: hidden; transition: border-color 0.15s; }
-    .doc-row:hover { border-color: var(--border-hover); }
+    /* DOC LIST folder style */
+    .doc-list { display: flex; flex-direction: column; gap: 2px; }
+    .doc-row { position: relative; display: flex; align-items: center; gap: 12px; background: transparent; border: 1px solid transparent; border-radius: 8px; cursor: pointer; padding: 9px 10px; transition: background 0.12s, border-color 0.12s; }
+    .doc-row:hover { background: var(--bg2); border-color: var(--border); }
     .doc-row:hover .doc-delete-btn { opacity: 1; }
-    .doc-thumb { width: 100%; height: 120px; background: var(--bg3); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
-    .doc-thumb canvas { width: 100%; height: 100%; object-fit: cover; }
-    .doc-thumb img { width: 100%; height: 100%; object-fit: cover; }
-    .doc-thumb-icon { width: 36px; height: 36px; background: var(--red-dim); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
-    .doc-thumb-icon svg { width: 18px; height: 18px; color: var(--red); }
-    .doc-body { padding: 10px 12px 12px; }
-    .doc-name { font-size: 12px; font-weight: 500; word-break: break-word; line-height: 1.4; }
-    .doc-meta { font-size: 11px; color: var(--text3); margin-top: 3px; }
-    .doc-delete-btn { position: absolute; top: 7px; right: 7px; width: 26px; height: 26px; background: rgba(0,0,0,0.65); border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: opacity 0.15s, background 0.15s; z-index: 2; }
-    .doc-delete-btn:hover { background: var(--red); border-color: var(--red); }
-    .doc-delete-btn svg { width: 13px; height: 13px; color: #fff; pointer-events: none; }
+    .doc-file-icon { width: 30px; height: 30px; background: var(--bg3); border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .doc-file-icon svg { width: 14px; height: 14px; color: var(--text3); }
+    .doc-file-icon.is-pdf { background: var(--red-dim); }
+    .doc-file-icon.is-pdf svg { color: var(--red); }
+    .doc-file-icon.is-img { background: rgba(80,140,255,0.1); }
+    .doc-file-icon.is-img svg { color: #5b8fff; }
+    .doc-info { flex: 1; min-width: 0; }
+    .doc-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+    .doc-meta { font-size: 11px; color: var(--text3); margin-top: 1px; }
+    .doc-delete-btn { width: 24px; height: 24px; background: none; border: 1px solid transparent; border-radius: 5px; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: opacity 0.15s, background 0.15s, border-color 0.15s; flex-shrink: 0; }
+    .doc-delete-btn:hover { background: var(--red-dim); border-color: var(--red); }
+    .doc-delete-btn svg { width: 12px; height: 12px; color: var(--red); pointer-events: none; }
 
     /* EMPTY */
     .empty { text-align: center; padding: 60px 20px; color: var(--text3); }
@@ -246,10 +247,10 @@
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
 
   // ─── CONFIG ────────────────────────────────────────────────
-  const SUPABASE_URL  = 'https://fqvfnohhilkzvijqukfg.supabase.co';
-  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxdmZub2hoaWxrenZpanF1a2ZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDU4NjAsImV4cCI6MjA5ODEyMTg2MH0.er10SEsmDlnx1yRLGJK2fKtLhQR40vFOXVJzH9yakCg';
+  const SUPABASE_URL  = 'YOUR_SUPABASE_URL';
+  const SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY';
   const BUCKET        = 'vault-docs';
-  const PASSWORD_HASH = '3f0e57f3e719957119f0ba621629a3ae0ed1ec95d1ad8a91bd980b2896b679e4';
+  const PASSWORD_HASH = 'YOUR_PASSWORD_HASH';
 
   const CATEGORIES = [
     { id: 'lore',      label: 'Lore',        icon: '🌐' },
@@ -387,6 +388,19 @@
     await loadDocGrid('doc-grid-wrap', catId);
   }
 
+  function fileIconHtml(filename) {
+    const ext = filename.split('.').pop().toLowerCase();
+    const isPdf = ext === 'pdf';
+    const isImg = ['png','jpg','jpeg','gif','webp'].includes(ext);
+    const cls = isPdf ? 'is-pdf' : isImg ? 'is-img' : '';
+    const icon = isPdf
+      ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>'
+      : isImg
+      ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/>'
+      : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>';
+    return `<div class="doc-file-icon ${cls}"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor">${icon}</svg></div>`;
+  }
+
   async function loadDocGrid(wrapperId, catId) {
     const wrap = document.getElementById(wrapperId);
     if (!wrap) return;
@@ -401,60 +415,29 @@
       return;
     }
 
-    const grid = document.createElement('div');
-    grid.className = 'doc-grid';
+    const list = document.createElement('div');
+    list.className = 'doc-list';
     wrap.innerHTML = '';
-    wrap.appendChild(grid);
+    wrap.appendChild(list);
 
     docs.forEach(d => {
       const kb = d.metadata?.size ? (d.metadata.size / 1024).toFixed(0) + ' KB' : '';
       const date = d.created_at ? new Date(d.created_at).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' }) : '';
-      const card = document.createElement('div');
-      card.className = 'doc-row';
-      card.innerHTML = `
-        <div class="doc-thumb" id="thumb-${catId}-${d.name.replace(/[^a-z0-9]/gi,'_')}">
-          <div class="doc-thumb-icon">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
-          </div>
-        </div>
-        <div class="doc-body">
+      const row = document.createElement('div');
+      row.className = 'doc-row';
+      row.innerHTML = `
+        ${fileIconHtml(d.name)}
+        <div class="doc-info">
           <div class="doc-name">${d.name}</div>
           <div class="doc-meta">${[date, kb].filter(Boolean).join(' · ')}</div>
         </div>
         <button class="doc-delete-btn" title="Hapus">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>`;
-      card.querySelector('.doc-delete-btn').addEventListener('click', e => { e.stopPropagation(); deleteDoc(catId, d.name); });
-      card.addEventListener('click', () => openDoc(catId, d.name));
-      grid.appendChild(card);
-
-      let loaded = false;
-      card.addEventListener('mouseenter', () => {
-        if (!loaded) { loaded = true; loadThumb(catId, d.name); }
-      });
+      row.querySelector('.doc-delete-btn').addEventListener('click', e => { e.stopPropagation(); deleteDoc(catId, d.name); });
+      row.addEventListener('click', () => openDoc(catId, d.name));
+      list.appendChild(row);
     });
-  }
-
-  async function loadThumb(catId, filename) {
-    const id = `thumb-${catId}-${filename.replace(/[^a-z0-9]/gi,'_')}`;
-    const el = document.getElementById(id);
-    if (!el) return;
-    const ext = filename.split('.').pop().toLowerCase();
-    const { data } = await sb.storage.from(BUCKET).createSignedUrl(`${catId}/${filename}`, 3600);
-    if (!data?.signedUrl) return;
-    if (['png','jpg','jpeg','gif','webp'].includes(ext)) {
-      el.innerHTML = `<img src="${data.signedUrl}" alt="${filename}" />`;
-    } else if (ext === 'pdf') {
-      try {
-        const pdf = await pdfjsLib.getDocument(data.signedUrl).promise;
-        const page = await pdf.getPage(1);
-        const vp = page.getViewport({ scale: 0.4 });
-        const canvas = document.createElement('canvas');
-        canvas.width = vp.width; canvas.height = vp.height;
-        await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
-        el.innerHTML = ''; el.appendChild(canvas);
-      } catch(e) {}
-    }
   }
 
   async function deleteDoc(catId, filename) {
@@ -620,7 +603,7 @@
     document.getElementById('upload-progress').style.display = 'block';
     let prog = 0;
     const interval = setInterval(() => { prog = Math.min(prog + 8, 85); document.getElementById('upload-bar').style.width = prog + '%'; }, 120);
-    const path = `${activeCategory}/${Date.now()}_${pendingFile.name}`;
+    const path = `${activeCategory}/${pendingFile.name}`;
     const { error } = await sb.storage.from(BUCKET).upload(path, pendingFile, { upsert: true });
     clearInterval(interval);
     document.getElementById('upload-bar').style.width = '100%';
