@@ -201,7 +201,7 @@
   async function loadProducts() {
     const { data } = await sb.from('products').select('*').order('created_at');
     products = (data || []).map(row => ({
-      id: row.id,
+      id: String(row.id),
       name: row.name,
       batches: row.data?.batches || [defaultBatch('Batch 1')]
     }));
@@ -282,7 +282,7 @@
   }
 
   function selectProduct(id) {
-    activeProductId = id;
+    activeProductId = String(id);
     activeBatchIdx = 0;
     activeArtikelIdx = 0;
     renderSidebar();
@@ -292,7 +292,7 @@
   // ─── ARTIKEL ────────────────────────────────────────────────
   // ─── BATCH ──────────────────────────────────────────────────
   function addBatch() {
-    const p = products.find(p=>p.id===activeProductId);
+    const p = products.find(p=>String(p.id)===String(activeProductId));
     const n = p.batches.length + 1;
     p.batches.push(defaultBatch(`Batch ${n}`));
     activeBatchIdx = p.batches.length - 1;
@@ -303,7 +303,7 @@
 
   function deleteBatch(idx, e) {
     e.stopPropagation();
-    const p = products.find(p=>p.id===activeProductId);
+    const p = products.find(p=>String(p.id)===String(activeProductId));
     if (p.batches.length <= 1) { alert('Minimal satu batch.'); return; }
     if (!confirm(`Hapus "${p.batches[idx].name}"?`)) return;
     p.batches.splice(idx, 1);
@@ -320,7 +320,7 @@
   }
 
   function addArtikel() {
-    const p = products.find(p=>p.id===activeProductId);
+    const p = products.find(p=>String(p.id)===String(activeProductId));
     const batch = p.batches[activeBatchIdx];
     const n = batch.artikels.length + 1;
     batch.artikels.push(defaultArtikel(`Artikel ${n}`));
@@ -331,7 +331,7 @@
 
   function deleteArtikel(idx, e) {
     e.stopPropagation();
-    const p = products.find(p=>p.id===activeProductId);
+    const p = products.find(p=>String(p.id)===String(activeProductId));
     const batch = p.batches[activeBatchIdx];
     if (batch.artikels.length <= 1) { alert('Minimal satu artikel.'); return; }
     if (!confirm(`Hapus "${batch.artikels[idx].name}"?`)) return;
@@ -348,7 +348,7 @@
 
   // ─── RENDER ─────────────────────────────────────────────────
   function renderProductPage() {
-    const p = products.find(p=>p.id===activeProductId);
+    const p = products.find(p=>String(p.id)===String(activeProductId));
     const batch = p.batches[activeBatchIdx];
     const a = batch.artikels[activeArtikelIdx];
     const total = SIZES.reduce((s,sz)=>s+(parseInt(a.sizes[sz])||0),0);
@@ -492,14 +492,15 @@
 
   // ─── FIELD UPDATES ──────────────────────────────────────────
   function updateArtikelField(field, val) {
-    const p = products.find(p=>p.id===activeProductId);
+    const p = products.find(p=>String(p.id)===String(activeProductId));
+    if (!p) return;
     p.batches[activeBatchIdx].artikels[activeArtikelIdx][field] = val;
     if (field === 'name') renderProductPage();
     scheduleSave(p);
   }
 
   function updateSize(size, val) {
-    const p = products.find(p=>p.id===activeProductId);
+    const p = products.find(p=>String(p.id)===String(activeProductId));
     p.batches[activeBatchIdx].artikels[activeArtikelIdx].sizes[size] = parseInt(val)||0;
     const total = SIZES.reduce((s,sz)=>s+(parseInt(p.batches[activeBatchIdx].artikels[activeArtikelIdx].sizes[sz])||0),0);
     const el = document.getElementById('total-cell');
@@ -511,7 +512,8 @@
   async function handleImg(type, input) {
     const file = input.files[0];
     if (!file) return;
-    const p = products.find(p=>p.id===activeProductId);
+    const p = products.find(p=>String(p.id)===String(activeProductId));
+    if (!p) return;
     const a = p.batches[activeBatchIdx].artikels[activeArtikelIdx];
 
     const zone = document.getElementById(`zone-${type}`);
@@ -564,7 +566,8 @@
 
   // ─── PDF EXPORT ─────────────────────────────────────────────
   async function exportPDF() {
-    const p = products.find(p=>p.id===activeProductId);
+    const p = products.find(p=>String(p.id)===String(activeProductId));
+    if (!p) { alert('Pilih produk dulu.'); return; }
     const batch = p.batches[activeBatchIdx];
     const a = batch.artikels[activeArtikelIdx];
     const { jsPDF } = window.jspdf;
