@@ -209,7 +209,7 @@
   }
 
   function defaultBatch(name) {
-    return { name, cogs: 0, artikels: [defaultArtikel('Artikel 1')] };
+    return { name, artikels: [defaultArtikel('Artikel 1')] };
   }
 
   function defaultArtikel(name) {
@@ -218,7 +218,7 @@
       mockupUrl: '', mockupName: '', mockupPath: '',
       designUrl: '', designName: '', designPath: '',
       sizechartUrl: '', sizechartName: '', sizechartPath: '',
-      sablon: '', sablonLink: '', warnaKaos: '', tebalKain: '',
+      sablon: '', sablonLink: '', warnaKaos: '', tebalKain: '', cogs: 0,
       sizes: { S:0, M:0, L:0, XL:0, XXL:0 },
       masukVendor: '', keluarVendor: '', keterangan: ''
     };
@@ -353,10 +353,7 @@
     const batch = p.batches[activeBatchIdx];
     const a = batch.artikels[activeArtikelIdx];
     const total = SIZES.reduce((s,sz)=>s+(parseInt(a.sizes[sz])||0),0);
-    const batchTotalUnits = batch.artikels.reduce((sum, ar) => 
-      sum + SIZES.reduce((s,sz) => s+(parseInt(ar.sizes[sz])||0), 0), 0);
-    const batchCogs = parseInt(batch.cogs)||0;
-    const batchTotalCost = (batchTotalUnits * batchCogs).toLocaleString('id-ID');
+
 
     document.getElementById('content').innerHTML = `
       <div class="content-header">
@@ -372,22 +369,7 @@
           </button>`).join('')}
         <button class="add-artikel-btn" onclick="addBatch()" title="Tambah batch" style="font-size:16px;padding:8px 10px;">+</button>
       </div>
-      <div style="display:flex;align-items:center;gap:16px;background:var(--bg2);border-radius:0 0 8px 8px;padding:10px 16px;margin-bottom:22px;border-top:1px solid var(--border);">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;white-space:nowrap;">COGS/unit</label>
-          <div style="position:relative;display:flex;align-items:center;">
-            <span style="position:absolute;left:10px;font-size:12px;color:var(--text3);">Rp</span>
-            <input type="number" min="0" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:inherit;font-size:13px;padding:6px 10px 6px 30px;width:140px;outline:none;" 
-              value="${batch.cogs||0}" onchange="updateBatchField('cogs',this.value)" />
-          </div>
-        </div>
-        <div style="font-size:12px;color:var(--text3);">
-          Total unit: <span style="color:var(--text);font-weight:500;">${batchTotalUnits}</span>
-        </div>
-        <div style="font-size:12px;color:var(--text3);">
-          Total biaya: <span style="color:var(--accent);font-weight:600;">Rp ${batchTotalCost}</span>
-        </div>
-      </div>
+
 
       <div class="artikel-bar" style="margin-bottom:22px;padding-left:8px;background:var(--bg2);border-radius:0 0 6px 6px;">
         ${batch.artikels.map((ar,i)=>`
@@ -692,10 +674,7 @@
     const tableW = W - M*2;
     const allSizes = [...SIZES, 'Total'];
     const total = SIZES.reduce((s,sz)=>s+(parseInt(a.sizes[sz])||0),0);
-    const batchTotalUnits = batch.artikels.reduce((sum, ar) => 
-      sum + SIZES.reduce((s,sz) => s+(parseInt(ar.sizes[sz])||0), 0), 0);
-    const batchCogs = parseInt(batch.cogs)||0;
-    const batchTotalCost = (batchTotalUnits * batchCogs).toLocaleString('id-ID');
+
     const vals = [...SIZES.map(s=>String(a.sizes[s]||0)), String(total)];
     const colWidths = [tableW/6, tableW/6, tableW/6, tableW/6, tableW/6, tableW/6];
     let cx = M;
