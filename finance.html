@@ -177,7 +177,7 @@
         const artikelCount = b.artikels.length;
         grandTotalUnits += batchUnits;
         grandTotalCost += batchCost;
-        rows.push({ prodName: p.name, batchName: b.name, artikelCount, units: batchUnits, cost: batchCost });
+        rows.push({ prodName: p.name, batchName: b.name, artikelCount, units: batchUnits, cost: batchCost, artikels: b.artikels });
       });
     });
 
@@ -187,7 +187,7 @@
         ${allProducts.map(p=>`<button class="prod-tab ${activeFinanceProd===p.id?'active':''}" onclick="filterProd('${p.id}')">${p.name}</button>`).join('')}
       </div>`;
 
-    _lastRows = rows.map((r,i) => ({...r, artikels: (() => { const f = activeFinanceProd==='all' ? allProducts : allProducts.filter(p=>p.id===activeFinanceProd); let idx=0; for(const p of f){for(const b of p.batches){if(idx===i)return b.artikels; idx++;}} return []; })()}));
+    _lastRows = rows;
     document.getElementById('finance-content').innerHTML = `
       <div class="summary-grid">
         <div class="summary-card">
