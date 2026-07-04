@@ -217,7 +217,7 @@
       mockupUrl: '', mockupName: '', mockupPath: '',
       designUrl: '', designName: '', designPath: '',
       sizechartUrl: '', sizechartName: '', sizechartPath: '',
-      sablon: '', sablonLink: '',
+      sablon: '', sablonLink: '', warnaKaos: '', tebalKain: '',
       sizes: { S:0, M:0, L:0, XL:0, XXL:0 },
       masukVendor: '', keluarVendor: '', keterangan: ''
     };
@@ -398,6 +398,21 @@
             </select>
           </div>
         </div>
+        <div class="form-row">
+          <div class="form-group">
+            <div class="form-label">Warna Kaos</div>
+            <input class="form-input" value="${a.warnaKaos||''}" placeholder="Contoh: Putih, Hitam, Navy..." onchange="updateArtikelField('warnaKaos',this.value)" />
+          </div>
+          <div class="form-group">
+            <div class="form-label">Tebal Kain</div>
+            <select class="form-input" onchange="updateArtikelField('tebalKain',this.value)">
+              <option value="" ${!a.tebalKain?'selected':''}>Pilih tebal kain...</option>
+              <option value="16s" ${a.tebalKain==='16s'?'selected':''}>16s (tebal)</option>
+              <option value="20s" ${a.tebalKain==='20s'?'selected':''}>20s (medium)</option>
+              <option value="24s" ${a.tebalKain==='24s'?'selected':''}>24s (tipis)</option>
+            </select>
+          </div>
+        </div>
         <div class="form-row single">
           <div class="form-group">
             <div class="form-label">Link File Sablon (Google Drive)</div>
@@ -566,12 +581,16 @@
     doc.setTextColor(0,0,0);
     doc.setFontSize(14); doc.setFont('helvetica','bold');
     doc.text(`${p.name} — ${batch.name} — ${a.name}`, M, y); y += 7;
-    if (a.sablon || a.sablonLink) {
-      doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(130,130,130);
-      if (a.sablon) { doc.text(`Jenis Sablon: ${a.sablon}`, M, y); y += 5; }
+    if (a.sablon || a.sablonLink || a.warnaKaos || a.tebalKain) {
+      doc.setFontSize(9); doc.setFont('helvetica','normal');
+      const specs = [];
+      if (a.sablon) specs.push(`Sablon: ${a.sablon}`);
+      if (a.warnaKaos) specs.push(`Warna: ${a.warnaKaos}`);
+      if (a.tebalKain) specs.push(`Kain: ${a.tebalKain}`);
+      if (specs.length) { doc.setTextColor(60,60,60); doc.text(specs.join('  ·  '), M, y); y += 5; }
       if (a.sablonLink) {
         doc.setTextColor(79,110,247);
-        doc.text(`File: ${a.sablonLink}`, M, y, { maxWidth: W-M*2 }); 
+        doc.text(`File sablon: ${a.sablonLink}`, M, y, { maxWidth: W-M*2 });
         y += 5;
       }
       doc.setTextColor(0,0,0); y += 2;
