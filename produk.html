@@ -6,7 +6,6 @@
   <title>Rena Omber — Produk</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -15,8 +14,9 @@
       --border: rgba(99,130,255,0.12); --border-hover: rgba(99,130,255,0.28);
       --text: #e8eaf6; --text2: #8892b0; --text3: #4a5568;
       --accent: #4f6ef7; --accent-dim: rgba(79,110,247,0.12);
+      --danger: #f87171;
     }
-    html, body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; min-height: 100vh; line-height: 1.6; }
+    html, body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; min-height: 100vh; }
 
     /* GATE */
     #gate { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
@@ -27,80 +27,90 @@
     .gate-form input { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 14px; padding: 10px 14px; width: 220px; outline: none; }
     .gate-form input:focus { border-color: var(--border-hover); }
     .gate-form button { background: var(--accent); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; padding: 10px 18px; }
-    .gate-error { font-size: 12px; color: #f87171; min-height: 16px; text-align: center; }
+    .gate-error { font-size: 12px; color: var(--danger); min-height: 16px; text-align: center; }
 
     /* MAIN */
     #main { display: none; }
-    .top-bar { display: flex; align-items: center; justify-content: space-between; padding: 18px 32px; border-bottom: 1px solid var(--border); }
-    .top-left { display: flex; align-items: center; gap: 12px; }
-    .top-mark { width: 24px; height: 3px; background: var(--accent); border-radius: 2px; }
+    .top-bar { display: flex; align-items: center; justify-content: space-between; padding: 16px 28px; border-bottom: 1px solid var(--border); }
+    .top-left { display: flex; align-items: center; gap: 10px; }
+    .top-mark { width: 22px; height: 3px; background: var(--accent); border-radius: 2px; }
     .top-name { font-size: 13px; font-weight: 500; }
-    .top-sub { font-size: 11px; color: var(--text3); letter-spacing: 0.06em; text-transform: uppercase; }
+    .top-sub { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; }
     .top-right { display: flex; gap: 8px; }
-    .btn-ghost { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text2); cursor: pointer; font-family: inherit; font-size: 12px; padding: 6px 14px; text-decoration: none; display: inline-flex; align-items: center; }
+    .btn-ghost { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text2); cursor: pointer; font-family: inherit; font-size: 12px; padding: 6px 14px; text-decoration: none; display: inline-flex; align-items: center; transition: border-color 0.15s, color 0.15s; }
     .btn-ghost:hover { border-color: var(--border-hover); color: var(--text); }
 
     /* LAYOUT */
-    .layout { display: grid; grid-template-columns: 200px 1fr; min-height: calc(100vh - 57px); }
-    .sidebar { border-right: 1px solid var(--border); padding: 20px 0; }
-    .sidebar-label { font-size: 10px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; padding: 0 16px; margin-bottom: 8px; }
-    .prod-item { display: flex; align-items: center; justify-content: space-between; padding: 9px 16px; cursor: pointer; border-left: 2px solid transparent; transition: background 0.1s; font-size: 13px; color: var(--text2); }
+    .layout { display: grid; grid-template-columns: 210px 1fr; min-height: calc(100vh - 53px); }
+
+    /* SIDEBAR */
+    .sidebar { border-right: 1px solid var(--border); padding: 18px 0; display: flex; flex-direction: column; gap: 0; }
+    .sidebar-label { font-size: 10px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; padding: 0 16px; margin-bottom: 6px; }
+    .prod-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; cursor: pointer; border-left: 2px solid transparent; transition: background 0.1s; font-size: 13px; color: var(--text2); }
     .prod-item:hover { background: var(--bg2); color: var(--text); }
     .prod-item.active { border-left-color: var(--accent); background: var(--bg2); color: var(--text); font-weight: 500; }
-    .prod-item-del { opacity: 0; background: none; border: none; color: var(--text3); cursor: pointer; font-size: 14px; padding: 0 2px; transition: opacity 0.15s, color 0.15s; }
+    .prod-item-del { opacity: 0; background: none; border: none; color: var(--text3); cursor: pointer; font-size: 15px; padding: 0 2px; line-height: 1; }
     .prod-item:hover .prod-item-del { opacity: 1; }
-    .prod-item-del:hover { color: #f87171; }
-    .add-prod-btn { display: flex; align-items: center; gap: 6px; margin: 10px 16px 0; padding: 7px 10px; background: var(--accent-dim); border: 1px dashed var(--border-hover); border-radius: 6px; cursor: pointer; font-size: 12px; color: var(--text2); transition: background 0.15s; }
+    .prod-item-del:hover { color: var(--danger); }
+    .add-prod-btn { margin: 10px 14px 0; padding: 8px 10px; background: var(--accent-dim); border: 1px dashed var(--border-hover); border-radius: 6px; cursor: pointer; font-size: 12px; color: var(--text2); text-align: center; transition: background 0.15s; }
     .add-prod-btn:hover { background: rgba(79,110,247,0.2); color: var(--text); }
 
     /* CONTENT */
-    .content { padding: 28px 36px; max-width: 900px; }
-    .content-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .content { padding: 26px 34px; overflow-y: auto; }
+    .content-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
     .content-title { font-size: 20px; font-weight: 600; }
-    .btn-export { background: var(--accent); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; padding: 9px 18px; transition: opacity 0.15s; }
-    .btn-export:hover { opacity: 0.85; }
 
-    /* FORM SECTIONS */
-    .form-section { margin-bottom: 28px; }
-    .form-section-title { font-size: 11px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    /* ARTIKEL TABS */
+    .artikel-bar { display: flex; align-items: center; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 22px; }
+    .artikel-tab { background: none; border: none; border-bottom: 2px solid transparent; color: var(--text3); cursor: pointer; font-family: inherit; font-size: 13px; padding: 8px 16px; margin-bottom: -1px; transition: color 0.15s, border-color 0.15s; }
+    .artikel-tab:hover { color: var(--text2); }
+    .artikel-tab.active { border-bottom-color: var(--accent); color: var(--text); font-weight: 500; }
+    .artikel-tab-del { font-size: 11px; color: var(--text3); margin-left: 4px; cursor: pointer; opacity: 0; }
+    .artikel-tab:hover .artikel-tab-del { opacity: 1; }
+    .add-artikel-btn { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 18px; padding: 8px 12px; transition: color 0.15s; }
+    .add-artikel-btn:hover { color: var(--accent); }
+
+    /* FORM */
+    .form-section { margin-bottom: 24px; }
+    .form-section-title { font-size: 10px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
     .form-row.single { grid-template-columns: 1fr; }
     .form-group { display: flex; flex-direction: column; gap: 5px; }
     .form-label { font-size: 12px; color: var(--text2); }
-    .form-input { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 13px; padding: 9px 12px; outline: none; transition: border-color 0.15s; width: 100%; }
+    .form-input { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 13px; padding: 8px 12px; outline: none; width: 100%; transition: border-color 0.15s; }
     .form-input:focus { border-color: var(--border-hover); }
-    textarea.form-input { resize: vertical; min-height: 80px; line-height: 1.6; }
+    textarea.form-input { resize: vertical; min-height: 72px; line-height: 1.6; }
 
-    /* UPLOAD ZONE */
-    .upload-zone { border: 1px dashed var(--border-hover); border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; color: var(--text3); font-size: 12px; transition: background 0.15s, border-color 0.15s; position: relative; }
-    .upload-zone:hover { background: var(--accent-dim); border-color: var(--accent); color: var(--text2); }
+    /* UPLOAD */
+    .upload-zone { border: 1px dashed var(--border-hover); border-radius: 8px; padding: 16px; text-align: center; cursor: pointer; color: var(--text3); font-size: 12px; transition: background 0.15s, border-color 0.15s; position: relative; min-height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+    .upload-zone:hover { background: var(--accent-dim); border-color: var(--accent); }
     .upload-zone.has-file { border-style: solid; border-color: var(--accent); background: var(--accent-dim); }
     .upload-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-    .upload-zone-icon { font-size: 22px; margin-bottom: 6px; }
-    .upload-preview { max-width: 100%; max-height: 160px; border-radius: 6px; margin-top: 10px; object-fit: contain; }
+    .upload-preview { max-width: 100%; max-height: 140px; border-radius: 6px; object-fit: contain; margin-top: 6px; }
+    .upload-spinner { font-size: 11px; color: var(--accent); }
 
     /* SIZE TABLE */
     .size-table { width: 100%; border-collapse: collapse; }
-    .size-table th { font-size: 11px; color: var(--text3); font-weight: 500; text-align: center; padding: 6px 10px; border: 1px solid var(--border); background: var(--bg3); letter-spacing: 0.06em; text-transform: uppercase; }
-    .size-table td { border: 1px solid var(--border); padding: 4px; }
+    .size-table th { font-size: 11px; color: var(--text3); font-weight: 500; text-align: center; padding: 6px 8px; border: 1px solid var(--border); background: var(--bg3); letter-spacing: 0.06em; text-transform: uppercase; }
+    .size-table td { border: 1px solid var(--border); padding: 3px; }
     .size-table input { background: transparent; border: none; color: var(--text); font-family: inherit; font-size: 13px; text-align: center; width: 100%; padding: 5px; outline: none; }
     .size-table input:focus { background: var(--accent-dim); }
-    .size-total { background: var(--bg3); font-weight: 500; color: var(--text); }
+    .size-total { background: var(--bg3); }
 
-    /* EMPTY STATE */
-    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: calc(100vh - 57px); color: var(--text3); gap: 12px; }
+    /* ACTIONS */
+    .form-actions { display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
+    .btn-primary { background: var(--accent); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; padding: 9px 18px; transition: opacity 0.15s; }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-primary:disabled { opacity: 0.4; cursor: default; }
+    .save-status { font-size: 12px; color: var(--text3); display: flex; align-items: center; }
+
+    /* EMPTY */
+    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: calc(100vh - 53px); color: var(--text3); gap: 10px; }
     .empty-state p { font-size: 13px; }
-
-    @media (max-width: 640px) {
-      .layout { grid-template-columns: 1fr; }
-      .content { padding: 20px; }
-      .form-row { grid-template-columns: 1fr; }
-    }
   </style>
 </head>
 <body>
 
-<!-- GATE -->
 <div id="gate">
   <div>
     <div class="gate-mark"></div>
@@ -116,7 +126,6 @@
   </div>
 </div>
 
-<!-- MAIN -->
 <div id="main">
   <div class="top-bar">
     <div class="top-left">
@@ -131,7 +140,6 @@
       <button class="btn-ghost" onclick="logout()">Keluar</button>
     </div>
   </div>
-
   <div class="layout">
     <aside class="sidebar">
       <div class="sidebar-label">Produk</div>
@@ -140,7 +148,7 @@
     </aside>
     <main class="content" id="content">
       <div class="empty-state">
-        <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="opacity:0.3"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg>
+        <svg width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="opacity:0.3"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg>
         <p>Pilih atau tambah produk di sidebar</p>
       </div>
     </main>
@@ -159,14 +167,14 @@
   const SIZES = ['S','M','L','XL','XXL'];
 
   let products = [];
-  let activeId = null;
-  let imageData = {};
+  let activeProductId = null;
+  let activeArtikelIdx = 0;
   let saveTimer = null;
 
   // ─── AUTH ───────────────────────────────────────────────────
   async function sha256(str) {
     const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
   }
   async function checkPw() {
     const val = document.getElementById('pw-input').value.trim();
@@ -188,31 +196,46 @@
   }
   if (sessionStorage.getItem('ro_auth') === '1') showMain();
 
-  // ─── SUPABASE SYNC ──────────────────────────────────────────
+  // ─── LOAD / SAVE ────────────────────────────────────────────
   async function loadProducts() {
-    const { data, error } = await sb.from('products').select('*').order('created_at');
-    if (error) { console.error(error); return; }
-    products = (data || []).map(row => ({ id: row.id, name: row.name, ...row.data }));
-    // restore imageData from data.images if stored
-    products.forEach(p => {
-      if (p._images) { imageData[p.id] = p._images; delete p._images; }
-    });
+    const { data } = await sb.from('products').select('*').order('created_at');
+    products = (data || []).map(row => ({
+      id: row.id,
+      name: row.name,
+      artikels: row.data?.artikels || [defaultArtikel('Artikel 1')]
+    }));
+  }
+
+  function defaultArtikel(name) {
+    return {
+      name,
+      mockupUrl: '', mockupName: '',
+      designUrl: '', designName: '',
+      sizechartUrl: '', sizechartName: '',
+      sizes: { S:0, M:0, L:0, XL:0, XXL:0 },
+      masukVendor: '', keluarVendor: '', keterangan: ''
+    };
   }
 
   async function saveProduct(p) {
-    const { _images, ...rest } = p;
-    const row = {
+    await sb.from('products').upsert({
       id: p.id,
       name: p.name,
-      data: { ...rest, _images: imageData[p.id] || {} },
+      data: { artikels: p.artikels },
       updated_at: new Date().toISOString()
-    };
-    await sb.from('products').upsert(row);
+    });
+    setSaveStatus('Tersimpan');
   }
 
   function scheduleSave(p) {
+    setSaveStatus('Menyimpan...');
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => saveProduct(p), 800);
+    saveTimer = setTimeout(() => saveProduct(p), 900);
+  }
+
+  function setSaveStatus(msg) {
+    const el = document.getElementById('save-status');
+    if (el) el.textContent = msg;
   }
 
   // ─── PRODUCTS ───────────────────────────────────────────────
@@ -222,9 +245,7 @@
     const p = {
       id: Date.now().toString(),
       name: name.trim(),
-      mockupName: '', designName: '', sizechartName: '',
-      sizes: { S:0, M:0, L:0, XL:0, XXL:0 },
-      masukVendor: '', keluarVendor: '', keterangan: ''
+      artikels: [defaultArtikel('Artikel 1')]
     };
     products.push(p);
     await saveProduct(p);
@@ -234,258 +255,361 @@
 
   async function deleteProduct(id, e) {
     e.stopPropagation();
-    const p = products.find(p => p.id === id);
+    const p = products.find(p=>p.id===id);
     if (!confirm(`Hapus "${p.name}"?`)) return;
     await sb.from('products').delete().eq('id', id);
-    products = products.filter(p => p.id !== id);
-    delete imageData[id];
+    products = products.filter(p=>p.id!==id);
     renderSidebar();
-    if (activeId === id) {
-      activeId = null;
+    if (activeProductId === id) {
+      activeProductId = null;
       document.getElementById('content').innerHTML = `<div class="empty-state"><p>Pilih atau tambah produk di sidebar</p></div>`;
     }
   }
 
   function renderSidebar() {
     const el = document.getElementById('prod-list');
-    if (!products.length) { el.innerHTML = ''; return; }
-    el.innerHTML = products.map(p => `
-      <div class="prod-item ${p.id===activeId?'active':''}" onclick="selectProduct('${p.id}')">
+    el.innerHTML = products.map(p=>`
+      <div class="prod-item ${p.id===activeProductId?'active':''}" onclick="selectProduct('${p.id}')">
         <span>${p.name}</span>
-        <button class="prod-item-del" onclick="deleteProduct('${p.id}',event)" title="Hapus">×</button>
+        <button class="prod-item-del" onclick="deleteProduct('${p.id}',event)">×</button>
       </div>`).join('');
   }
 
   function selectProduct(id) {
-    activeId = id;
+    activeProductId = id;
+    activeArtikelIdx = 0;
     renderSidebar();
-    const p = products.find(p => p.id === id);
-    renderForm(p);
+    renderProductPage();
   }
 
-  // ─── FORM ───────────────────────────────────────────────────
-  function renderForm(p) {
-    const totalAmt = SIZES.reduce((s,sz) => s + (parseInt(p.sizes[sz])||0), 0);
+  // ─── ARTIKEL ────────────────────────────────────────────────
+  function addArtikel() {
+    const p = products.find(p=>p.id===activeProductId);
+    const n = p.artikels.length + 1;
+    p.artikels.push(defaultArtikel(`Artikel ${n}`));
+    activeArtikelIdx = p.artikels.length - 1;
+    scheduleSave(p);
+    renderProductPage();
+  }
+
+  function deleteArtikel(idx, e) {
+    e.stopPropagation();
+    const p = products.find(p=>p.id===activeProductId);
+    if (p.artikels.length <= 1) { alert('Minimal satu artikel.'); return; }
+    if (!confirm(`Hapus "${p.artikels[idx].name}"?`)) return;
+    p.artikels.splice(idx, 1);
+    activeArtikelIdx = Math.min(activeArtikelIdx, p.artikels.length - 1);
+    scheduleSave(p);
+    renderProductPage();
+  }
+
+  function selectArtikel(idx) {
+    activeArtikelIdx = idx;
+    renderProductPage();
+  }
+
+  // ─── RENDER ─────────────────────────────────────────────────
+  function renderProductPage() {
+    const p = products.find(p=>p.id===activeProductId);
+    const a = p.artikels[activeArtikelIdx];
+    const total = SIZES.reduce((s,sz)=>s+(parseInt(a.sizes[sz])||0),0);
+
     document.getElementById('content').innerHTML = `
       <div class="content-header">
         <div class="content-title">${p.name}</div>
-        <button class="btn-export" onclick="exportPDF('${p.id}')">Export PDF</button>
+        <span class="save-status" id="save-status"></span>
       </div>
 
-      <!-- UPLOAD SECTION -->
+      <div class="artikel-bar">
+        ${p.artikels.map((ar,i)=>`
+          <button class="artikel-tab ${i===activeArtikelIdx?'active':''}" onclick="selectArtikel(${i})">
+            ${ar.name}
+            <span class="artikel-tab-del" onclick="deleteArtikel(${i},event)">×</span>
+          </button>`).join('')}
+        <button class="add-artikel-btn" onclick="addArtikel()" title="Tambah artikel">+</button>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Nama Artikel</div>
+        <div class="form-row single">
+          <div class="form-group">
+            <input class="form-input" value="${a.name}" placeholder="Nama artikel..." onchange="updateArtikelField('name',this.value)" />
+          </div>
+        </div>
+      </div>
+
       <div class="form-section">
         <div class="form-section-title">Visual</div>
         <div class="form-row">
           <div class="form-group">
             <div class="form-label">Mockup Design</div>
-            <div class="upload-zone ${imageData[p.id]?.mockup?'has-file':''}" id="zone-mockup">
-              <input type="file" accept="image/*" onchange="handleImg('${p.id}','mockup',this)" />
-              <div class="upload-zone-icon">+</div>
-              <div>${p.mockupName || 'Upload gambar mockup'}</div>
-              ${imageData[p.id]?.mockup ? `<img src="${imageData[p.id].mockup}" class="upload-preview" />` : ''}
+            <div class="upload-zone ${a.mockupUrl?'has-file':''}" id="zone-mockup">
+              <input type="file" accept="image/*" onchange="handleImg('mockup',this)" />
+              ${a.mockupUrl
+                ? `<img src="${a.mockupUrl}" class="upload-preview" /><div style="font-size:11px;margin-top:4px;">${a.mockupName}</div>`
+                : `<div style="font-size:20px;">+</div><div>${a.mockupName||'Upload mockup'}</div>`}
             </div>
           </div>
           <div class="form-group">
             <div class="form-label">Design (artwork)</div>
-            <div class="upload-zone ${imageData[p.id]?.design?'has-file':''}" id="zone-design">
-              <input type="file" accept="image/*" onchange="handleImg('${p.id}','design',this)" />
-              <div class="upload-zone-icon">+</div>
-              <div>${p.designName || 'Upload file design'}</div>
-              ${imageData[p.id]?.design ? `<img src="${imageData[p.id].design}" class="upload-preview" />` : ''}
+            <div class="upload-zone ${a.designUrl?'has-file':''}" id="zone-design">
+              <input type="file" accept="image/*" onchange="handleImg('design',this)" />
+              ${a.designUrl
+                ? `<img src="${a.designUrl}" class="upload-preview" /><div style="font-size:11px;margin-top:4px;">${a.designName}</div>`
+                : `<div style="font-size:20px;">+</div><div>${a.designName||'Upload design'}</div>`}
             </div>
           </div>
         </div>
         <div class="form-group">
           <div class="form-label">Size Chart</div>
-          <div class="upload-zone ${imageData[p.id]?.sizechart?'has-file':''}" id="zone-sizechart">
-            <input type="file" accept="image/*" onchange="handleImg('${p.id}','sizechart',this)" />
-            <div class="upload-zone-icon">+</div>
-            <div>${p.sizechartName || 'Upload size chart'}</div>
-            ${imageData[p.id]?.sizechart ? `<img src="${imageData[p.id].sizechart}" class="upload-preview" />` : ''}
+          <div class="upload-zone ${a.sizechartUrl?'has-file':''}" id="zone-sizechart">
+            <input type="file" accept="image/*" onchange="handleImg('sizechart',this)" />
+            ${a.sizechartUrl
+              ? `<img src="${a.sizechartUrl}" class="upload-preview" /><div style="font-size:11px;margin-top:4px;">${a.sizechartName}</div>`
+              : `<div style="font-size:20px;">+</div><div>${a.sizechartName||'Upload size chart'}</div>`}
           </div>
         </div>
       </div>
 
-      <!-- SIZE AMOUNT -->
       <div class="form-section">
         <div class="form-section-title">Jumlah per Ukuran</div>
         <table class="size-table">
+          <tr>${SIZES.map(s=>`<th>${s}</th>`).join('')}<th>Total</th></tr>
           <tr>
-            ${SIZES.map(s=>`<th>${s}</th>`).join('')}
-            <th>Total</th>
-          </tr>
-          <tr>
-            ${SIZES.map(s=>`<td><input type="number" min="0" value="${p.sizes[s]||0}" onchange="updateSize('${p.id}','${s}',this.value)" /></td>`).join('')}
-            <td class="size-total"><input readonly value="${totalAmt}" id="total-amt" style="font-weight:600;color:var(--accent);" /></td>
+            ${SIZES.map(s=>`<td><input type="number" min="0" value="${a.sizes[s]||0}" onchange="updateSize('${s}',this.value)" /></td>`).join('')}
+            <td class="size-total" style="text-align:center;font-weight:600;color:var(--accent);padding:5px;" id="total-cell">${total}</td>
           </tr>
         </table>
       </div>
 
-      <!-- VENDOR & INFO -->
       <div class="form-section">
         <div class="form-section-title">Vendor & Keterangan</div>
         <div class="form-row">
           <div class="form-group">
-            <div class="form-label">Masuk Vendor (tanggal)</div>
-            <input type="date" class="form-input" value="${p.masukVendor||''}" onchange="updateField('${p.id}','masukVendor',this.value)" />
+            <div class="form-label">Masuk Vendor</div>
+            <input type="date" class="form-input" value="${a.masukVendor||''}" onchange="updateArtikelField('masukVendor',this.value)" />
           </div>
           <div class="form-group">
-            <div class="form-label">Keluar Vendor (tanggal)</div>
-            <input type="date" class="form-input" value="${p.keluarVendor||''}" onchange="updateField('${p.id}','keluarVendor',this.value)" />
+            <div class="form-label">Keluar Vendor</div>
+            <input type="date" class="form-input" value="${a.keluarVendor||''}" onchange="updateArtikelField('keluarVendor',this.value)" />
           </div>
         </div>
         <div class="form-row single">
           <div class="form-group">
             <div class="form-label">Keterangan</div>
-            <textarea class="form-input" placeholder="Catatan tambahan..." onchange="updateField('${p.id}','keterangan',this.value)">${p.keterangan||''}</textarea>
+            <textarea class="form-input" placeholder="Catatan tambahan..." onchange="updateArtikelField('keterangan',this.value)">${a.keterangan||''}</textarea>
           </div>
         </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-primary" onclick="exportPDF()">Export PDF</button>
       </div>`;
   }
 
   // ─── FIELD UPDATES ──────────────────────────────────────────
-  function updateSize(id, size, val) {
-    const p = products.find(p => p.id === id);
-    p.sizes[size] = parseInt(val)||0;
-    const total = SIZES.reduce((s,sz) => s + (parseInt(p.sizes[sz])||0), 0);
-    const el = document.getElementById('total-amt');
-    if (el) el.value = total;
+  function updateArtikelField(field, val) {
+    const p = products.find(p=>p.id===activeProductId);
+    p.artikels[activeArtikelIdx][field] = val;
+    if (field === 'name') renderProductPage();
     scheduleSave(p);
   }
 
-  function updateField(id, field, val) {
-    const p = products.find(p => p.id === id);
-    p[field] = val;
+  function updateSize(size, val) {
+    const p = products.find(p=>p.id===activeProductId);
+    p.artikels[activeArtikelIdx].sizes[size] = parseInt(val)||0;
+    const total = SIZES.reduce((s,sz)=>s+(parseInt(p.artikels[activeArtikelIdx].sizes[sz])||0),0);
+    const el = document.getElementById('total-cell');
+    if (el) el.textContent = total;
     scheduleSave(p);
   }
 
-  function handleImg(id, type, input) {
+  // ─── IMAGE UPLOAD TO STORAGE ────────────────────────────────
+  async function handleImg(type, input) {
     const file = input.files[0];
     if (!file) return;
-    const p = products.find(p => p.id === id);
-    p[type+'Name'] = file.name;
+    const p = products.find(p=>p.id===activeProductId);
+    const a = p.artikels[activeArtikelIdx];
+
+    const zone = document.getElementById(`zone-${type}`);
+    zone.innerHTML = `<div class="upload-spinner">Mengupload...</div><input type="file" accept="image/*" onchange="handleImg('${type}',this)" style="position:absolute;inset:0;opacity:0;cursor:pointer;" />`;
+
+    // Compress first
+    const compressed = await compressImage(file, 900, 0.78);
+    const ext = 'jpg';
+    const path = `products/${p.id}/${activeArtikelIdx}_${type}.${ext}`;
+
+    const { data, error } = await sb.storage.from(BUCKET).upload(path, compressed, {
+      contentType: 'image/jpeg', upsert: true
+    });
+
+    if (error) { alert('Upload gagal: ' + error.message); return; }
+
+    const { data: urlData } = sb.storage.from(BUCKET).getPublicUrl(path);
+    // Use signed URL since bucket is private
+    const { data: signed } = await sb.storage.from(BUCKET).createSignedUrl(path, 60*60*24*365);
+    const url = signed?.signedUrl || urlData?.publicUrl || '';
+
+    a[`${type}Url`] = url;
+    a[`${type}Name`] = file.name;
+    a[`${type}Path`] = path; // store path for re-signing
     scheduleSave(p);
-    const reader = new FileReader();
-    reader.onload = e => {
-      if (!imageData[id]) imageData[id] = {};
-      imageData[id][type] = e.target.result;
-      renderForm(p);
-    };
-    reader.readAsDataURL(file);
+    renderProductPage();
+  }
+
+  async function compressImage(file, maxPx, quality) {
+    return new Promise(res => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const img = new Image();
+        img.onload = () => {
+          let w = img.width, h = img.height;
+          if (w > maxPx || h > maxPx) {
+            if (w > h) { h = Math.round(h*maxPx/w); w = maxPx; }
+            else { w = Math.round(w*maxPx/h); h = maxPx; }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          canvas.toBlob(blob => res(blob), 'image/jpeg', quality);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
   }
 
   // ─── PDF EXPORT ─────────────────────────────────────────────
-  async function exportPDF(id) {
-    const p = products.find(p => p.id === id);
+  async function exportPDF() {
+    const p = products.find(p=>p.id===activeProductId);
+    const a = p.artikels[activeArtikelIdx];
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    const W = 210, margin = 16;
-    let y = margin;
+    const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    const W = 210, M = 16;
+    let y = M;
 
     // Header
-    doc.setFontSize(18); doc.setFont('helvetica','bold');
-    doc.text('Rena Omber', margin, y); y += 8;
-    doc.setFontSize(11); doc.setFont('helvetica','normal');
-    doc.setTextColor(120,120,120);
-    doc.text('Product Sheet', margin, y); y += 6;
-    doc.setDrawColor(79,110,247);
-    doc.setLineWidth(0.5);
-    doc.line(margin, y, W-margin, y); y += 8;
+    doc.setFontSize(16); doc.setFont('helvetica','bold'); doc.text('Rena Omber', M, y); y += 7;
+    doc.setFontSize(10); doc.setFont('helvetica','normal'); doc.setTextColor(130,130,130);
+    doc.text('Product Sheet', M, y); y += 5;
+    doc.setDrawColor(79,110,247); doc.setLineWidth(0.5);
+    doc.line(M, y, W-M, y); y += 8;
     doc.setTextColor(0,0,0);
+    doc.setFontSize(14); doc.setFont('helvetica','bold');
+    doc.text(`${p.name} — ${a.name}`, M, y); y += 10;
 
-    // Product name
-    doc.setFontSize(15); doc.setFont('helvetica','bold');
-    doc.text(p.name, margin, y); y += 10;
+    // Load image helper
+    const loadImgData = (url) => new Promise(res => {
+      if (!url) return res(null);
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width; canvas.height = img.height;
+        canvas.getContext('2d').drawImage(img, 0, 0);
+        res({ dataUrl: canvas.toDataURL('image/jpeg', 0.85), w: img.width, h: img.height });
+      };
+      img.onerror = () => res(null);
+      img.src = url;
+    });
 
-    // Images
-    const addImg = async (label, dataUrl, x, iy, w, h) => {
-      if (!dataUrl) return;
-      doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor(100,100,100);
-      doc.text(label.toUpperCase(), x, iy); iy += 4;
-      try {
-        const ext = dataUrl.split(';')[0].split('/')[1].toUpperCase();
-        doc.addImage(dataUrl, ext === 'JPG' ? 'JPEG' : ext, x, iy, w, h);
-      } catch(e) {}
-      return iy + h + 4;
+    const fitImg = (imgData, maxW, maxH) => {
+      if (!imgData) return null;
+      let { w, h } = imgData;
+      const ratio = w/h;
+      if (w > maxW) { w = maxW; h = w/ratio; }
+      if (h > maxH) { h = maxH; w = h*ratio; }
+      return { dataUrl: imgData.dataUrl, w: Math.round(w*10)/10, h: Math.round(h*10)/10 };
     };
 
-    const imgW = (W - margin*2 - 8) / 2;
-    const imgs = imageData[id] || {};
+    const colW = (W - M*2 - 8)/2;
 
-    if (imgs.mockup || imgs.design) {
-      let ny = y;
-      if (imgs.mockup) ny = await addImg('Mockup Design', imgs.mockup, margin, y, imgW, 55) || y;
-      if (imgs.design) await addImg('Design', imgs.design, margin + imgW + 8, y, imgW, 55);
-      y = ny;
+    // Mockup + Design side by side
+    const [mockup, design] = await Promise.all([loadImgData(a.mockupUrl), loadImgData(a.designUrl)]);
+    if (mockup || design) {
+      const startY = y;
+      let maxH = startY;
+      if (mockup) {
+        const fm = fitImg(mockup, colW, 65);
+        doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(130,130,130);
+        doc.text('MOCKUP DESIGN', M, y);
+        doc.addImage(fm.dataUrl, 'JPEG', M, y+3, fm.w, fm.h);
+        maxH = Math.max(maxH, y+3+fm.h);
+      }
+      if (design) {
+        const fd = fitImg(design, colW, 65);
+        doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(130,130,130);
+        doc.text('DESIGN', M+colW+8, startY);
+        doc.addImage(fd.dataUrl, 'JPEG', M+colW+8, startY+3, fd.w, fd.h);
+        maxH = Math.max(maxH, startY+3+fd.h);
+      }
+      y = maxH + 8;
     }
 
-    if (imgs.sizechart) {
-      y = await addImg('Size Chart', imgs.sizechart, margin, y, W - margin*2, 50) || y;
+    // Size chart
+    const sizechart = await loadImgData(a.sizechartUrl);
+    if (sizechart) {
+      const fs = fitImg(sizechart, W-M*2, 55);
+      doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(130,130,130);
+      doc.text('SIZE CHART', M, y); y += 4;
+      doc.addImage(fs.dataUrl, 'JPEG', M, y, fs.w, fs.h);
+      y += fs.h + 8;
     }
 
-    // Size amounts
-    doc.setFontSize(10); doc.setFont('helvetica','bold'); doc.setTextColor(100,100,100);
-    doc.text('JUMLAH PER UKURAN', margin, y); y += 5;
-    const cellW = (W - margin*2) / 6;
-    const sizes = [...SIZES, 'Total'];
-    const total = SIZES.reduce((s,sz) => s + (parseInt(p.sizes[sz])||0), 0);
-    const vals = [...SIZES.map(s => String(p.sizes[s]||0)), String(total)];
-
-    doc.setFillColor(26,34,53); doc.setTextColor(180,180,200);
-    doc.setFont('helvetica','bold'); doc.setFontSize(9);
-    sizes.forEach((s,i) => {
-      doc.rect(margin + i*cellW, y, cellW, 7, 'F');
-      doc.text(s, margin + i*cellW + cellW/2, y+5, { align:'center' });
-    });
-    y += 7;
-    doc.setFillColor(17,24,39); doc.setTextColor(0,0,0);
-    doc.setFont('helvetica','normal');
+    // Size table
+    doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(130,130,130);
+    doc.text('JUMLAH PER UKURAN', M, y); y += 4;
+    const cw = (W-M*2)/6;
+    const allSizes = [...SIZES, 'Total'];
+    const total = SIZES.reduce((s,sz)=>s+(parseInt(a.sizes[sz])||0),0);
+    const vals = [...SIZES.map(s=>String(a.sizes[s]||0)), String(total)];
+    doc.setFillColor(26,34,53); doc.setTextColor(180,190,220); doc.setFont('helvetica','bold'); doc.setFontSize(8);
+    allSizes.forEach((s,i) => { doc.rect(M+i*cw, y, cw, 6,'F'); doc.text(s, M+i*cw+cw/2, y+4.2, {align:'center'}); });
+    y += 6;
+    doc.setFont('helvetica','normal'); doc.setFontSize(9);
     vals.forEach((v,i) => {
-      doc.setFillColor(i===5?230:245, i===5?235:245, i===5?255:245);
-      doc.rect(margin + i*cellW, y, cellW, 7, 'F');
-      doc.setDrawColor(200,200,220);
-      doc.rect(margin + i*cellW, y, cellW, 7, 'S');
-      doc.setTextColor(i===5?79:40, i===5?110:40, i===5?247:40);
-      doc.text(v, margin + i*cellW + cellW/2, y+5, { align:'center' });
+      const isTot = i===5;
+      doc.setFillColor(isTot?230:240, isTot?235:242, isTot?255:248);
+      doc.rect(M+i*cw, y, cw, 6,'F');
+      doc.setDrawColor(200,210,230); doc.rect(M+i*cw, y, cw, 6,'S');
+      doc.setTextColor(isTot?79:50, isTot?110:50, isTot?247:50);
+      doc.text(v, M+i*cw+cw/2, y+4.2, {align:'center'});
     });
-    y += 12;
+    y += 10;
 
-    // Vendor dates
-    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(100,100,100);
-    doc.text('VENDOR', margin, y); y += 5;
-    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(0,0,0);
-    if (p.masukVendor) { doc.text(`Masuk: ${formatDate(p.masukVendor)}`, margin, y); y += 6; }
-    if (p.keluarVendor) { doc.text(`Keluar: ${formatDate(p.keluarVendor)}`, margin, y); y += 6; }
-    y += 4;
+    // Vendor
+    doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(130,130,130);
+    doc.text('VENDOR', M, y); y += 5;
+    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(30,30,30);
+    if (a.masukVendor) { doc.text(`Masuk: ${fmtDate(a.masukVendor)}`, M, y); y += 5.5; }
+    if (a.keluarVendor) { doc.text(`Keluar: ${fmtDate(a.keluarVendor)}`, M, y); y += 5.5; }
+    y += 3;
 
     // Keterangan
-    if (p.keterangan) {
-      doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(100,100,100);
-      doc.text('KETERANGAN', margin, y); y += 5;
-      doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(0,0,0);
-      const lines = doc.splitTextToSize(p.keterangan, W - margin*2);
-      doc.text(lines, margin, y); y += lines.length * 5 + 4;
+    if (a.keterangan) {
+      doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(130,130,130);
+      doc.text('KETERANGAN', M, y); y += 5;
+      doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(30,30,30);
+      const lines = doc.splitTextToSize(a.keterangan, W-M*2);
+      doc.text(lines, M, y); y += lines.length*5+3;
     }
 
     // Footer
-    doc.setDrawColor(79,110,247);
-    doc.line(margin, 287, W-margin, 287);
-    doc.setFontSize(8); doc.setTextColor(150,150,150);
-    doc.text(`Rena Omber · Generated ${new Date().toLocaleDateString('id-ID')}`, margin, 292);
+    doc.setDrawColor(79,110,247); doc.line(M, 286, W-M, 286);
+    doc.setFontSize(7); doc.setTextColor(150,150,150);
+    doc.text(`Rena Omber · ${p.name} · ${a.name} · ${new Date().toLocaleDateString('id-ID')}`, M, 291);
 
-    const filename = `${p.name.replace(/\s+/g,'_')}_product_sheet.pdf`;
+    const filename = `${p.name}_${a.name}_product_sheet.pdf`.replace(/\s+/g,'_');
     doc.save(filename);
 
-    // Upload ke Supabase
+    // Upload PDF to vault
     const pdfBlob = doc.output('blob');
-    const path = `ops/${filename}`;
-    await sb.storage.from(BUCKET).upload(path, pdfBlob, { contentType:'application/pdf', upsert:true });
+    await sb.storage.from(BUCKET).upload(`ops/${filename}`, pdfBlob, { contentType:'application/pdf', upsert:true });
   }
 
-  function formatDate(d) {
+  function fmtDate(d) {
     if (!d) return '';
-    const dt = new Date(d);
-    return dt.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
+    return new Date(d).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
   }
 </script>
 </body>
