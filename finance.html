@@ -320,11 +320,12 @@
       const units = artikelUnits(a);
       const cogs = parseInt(a.cogs)||0;
       const cost = units * cogs;
-      doc.setFillColor(idx%2===0?245:252, idx%2===0?250:255, idx%2===0?248:252);
       cx = M;
       [a.name, fmt(cogs), String(units), cost?fmt(cost):'—'].forEach((v,i) => {
-        doc.rect(cx, y, cols[i], 7, 'F');
-        doc.setDrawColor(200,230,215); doc.rect(cx, y, cols[i], 7, 'S');
+        doc.setFillColor(idx%2===0 ? 245 : 252, idx%2===0 ? 250 : 253, idx%2===0 ? 248 : 251);
+        doc.setDrawColor(200, 230, 215);
+        doc.rect(cx, y, cols[i], 7, 'FD');
+        doc.setTextColor(30,30,30);
         doc.text(String(v), cx+4, y+4.8);
         cx += cols[i];
       });
