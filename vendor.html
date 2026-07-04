@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rena Omber — Master Vendor</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0f1e; --bg2: #111827; --bg3: #1a2235;
+      --border: rgba(99,130,255,0.12); --border-hover: rgba(99,130,255,0.28);
+      --text: #e8eaf6; --text2: #8892b0; --text3: #4a5568;
+      --accent: #4f6ef7; --accent-dim: rgba(79,110,247,0.12);
+      --danger: #f87171;
+    }
+    html, body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; min-height: 100vh; }
+
+    #gate { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
+    .gate-mark { width: 40px; height: 4px; background: var(--accent); border-radius: 2px; margin: 0 auto 16px; }
+    .gate-form { display: flex; gap: 8px; margin-top: 8px; }
+    .gate-form input { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 14px; padding: 10px 14px; width: 220px; outline: none; }
+    .gate-form button { background: var(--accent); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; padding: 10px 18px; }
+    .gate-error { font-size: 12px; color: var(--danger); min-height: 16px; text-align: center; }
+
+    #main { display: none; }
+    .top-bar { display: flex; align-items: center; justify-content: space-between; padding: 16px 28px; border-bottom: 1px solid var(--border); }
+    .top-left { display: flex; align-items: center; gap: 10px; }
+    .top-mark { width: 22px; height: 3px; background: var(--accent); border-radius: 2px; }
+    .top-name { font-size: 13px; font-weight: 500; }
+    .top-sub { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; }
+    .top-right { display: flex; gap: 8px; }
+    .btn-ghost { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text2); cursor: pointer; font-family: inherit; font-size: 12px; padding: 6px 14px; text-decoration: none; display: inline-flex; align-items: center; transition: border-color 0.15s; }
+    .btn-ghost:hover { border-color: var(--border-hover); color: var(--text); }
+
+    .content { padding: 28px 36px; max-width: 860px; }
+    .content-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .content-title { font-size: 20px; font-weight: 600; }
+    .btn-primary { background: var(--accent); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; padding: 9px 16px; }
+    .btn-primary:hover { opacity: 0.85; }
+
+    /* TABS */
+    .type-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+    .type-tab { background: none; border: none; border-bottom: 2px solid transparent; color: var(--text3); cursor: pointer; font-family: inherit; font-size: 13px; padding: 8px 16px; margin-bottom: -1px; transition: color 0.15s, border-color 0.15s; }
+    .type-tab:hover { color: var(--text2); }
+    .type-tab.active { border-bottom-color: var(--accent); color: var(--text); font-weight: 500; }
+
+    /* VENDOR LIST */
+    .vendor-list { display: flex; flex-direction: column; gap: 8px; }
+    .vendor-card { display: flex; align-items: center; gap: 14px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; transition: border-color 0.15s; }
+    .vendor-card:hover { border-color: var(--border-hover); }
+    .vendor-type-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 500; white-space: nowrap; }
+    .badge-kaos { background: rgba(79,110,247,0.15); color: #7b9fff; }
+    .badge-hangtag { background: rgba(251,191,36,0.15); color: #fbbf24; }
+    .badge-packaging { background: rgba(52,211,153,0.15); color: #34d399; }
+    .badge-lainnya { background: rgba(148,163,184,0.15); color: #94a3b8; }
+    .vendor-info { flex: 1; min-width: 0; }
+    .vendor-name { font-size: 13px; font-weight: 500; }
+    .vendor-notes { font-size: 11px; color: var(--text3); margin-top: 2px; }
+    .vendor-price { font-size: 13px; font-weight: 600; color: var(--accent); white-space: nowrap; }
+    .vendor-actions { display: flex; gap: 6px; }
+    .btn-edit { background: none; border: 1px solid var(--border); border-radius: 5px; color: var(--text3); cursor: pointer; font-size: 11px; padding: 4px 10px; transition: all 0.15s; }
+    .btn-edit:hover { border-color: var(--border-hover); color: var(--text); }
+    .btn-del { background: none; border: 1px solid transparent; border-radius: 5px; color: var(--text3); cursor: pointer; font-size: 14px; padding: 4px 8px; transition: all 0.15s; }
+    .btn-del:hover { color: var(--danger); border-color: var(--danger); }
+
+    .empty { text-align: center; padding: 40px; color: var(--text3); font-size: 13px; }
+
+    /* MODAL */
+    .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 50; }
+    .modal-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; width: 90%; max-width: 420px; padding: 24px; }
+    .modal-title { font-size: 15px; font-weight: 600; margin-bottom: 18px; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+    .form-label { font-size: 12px; color: var(--text2); }
+    .form-input { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 13px; padding: 9px 12px; outline: none; width: 100%; transition: border-color 0.15s; }
+    .form-input:focus { border-color: var(--border-hover); }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+    .btn-cancel { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text3); cursor: pointer; font-family: inherit; font-size: 13px; padding: 8px 16px; }
+  </style>
+</head>
+<body>
+
+<div id="gate">
+  <div>
+    <div class="gate-mark"></div>
+    <div style="font-size:18px;font-weight:500;text-align:center;">Rena Omber</div>
+    <div style="font-size:12px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;text-align:center;margin-top:4px;">Master Vendor</div>
+  </div>
+  <div>
+    <div class="gate-form">
+      <input type="password" id="pw-input" placeholder="Password" onkeydown="if(event.key==='Enter')checkPw()" />
+      <button onclick="checkPw()">Masuk</button>
+    </div>
+    <div class="gate-error" id="pw-error"></div>
+  </div>
+</div>
+
+<div id="main">
+  <div class="top-bar">
+    <div class="top-left">
+      <div class="top-mark"></div>
+      <div>
+        <div class="top-name">Rena Omber</div>
+        <div class="top-sub">Master Vendor</div>
+      </div>
+    </div>
+    <div class="top-right">
+      <a href="produk.html" class="btn-ghost">Produk</a>
+      <a href="index.html" class="btn-ghost">Vault</a>
+      <button class="btn-ghost" onclick="logout()">Keluar</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="content-header">
+      <div class="content-title">Daftar Vendor</div>
+      <button class="btn-primary" onclick="openModal()">+ Tambah Vendor</button>
+    </div>
+    <div class="type-tabs">
+      <button class="type-tab active" onclick="filterType('all')">Semua</button>
+      <button class="type-tab" onclick="filterType('kaos')">Kaos</button>
+      <button class="type-tab" onclick="filterType('hangtag')">Hangtag</button>
+      <button class="type-tab" onclick="filterType('packaging')">Packaging</button>
+      <button class="type-tab" onclick="filterType('lainnya')">Lainnya</button>
+    </div>
+    <div id="vendor-list"><div class="empty">Memuat...</div></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal" style="display:none;" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-title">Tambah Vendor</div>
+    <div class="form-group">
+      <div class="form-label">Nama Vendor</div>
+      <input class="form-input" id="f-name" placeholder="Contoh: CV Maju Jaya..." />
+    </div>
+    <div class="form-group">
+      <div class="form-label">Tipe</div>
+      <select class="form-input" id="f-type">
+        <option value="kaos">Kaos</option>
+        <option value="hangtag">Hangtag</option>
+        <option value="packaging">Packaging</option>
+        <option value="lainnya">Lainnya</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <div class="form-label">Harga per unit (Rp)</div>
+      <div style="position:relative;">
+        <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text3);">Rp</span>
+        <input type="number" class="form-input" id="f-price" style="padding-left:32px;" placeholder="0" min="0" />
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="form-label">Catatan (opsional)</div>
+      <input class="form-input" id="f-notes" placeholder="Alamat, kontak, MOQ..." />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Batal</button>
+      <button class="btn-primary" onclick="saveVendor()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ─── CONFIG ────────────────────────────────────────────────
+  const SUPABASE_URL  = 'https://fqvfnohhilkzvijqukfg.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxdmZub2hoaWxrenZpanF1a2ZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDU4NjAsImV4cCI6MjA5ODEyMTg2MH0.er10SEsmDlnx1yRLGJK2fKtLhQR40vFOXVJzH9yakCg';
+  const PASSWORD_HASH = '3f0e57f3e719957119f0ba621629a3ae0ed1ec95d1ad8a91bd980b2896b679e4';
+  // ───────────────────────────────────────────────────────────
+
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  let vendors = [];
+  let activeType = 'all';
+  let editingId = null;
+
+  async function sha256(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+  async function checkPw() {
+    const val = document.getElementById('pw-input').value.trim();
+    if ((await sha256(val)) === PASSWORD_HASH) {
+      sessionStorage.setItem('ro_auth','1');
+      await showMain();
+    } else {
+      document.getElementById('pw-error').textContent = 'Password salah.';
+      document.getElementById('pw-input').value = '';
+    }
+  }
+  function logout() { sessionStorage.removeItem('ro_auth'); location.reload(); }
+  async function showMain() {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+    await loadVendors();
+  }
+  if (sessionStorage.getItem('ro_auth') === '1') showMain();
+
+  async function loadVendors() {
+    const { data } = await sb.from('vendors').select('*').order('created_at');
+    vendors = data || [];
+    renderList();
+  }
+
+  function filterType(type) {
+    activeType = type;
+    document.querySelectorAll('.type-tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    renderList();
+  }
+
+  function badgeClass(type) {
+    return { kaos:'badge-kaos', hangtag:'badge-hangtag', packaging:'badge-packaging', lainnya:'badge-lainnya' }[type] || 'badge-lainnya';
+  }
+
+  function renderList() {
+    const filtered = activeType === 'all' ? vendors : vendors.filter(v => v.type === activeType);
+    const el = document.getElementById('vendor-list');
+    if (!filtered.length) { el.innerHTML = '<div class="empty">Belum ada vendor. Tambah yang pertama.</div>'; return; }
+    el.innerHTML = `<div class="vendor-list">${filtered.map(v => `
+      <div class="vendor-card">
+        <span class="vendor-type-badge ${badgeClass(v.type)}">${v.type}</span>
+        <div class="vendor-info">
+          <div class="vendor-name">${v.name}</div>
+          ${v.notes ? `<div class="vendor-notes">${v.notes}</div>` : ''}
+        </div>
+        <div class="vendor-price">Rp ${(v.price_per_unit||0).toLocaleString('id-ID')}/unit</div>
+        <div class="vendor-actions">
+          <button class="btn-edit" onclick="openModal('${v.id}')">Edit</button>
+          <button class="btn-del" onclick="deleteVendor('${v.id}')">×</button>
+        </div>
+      </div>`).join('')}</div>`;
+  }
+
+  function openModal(id) {
+    editingId = id || null;
+    document.getElementById('modal-title').textContent = id ? 'Edit Vendor' : 'Tambah Vendor';
+    if (id) {
+      const v = vendors.find(v => v.id === id);
+      document.getElementById('f-name').value = v.name;
+      document.getElementById('f-type').value = v.type;
+      document.getElementById('f-price').value = v.price_per_unit || 0;
+      document.getElementById('f-notes').value = v.notes || '';
+    } else {
+      document.getElementById('f-name').value = '';
+      document.getElementById('f-type').value = 'kaos';
+      document.getElementById('f-price').value = '';
+      document.getElementById('f-notes').value = '';
+    }
+    document.getElementById('modal').style.display = 'flex';
+    document.getElementById('f-name').focus();
+  }
+
+  function closeModal() {
+    document.getElementById('modal').style.display = 'none';
+    editingId = null;
+  }
+
+  async function saveVendor() {
+    const name = document.getElementById('f-name').value.trim();
+    if (!name) { alert('Nama vendor harus diisi.'); return; }
+    const row = {
+      id: editingId || Date.now().toString(),
+      name,
+      type: document.getElementById('f-type').value,
+      price_per_unit: parseInt(document.getElementById('f-price').value) || 0,
+      notes: document.getElementById('f-notes').value.trim()
+    };
+    await sb.from('vendors').upsert(row);
+    closeModal();
+    await loadVendors();
+  }
+
+  async function deleteVendor(id) {
+    const v = vendors.find(v => v.id === id);
+    if (!confirm(`Hapus vendor "${v.name}"?`)) return;
+    await sb.from('vendors').delete().eq('id', id);
+    await loadVendors();
+  }
+</script>
+</body>
+</html>
