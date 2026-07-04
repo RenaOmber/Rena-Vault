@@ -217,7 +217,7 @@
       mockupUrl: '', mockupName: '', mockupPath: '',
       designUrl: '', designName: '', designPath: '',
       sizechartUrl: '', sizechartName: '', sizechartPath: '',
-      sablon: '',
+      sablon: '', sablonLink: '',
       sizes: { S:0, M:0, L:0, XL:0, XXL:0 },
       masukVendor: '', keluarVendor: '', keterangan: ''
     };
@@ -398,6 +398,12 @@
             </select>
           </div>
         </div>
+        <div class="form-row single">
+          <div class="form-group">
+            <div class="form-label">Link File Sablon (Google Drive)</div>
+            <input class="form-input" value="${a.sablonLink||''}" placeholder="https://drive.google.com/..." onchange="updateArtikelField('sablonLink',this.value)" />
+          </div>
+        </div>
       </div>
 
       <div class="form-section">
@@ -560,10 +566,15 @@
     doc.setTextColor(0,0,0);
     doc.setFontSize(14); doc.setFont('helvetica','bold');
     doc.text(`${p.name} — ${batch.name} — ${a.name}`, M, y); y += 7;
-    if (a.sablon) {
+    if (a.sablon || a.sablonLink) {
       doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(130,130,130);
-      doc.text(`Jenis Sablon: ${a.sablon}`, M, y); doc.setTextColor(0,0,0);
-      y += 7;
+      if (a.sablon) { doc.text(`Jenis Sablon: ${a.sablon}`, M, y); y += 5; }
+      if (a.sablonLink) {
+        doc.setTextColor(79,110,247);
+        doc.text(`File: ${a.sablonLink}`, M, y, { maxWidth: W-M*2 }); 
+        y += 5;
+      }
+      doc.setTextColor(0,0,0); y += 2;
     } else { y += 3; }
 
     // Load image helper
