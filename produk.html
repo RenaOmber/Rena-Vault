@@ -168,6 +168,7 @@
 
   let products = [];
   let activeProductId = null;
+  let activeBatchIdx = 0;
   let activeArtikelIdx = 0;
   let saveTimer = null;
 
@@ -202,16 +203,21 @@
     products = (data || []).map(row => ({
       id: row.id,
       name: row.name,
-      artikels: row.data?.artikels || [defaultArtikel('Artikel 1')]
+      batches: row.data?.batches || [defaultBatch('Batch 1')]
     }));
+  }
+
+  function defaultBatch(name) {
+    return { name, artikels: [defaultArtikel('Artikel 1')] };
   }
 
   function defaultArtikel(name) {
     return {
       name,
-      mockupUrl: '', mockupName: '',
-      designUrl: '', designName: '',
-      sizechartUrl: '', sizechartName: '',
+      mockupUrl: '', mockupName: '', mockupPath: '',
+      designUrl: '', designName: '', designPath: '',
+      sizechartUrl: '', sizechartName: '', sizechartPath: '',
+      sablon: '',
       sizes: { S:0, M:0, L:0, XL:0, XXL:0 },
       masukVendor: '', keluarVendor: '', keterangan: ''
     };
@@ -221,7 +227,7 @@
     await sb.from('products').upsert({
       id: p.id,
       name: p.name,
-      data: { artikels: p.artikels },
+      data: { batches: p.batches },
       updated_at: new Date().toISOString()
     });
     setSaveStatus('Tersimpan');
@@ -245,7 +251,7 @@
     const p = {
       id: Date.now().toString(),
       name: name.trim(),
-      artikels: [defaultArtikel('Artikel 1')]
+      batches: [defaultBatch('Batch 1')]
     };
     products.push(p);
     await saveProduct(p);
@@ -277,17 +283,48 @@
 
   function selectProduct(id) {
     activeProductId = id;
+    activeBatchIdx = 0;
     activeArtikelIdx = 0;
     renderSidebar();
     renderProductPage();
   }
 
   // ─── ARTIKEL ────────────────────────────────────────────────
+  // ─── BATCH ──────────────────────────────────────────────────
+  function addBatch() {
+    const p = products.find(p=>p.id===activeProductId);
+    const n = p.batches.length + 1;
+    p.batches.push(defaultBatch(`Batch ${n}`));
+    activeBatchIdx = p.batches.length - 1;
+    activeArtikelIdx = 0;
+    scheduleSave(p);
+    renderProductPage();
+  }
+
+  function deleteBatch(idx, e) {
+    e.stopPropagation();
+    const p = products.find(p=>p.id===activeProductId);
+    if (p.batches.length <= 1) { alert('Minimal satu batch.'); return; }
+    if (!confirm(`Hapus "${p.batches[idx].name}"?`)) return;
+    p.batches.splice(idx, 1);
+    activeBatchIdx = Math.min(activeBatchIdx, p.batches.length - 1);
+    activeArtikelIdx = 0;
+    scheduleSave(p);
+    renderProductPage();
+  }
+
+  function selectBatch(idx) {
+    activeBatchIdx = idx;
+    activeArtikelIdx = 0;
+    renderProductPage();
+  }
+
   function addArtikel() {
     const p = products.find(p=>p.id===activeProductId);
-    const n = p.artikels.length + 1;
-    p.artikels.push(defaultArtikel(`Artikel ${n}`));
-    activeArtikelIdx = p.artikels.length - 1;
+    const batch = p.batches[activeBatchIdx];
+    const n = batch.artikels.length + 1;
+    batch.artikels.push(defaultArtikel(`Artikel ${n}`));
+    activeArtikelIdx = batch.artikels.length - 1;
     scheduleSave(p);
     renderProductPage();
   }
@@ -295,10 +332,11 @@
   function deleteArtikel(idx, e) {
     e.stopPropagation();
     const p = products.find(p=>p.id===activeProductId);
-    if (p.artikels.length <= 1) { alert('Minimal satu artikel.'); return; }
-    if (!confirm(`Hapus "${p.artikels[idx].name}"?`)) return;
-    p.artikels.splice(idx, 1);
-    activeArtikelIdx = Math.min(activeArtikelIdx, p.artikels.length - 1);
+    const batch = p.batches[activeBatchIdx];
+    if (batch.artikels.length <= 1) { alert('Minimal satu artikel.'); return; }
+    if (!confirm(`Hapus "${batch.artikels[idx].name}"?`)) return;
+    batch.artikels.splice(idx, 1);
+    activeArtikelIdx = Math.min(activeArtikelIdx, batch.artikels.length - 1);
     scheduleSave(p);
     renderProductPage();
   }
@@ -311,7 +349,8 @@
   // ─── RENDER ─────────────────────────────────────────────────
   function renderProductPage() {
     const p = products.find(p=>p.id===activeProductId);
-    const a = p.artikels[activeArtikelIdx];
+    const batch = p.batches[activeBatchIdx];
+    const a = batch.artikels[activeArtikelIdx];
     const total = SIZES.reduce((s,sz)=>s+(parseInt(a.sizes[sz])||0),0);
 
     document.getElementById('content').innerHTML = `
@@ -320,20 +359,43 @@
         <span class="save-status" id="save-status"></span>
       </div>
 
-      <div class="artikel-bar">
-        ${p.artikels.map((ar,i)=>`
-          <button class="artikel-tab ${i===activeArtikelIdx?'active':''}" onclick="selectArtikel(${i})">
+      <div class="artikel-bar" style="margin-bottom:0;border-bottom:none;padding-bottom:0;">
+        ${p.batches.map((b,i)=>`
+          <button class="artikel-tab ${i===activeBatchIdx?'active':''}" onclick="selectBatch(${i})">
+            ${b.name}
+            <span class="artikel-tab-del" onclick="deleteBatch(${i},event)">×</span>
+          </button>`).join('')}
+        <button class="add-artikel-btn" onclick="addBatch()" title="Tambah batch" style="font-size:16px;padding:8px 10px;">+</button>
+      </div>
+
+      <div class="artikel-bar" style="margin-bottom:22px;padding-left:8px;background:var(--bg2);border-radius:0 0 6px 6px;">
+        ${batch.artikels.map((ar,i)=>`
+          <button class="artikel-tab ${i===activeArtikelIdx?'active':''}" onclick="selectArtikel(${i})" style="font-size:12px;padding:6px 12px;">
             ${ar.name}
             <span class="artikel-tab-del" onclick="deleteArtikel(${i},event)">×</span>
           </button>`).join('')}
-        <button class="add-artikel-btn" onclick="addArtikel()" title="Tambah artikel">+</button>
+        <button class="add-artikel-btn" onclick="addArtikel()" title="Tambah artikel" style="font-size:14px;padding:6px 8px;">+</button>
       </div>
 
       <div class="form-section">
-        <div class="form-section-title">Nama Artikel</div>
-        <div class="form-row single">
+        <div class="form-section-title">Info Artikel</div>
+        <div class="form-row">
           <div class="form-group">
+            <div class="form-label">Nama Artikel</div>
             <input class="form-input" value="${a.name}" placeholder="Nama artikel..." onchange="updateArtikelField('name',this.value)" />
+          </div>
+          <div class="form-group">
+            <div class="form-label">Jenis Sablon</div>
+            <select class="form-input" onchange="updateArtikelField('sablon',this.value)">
+              <option value="" ${!a.sablon?'selected':''}>Pilih jenis sablon...</option>
+              <option value="DTF" ${a.sablon==='DTF'?'selected':''}>DTF (Direct to Film)</option>
+              <option value="Plastisol" ${a.sablon==='Plastisol'?'selected':''}>Plastisol</option>
+              <option value="Rubber" ${a.sablon==='Rubber'?'selected':''}>Rubber</option>
+              <option value="Discharge" ${a.sablon==='Discharge'?'selected':''}>Discharge</option>
+              <option value="Sublimasi" ${a.sablon==='Sublimasi'?'selected':''}>Sublimasi</option>
+              <option value="Bordir" ${a.sablon==='Bordir'?'selected':''}>Bordir</option>
+              <option value="Lainnya" ${a.sablon==='Lainnya'?'selected':''}>Lainnya</option>
+            </select>
           </div>
         </div>
       </div>
@@ -410,15 +472,15 @@
   // ─── FIELD UPDATES ──────────────────────────────────────────
   function updateArtikelField(field, val) {
     const p = products.find(p=>p.id===activeProductId);
-    p.artikels[activeArtikelIdx][field] = val;
+    p.batches[activeBatchIdx].artikels[activeArtikelIdx][field] = val;
     if (field === 'name') renderProductPage();
     scheduleSave(p);
   }
 
   function updateSize(size, val) {
     const p = products.find(p=>p.id===activeProductId);
-    p.artikels[activeArtikelIdx].sizes[size] = parseInt(val)||0;
-    const total = SIZES.reduce((s,sz)=>s+(parseInt(p.artikels[activeArtikelIdx].sizes[sz])||0),0);
+    p.batches[activeBatchIdx].artikels[activeArtikelIdx].sizes[size] = parseInt(val)||0;
+    const total = SIZES.reduce((s,sz)=>s+(parseInt(p.batches[activeBatchIdx].artikels[activeArtikelIdx].sizes[sz])||0),0);
     const el = document.getElementById('total-cell');
     if (el) el.textContent = total;
     scheduleSave(p);
@@ -429,7 +491,7 @@
     const file = input.files[0];
     if (!file) return;
     const p = products.find(p=>p.id===activeProductId);
-    const a = p.artikels[activeArtikelIdx];
+    const a = p.batches[activeBatchIdx].artikels[activeArtikelIdx];
 
     const zone = document.getElementById(`zone-${type}`);
     zone.innerHTML = `<div class="upload-spinner">Mengupload...</div><input type="file" accept="image/*" onchange="handleImg('${type}',this)" style="position:absolute;inset:0;opacity:0;cursor:pointer;" />`;
@@ -482,7 +544,7 @@
   // ─── PDF EXPORT ─────────────────────────────────────────────
   async function exportPDF() {
     const p = products.find(p=>p.id===activeProductId);
-    const a = p.artikels[activeArtikelIdx];
+    const a = p.batches[activeBatchIdx].artikels[activeArtikelIdx];
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
     const W = 210, M = 16;
@@ -496,7 +558,12 @@
     doc.line(M, y, W-M, y); y += 8;
     doc.setTextColor(0,0,0);
     doc.setFontSize(14); doc.setFont('helvetica','bold');
-    doc.text(`${p.name} — ${a.name}`, M, y); y += 10;
+    doc.text(`${p.name} — ${batch.name} — ${a.name}`, M, y); y += 7;
+    if (a.sablon) {
+      doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(130,130,130);
+      doc.text(`Jenis Sablon: ${a.sablon}`, M, y); doc.setTextColor(0,0,0);
+      y += 7;
+    } else { y += 3; }
 
     // Load image helper
     const loadImgData = (url) => new Promise(res => {
@@ -608,9 +675,9 @@
     // Footer
     doc.setDrawColor(79,110,247); doc.line(M, 286, W-M, 286);
     doc.setFontSize(7); doc.setTextColor(150,150,150);
-    doc.text(`Rena Omber · ${p.name} · ${a.name} · ${new Date().toLocaleDateString('id-ID')}`, M, 291);
+    doc.text(`Rena Omber · ${p.name} · ${batch.name} · ${a.name} · ${new Date().toLocaleDateString('id-ID')}`, M, 291);
 
-    const filename = `${p.name}_${a.name}_product_sheet.pdf`.replace(/\s+/g,'_');
+    const filename = `${p.name}_${batch.name}_${a.name}_product_sheet.pdf`.replace(/\s+/g,'_');
     doc.save(filename);
 
     // Upload PDF to vault
