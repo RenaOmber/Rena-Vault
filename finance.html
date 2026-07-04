@@ -46,6 +46,10 @@
 
     /* TABLE */
     .section-title { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; }
+  .prod-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 20px; flex-wrap: wrap; }
+  .prod-tab { background: none; border: none; border-bottom: 2px solid transparent; color: var(--text3); cursor: pointer; font-family: inherit; font-size: 13px; padding: 8px 16px; margin-bottom: -1px; transition: color 0.15s, border-color 0.15s; }
+  .prod-tab:hover { color: var(--text2); }
+  .prod-tab.active { border-bottom-color: var(--accent); color: var(--text); font-weight: 500; }
     .finance-table { width: 100%; border-collapse: collapse; margin-bottom: 28px; }
     .finance-table th { font-size: 11px; color: var(--text3); font-weight: 500; text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
     .finance-table th.right { text-align: right; }
@@ -135,23 +139,31 @@
       sum + SIZES.reduce((s,sz) => s+(parseInt(a.sizes[sz])||0), 0), 0);
   }
 
+  let allProducts = [];
+  let activeFinanceProd = 'all';
+
   async function renderFinance() {
     const { data } = await sb.from('products').select('*').order('created_at');
-    const products = (data||[]).map(row => ({
+    allProducts = (data||[]).map(row => ({
       id: String(row.id), name: row.name,
       batches: row.data?.batches || []
     }));
 
-    if (!products.length) {
+    if (!allProducts.length) {
       document.getElementById('finance-content').innerHTML = '<div class="empty">Belum ada produk. Tambah dulu di halaman Produk.</div>';
       return;
     }
+    renderFinanceView();
+  }
 
-    // Calculate totals
+  function renderFinanceView() {
+    const filtered = activeFinanceProd === 'all'
+      ? allProducts
+      : allProducts.filter(p => p.id === activeFinanceProd);
+
     let grandTotalUnits = 0, grandTotalCost = 0;
     const rows = [];
-
-    products.forEach(p => {
+    filtered.forEach(p => {
       p.batches.forEach(b => {
         const units = totalUnits(b);
         const cogs = parseInt(b.cogs)||0;
@@ -162,11 +174,17 @@
       });
     });
 
+    const tabs = `
+      <div class="prod-tabs">
+        <button class="prod-tab ${activeFinanceProd==='all'?'active':''}" onclick="filterProd('all')">Semua</button>
+        ${allProducts.map(p=>`<button class="prod-tab ${activeFinanceProd===p.id?'active':''}" onclick="filterProd('${p.id}')">${p.name}</button>`).join('')}
+      </div>`;
+
     document.getElementById('finance-content').innerHTML = `
       <div class="summary-grid">
         <div class="summary-card">
           <div class="summary-label">Total Produk</div>
-          <div class="summary-value">${products.length}</div>
+          <div class="summary-value">${filtered.length}</div>
         </div>
         <div class="summary-card">
           <div class="summary-label">Total Batch</div>
@@ -181,7 +199,7 @@
           <div class="summary-value green">${fmt(grandTotalCost)}</div>
         </div>
       </div>
-
+      ${tabs}
       <div class="section-title">Rincian per Batch</div>
       <table class="finance-table">
         <thead>
@@ -194,7 +212,7 @@
           </tr>
         </thead>
         <tbody>
-          ${rows.map(r => `
+          ${rows.map(r=>`
             <tr>
               <td class="prod-name">${r.prodName}</td>
               <td class="batch-name">${r.batchName}</td>
@@ -209,6 +227,11 @@
           </tr>
         </tbody>
       </table>`;
+  }
+
+  function filterProd(id) {
+    activeFinanceProd = id;
+    renderFinanceView();
   }
 </script>
 </body>
