@@ -164,14 +164,12 @@
     const rows = [];
     filtered.forEach(p => {
       p.batches.forEach(b => {
-        b.artikels.forEach(a => {
-          const units = artikelUnits(a);
-          const cogs = parseInt(a.cogs)||0;
-          const cost = units * cogs;
-          grandTotalUnits += units;
-          grandTotalCost += cost;
-          rows.push({ prodName: p.name, batchName: b.name, artikelName: a.name, units, cogs, cost });
-        });
+        const batchUnits = b.artikels.reduce((s,a) => s + artikelUnits(a), 0);
+        const batchCost = b.artikels.reduce((s,a) => s + artikelUnits(a) * (parseInt(a.cogs)||0), 0);
+        const artikelCount = b.artikels.length;
+        grandTotalUnits += batchUnits;
+        grandTotalCost += batchCost;
+        rows.push({ prodName: p.name, batchName: b.name, artikelCount, units: batchUnits, cost: batchCost });
       });
     });
 
@@ -207,8 +205,7 @@
           <tr>
             <th>Produk</th>
             <th>Batch</th>
-            <th>Artikel</th>
-            <th class="right">COGS/unit</th>
+            <th class="right">Artikel</th>
             <th class="right">Total Unit</th>
             <th class="right">Total Biaya</th>
           </tr>
@@ -218,13 +215,12 @@
             <tr>
               <td class="prod-name">${r.prodName}</td>
               <td class="batch-name">${r.batchName}</td>
-              <td class="batch-name">${r.artikelName}</td>
-              <td class="right"><span class="cogs-badge">${fmt(r.cogs)}</span></td>
+              <td class="right">${r.artikelCount} artikel</td>
               <td class="right">${r.units.toLocaleString('id-ID')}</td>
-              <td class="right">${r.cogs ? fmt(r.cost) : '<span style="color:var(--text3)">—</span>'}</td>
+              <td class="right">${r.cost ? fmt(r.cost) : '<span style="color:var(--text3)">—</span>'}</td>
             </tr>`).join('')}
           <tr class="total-row">
-            <td colspan="4">Total</td>
+            <td colspan="3">Total</td>
             <td class="right">${grandTotalUnits.toLocaleString('id-ID')}</td>
             <td class="right accent">${fmt(grandTotalCost)}</td>
           </tr>
