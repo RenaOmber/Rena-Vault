@@ -563,7 +563,7 @@
     const allSizes = [...SIZES, 'Total'];
     const total = SIZES.reduce((s,sz)=>s+(parseInt(a.sizes[sz])||0),0);
     const vals = [...SIZES.map(s=>String(a.sizes[s]||0)), String(total)];
-    doc.setFillColor(26,34,53); doc.setTextColor(180,190,220); doc.setFont('helvetica','bold'); doc.setFontSize(8);
+    doc.setFillColor(40,50,80); doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(8);
     allSizes.forEach((s,i) => { doc.rect(M+i*cw, y, cw, 6,'F'); doc.text(s, M+i*cw+cw/2, y+4.2, {align:'center'}); });
     y += 6;
     doc.setFont('helvetica','normal'); doc.setFontSize(9);
