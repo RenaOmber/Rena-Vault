@@ -267,7 +267,7 @@
     { id: 'marketing', label: 'Marketing',    icon: '📢' },
     { id: 'social',    label: 'Social Media', icon: '📱' },
     { id: 'finance',   label: 'Finance',      icon: '💰' },
-    { id: 'ops',       label: 'Operasional',  icon: '⚙️'  },
+    { id: 'ops',       label: 'Operasional',  icon: '⚙' },
   ];
 
   // Template prompt per kategori — bisa dikustomisasi
@@ -362,6 +362,14 @@
           <div class="landing-card-name">Create</div>
           <div class="landing-card-sub">Buat prompt untuk Claude</div>
         </div>
+        ${catId === 'ops' ? `
+        <div class="landing-card" onclick="window.location.href='produk.html'">
+          <div class="landing-card-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg>
+          </div>
+          <div class="landing-card-name">Produk</div>
+          <div class="landing-card-sub">Kelola & export product sheet</div>
+        </div>` : ''}
       </div>`;
   }
 

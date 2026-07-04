@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rena Omber — Produk</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0f1e; --bg2: #111827; --bg3: #1a2235;
+      --border: rgba(99,130,255,0.12); --border-hover: rgba(99,130,255,0.28);
+      --text: #e8eaf6; --text2: #8892b0; --text3: #4a5568;
+      --accent: #4f6ef7; --accent-dim: rgba(79,110,247,0.12);
+    }
+    html, body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; min-height: 100vh; line-height: 1.6; }
+
+    /* GATE */
+    #gate { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
+    .gate-mark { width: 40px; height: 4px; background: var(--accent); border-radius: 2px; margin: 0 auto 16px; }
+    .gate-title { font-size: 18px; font-weight: 500; text-align: center; }
+    .gate-sub { font-size: 12px; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; text-align: center; }
+    .gate-form { display: flex; gap: 8px; margin-top: 8px; }
+    .gate-form input { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 14px; padding: 10px 14px; width: 220px; outline: none; }
+    .gate-form input:focus { border-color: var(--border-hover); }
+    .gate-form button { background: var(--accent); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; padding: 10px 18px; }
+    .gate-error { font-size: 12px; color: #f87171; min-height: 16px; text-align: center; }
+
+    /* MAIN */
+    #main { display: none; }
+    .top-bar { display: flex; align-items: center; justify-content: space-between; padding: 18px 32px; border-bottom: 1px solid var(--border); }
+    .top-left { display: flex; align-items: center; gap: 12px; }
+    .top-mark { width: 24px; height: 3px; background: var(--accent); border-radius: 2px; }
+    .top-name { font-size: 13px; font-weight: 500; }
+    .top-sub { font-size: 11px; color: var(--text3); letter-spacing: 0.06em; text-transform: uppercase; }
+    .top-right { display: flex; gap: 8px; }
+    .btn-ghost { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text2); cursor: pointer; font-family: inherit; font-size: 12px; padding: 6px 14px; text-decoration: none; display: inline-flex; align-items: center; }
+    .btn-ghost:hover { border-color: var(--border-hover); color: var(--text); }
+
+    /* LAYOUT */
+    .layout { display: grid; grid-template-columns: 200px 1fr; min-height: calc(100vh - 57px); }
+    .sidebar { border-right: 1px solid var(--border); padding: 20px 0; }
+    .sidebar-label { font-size: 10px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; padding: 0 16px; margin-bottom: 8px; }
+    .prod-item { display: flex; align-items: center; justify-content: space-between; padding: 9px 16px; cursor: pointer; border-left: 2px solid transparent; transition: background 0.1s; font-size: 13px; color: var(--text2); }
+    .prod-item:hover { background: var(--bg2); color: var(--text); }
+    .prod-item.active { border-left-color: var(--accent); background: var(--bg2); color: var(--text); font-weight: 500; }
+    .prod-item-del { opacity: 0; background: none; border: none; color: var(--text3); cursor: pointer; font-size: 14px; padding: 0 2px; transition: opacity 0.15s, color 0.15s; }
+    .prod-item:hover .prod-item-del { opacity: 1; }
+    .prod-item-del:hover { color: #f87171; }
+    .add-prod-btn { display: flex; align-items: center; gap: 6px; margin: 10px 16px 0; padding: 7px 10px; background: var(--accent-dim); border: 1px dashed var(--border-hover); border-radius: 6px; cursor: pointer; font-size: 12px; color: var(--text2); transition: background 0.15s; }
+    .add-prod-btn:hover { background: rgba(79,110,247,0.2); color: var(--text); }
+
+    /* CONTENT */
+    .content { padding: 28px 36px; max-width: 900px; }
+    .content-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .content-title { font-size: 20px; font-weight: 600; }
+    .btn-export { background: var(--accent); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; padding: 9px 18px; transition: opacity 0.15s; }
+    .btn-export:hover { opacity: 0.85; }
+
+    /* FORM SECTIONS */
+    .form-section { margin-bottom: 28px; }
+    .form-section-title { font-size: 11px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    .form-row.single { grid-template-columns: 1fr; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-label { font-size: 12px; color: var(--text2); }
+    .form-input { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 13px; padding: 9px 12px; outline: none; transition: border-color 0.15s; width: 100%; }
+    .form-input:focus { border-color: var(--border-hover); }
+    textarea.form-input { resize: vertical; min-height: 80px; line-height: 1.6; }
+
+    /* UPLOAD ZONE */
+    .upload-zone { border: 1px dashed var(--border-hover); border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; color: var(--text3); font-size: 12px; transition: background 0.15s, border-color 0.15s; position: relative; }
+    .upload-zone:hover { background: var(--accent-dim); border-color: var(--accent); color: var(--text2); }
+    .upload-zone.has-file { border-style: solid; border-color: var(--accent); background: var(--accent-dim); }
+    .upload-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .upload-zone-icon { font-size: 22px; margin-bottom: 6px; }
+    .upload-preview { max-width: 100%; max-height: 160px; border-radius: 6px; margin-top: 10px; object-fit: contain; }
+
+    /* SIZE TABLE */
+    .size-table { width: 100%; border-collapse: collapse; }
+    .size-table th { font-size: 11px; color: var(--text3); font-weight: 500; text-align: center; padding: 6px 10px; border: 1px solid var(--border); background: var(--bg3); letter-spacing: 0.06em; text-transform: uppercase; }
+    .size-table td { border: 1px solid var(--border); padding: 4px; }
+    .size-table input { background: transparent; border: none; color: var(--text); font-family: inherit; font-size: 13px; text-align: center; width: 100%; padding: 5px; outline: none; }
+    .size-table input:focus { background: var(--accent-dim); }
+    .size-total { background: var(--bg3); font-weight: 500; color: var(--text); }
+
+    /* EMPTY STATE */
+    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: calc(100vh - 57px); color: var(--text3); gap: 12px; }
+    .empty-state p { font-size: 13px; }
+
+    @media (max-width: 640px) {
+      .layout { grid-template-columns: 1fr; }
+      .content { padding: 20px; }
+      .form-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- GATE -->
+<div id="gate">
+  <div>
+    <div class="gate-mark"></div>
+    <div class="gate-title">Rena Omber</div>
+    <div class="gate-sub" style="margin-top:4px;">Manajemen Produk</div>
+  </div>
+  <div>
+    <div class="gate-form">
+      <input type="password" id="pw-input" placeholder="Password" onkeydown="if(event.key==='Enter')checkPw()" />
+      <button onclick="checkPw()">Masuk</button>
+    </div>
+    <div class="gate-error" id="pw-error"></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div class="top-bar">
+    <div class="top-left">
+      <div class="top-mark"></div>
+      <div>
+        <div class="top-name">Rena Omber</div>
+        <div class="top-sub">Manajemen Produk</div>
+      </div>
+    </div>
+    <div class="top-right">
+      <a href="index.html" class="btn-ghost">Vault</a>
+      <button class="btn-ghost" onclick="logout()">Keluar</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-label">Produk</div>
+      <div id="prod-list"></div>
+      <div class="add-prod-btn" onclick="addProduct()">+ Tambah produk</div>
+    </aside>
+    <main class="content" id="content">
+      <div class="empty-state">
+        <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="opacity:0.3"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg>
+        <p>Pilih atau tambah produk di sidebar</p>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+  // ─── CONFIG ────────────────────────────────────────────────
+  const SUPABASE_URL  = 'YOUR_SUPABASE_URL';
+  const SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY';
+  const BUCKET        = 'vault-docs';
+  const PASSWORD_HASH = 'YOUR_PASSWORD_HASH';
+  // ───────────────────────────────────────────────────────────
+
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  const SIZES = ['S','M','L','XL','XXL'];
+
+  let products = [];
+  let activeId = null;
+  let imageData = {};
+  let saveTimer = null;
+
+  // ─── AUTH ───────────────────────────────────────────────────
+  async function sha256(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+  async function checkPw() {
+    const val = document.getElementById('pw-input').value.trim();
+    if ((await sha256(val)) === PASSWORD_HASH) {
+      sessionStorage.setItem('ro_auth','1');
+      await showMain();
+    } else {
+      document.getElementById('pw-error').textContent = 'Password salah.';
+      document.getElementById('pw-input').value = '';
+    }
+  }
+  function logout() { sessionStorage.removeItem('ro_auth'); location.reload(); }
+  async function showMain() {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+    await loadProducts();
+    renderSidebar();
+    if (products.length) selectProduct(products[0].id);
+  }
+  if (sessionStorage.getItem('ro_auth') === '1') showMain();
+
+  // ─── SUPABASE SYNC ──────────────────────────────────────────
+  async function loadProducts() {
+    const { data, error } = await sb.from('products').select('*').order('created_at');
+    if (error) { console.error(error); return; }
+    products = (data || []).map(row => ({ id: row.id, name: row.name, ...row.data }));
+    // restore imageData from data.images if stored
+    products.forEach(p => {
+      if (p._images) { imageData[p.id] = p._images; delete p._images; }
+    });
+  }
+
+  async function saveProduct(p) {
+    const { _images, ...rest } = p;
+    const row = {
+      id: p.id,
+      name: p.name,
+      data: { ...rest, _images: imageData[p.id] || {} },
+      updated_at: new Date().toISOString()
+    };
+    await sb.from('products').upsert(row);
+  }
+
+  function scheduleSave(p) {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => saveProduct(p), 800);
+  }
+
+  // ─── PRODUCTS ───────────────────────────────────────────────
+  async function addProduct() {
+    const name = prompt('Nama produk (contoh: T-Shirt, Hoodie):');
+    if (!name?.trim()) return;
+    const p = {
+      id: Date.now().toString(),
+      name: name.trim(),
+      mockupName: '', designName: '', sizechartName: '',
+      sizes: { S:0, M:0, L:0, XL:0, XXL:0 },
+      masukVendor: '', keluarVendor: '', keterangan: ''
+    };
+    products.push(p);
+    await saveProduct(p);
+    renderSidebar();
+    selectProduct(p.id);
+  }
+
+  async function deleteProduct(id, e) {
+    e.stopPropagation();
+    const p = products.find(p => p.id === id);
+    if (!confirm(`Hapus "${p.name}"?`)) return;
+    await sb.from('products').delete().eq('id', id);
+    products = products.filter(p => p.id !== id);
+    delete imageData[id];
+    renderSidebar();
+    if (activeId === id) {
+      activeId = null;
+      document.getElementById('content').innerHTML = `<div class="empty-state"><p>Pilih atau tambah produk di sidebar</p></div>`;
+    }
+  }
+
+  function renderSidebar() {
+    const el = document.getElementById('prod-list');
+    if (!products.length) { el.innerHTML = ''; return; }
+    el.innerHTML = products.map(p => `
+      <div class="prod-item ${p.id===activeId?'active':''}" onclick="selectProduct('${p.id}')">
+        <span>${p.name}</span>
+        <button class="prod-item-del" onclick="deleteProduct('${p.id}',event)" title="Hapus">×</button>
+      </div>`).join('');
+  }
+
+  function selectProduct(id) {
+    activeId = id;
+    renderSidebar();
+    const p = products.find(p => p.id === id);
+    renderForm(p);
+  }
+
+  // ─── FORM ───────────────────────────────────────────────────
+  function renderForm(p) {
+    const totalAmt = SIZES.reduce((s,sz) => s + (parseInt(p.sizes[sz])||0), 0);
+    document.getElementById('content').innerHTML = `
+      <div class="content-header">
+        <div class="content-title">${p.name}</div>
+        <button class="btn-export" onclick="exportPDF('${p.id}')">Export PDF</button>
+      </div>
+
+      <!-- UPLOAD SECTION -->
+      <div class="form-section">
+        <div class="form-section-title">Visual</div>
+        <div class="form-row">
+          <div class="form-group">
+            <div class="form-label">Mockup Design</div>
+            <div class="upload-zone ${imageData[p.id]?.mockup?'has-file':''}" id="zone-mockup">
+              <input type="file" accept="image/*" onchange="handleImg('${p.id}','mockup',this)" />
+              <div class="upload-zone-icon">+</div>
+              <div>${p.mockupName || 'Upload gambar mockup'}</div>
+              ${imageData[p.id]?.mockup ? `<img src="${imageData[p.id].mockup}" class="upload-preview" />` : ''}
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="form-label">Design (artwork)</div>
+            <div class="upload-zone ${imageData[p.id]?.design?'has-file':''}" id="zone-design">
+              <input type="file" accept="image/*" onchange="handleImg('${p.id}','design',this)" />
+              <div class="upload-zone-icon">+</div>
+              <div>${p.designName || 'Upload file design'}</div>
+              ${imageData[p.id]?.design ? `<img src="${imageData[p.id].design}" class="upload-preview" />` : ''}
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">Size Chart</div>
+          <div class="upload-zone ${imageData[p.id]?.sizechart?'has-file':''}" id="zone-sizechart">
+            <input type="file" accept="image/*" onchange="handleImg('${p.id}','sizechart',this)" />
+            <div class="upload-zone-icon">+</div>
+            <div>${p.sizechartName || 'Upload size chart'}</div>
+            ${imageData[p.id]?.sizechart ? `<img src="${imageData[p.id].sizechart}" class="upload-preview" />` : ''}
+          </div>
+        </div>
+      </div>
+
+      <!-- SIZE AMOUNT -->
+      <div class="form-section">
+        <div class="form-section-title">Jumlah per Ukuran</div>
+        <table class="size-table">
+          <tr>
+            ${SIZES.map(s=>`<th>${s}</th>`).join('')}
+            <th>Total</th>
+          </tr>
+          <tr>
+            ${SIZES.map(s=>`<td><input type="number" min="0" value="${p.sizes[s]||0}" onchange="updateSize('${p.id}','${s}',this.value)" /></td>`).join('')}
+            <td class="size-total"><input readonly value="${totalAmt}" id="total-amt" style="font-weight:600;color:var(--accent);" /></td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- VENDOR & INFO -->
+      <div class="form-section">
+        <div class="form-section-title">Vendor & Keterangan</div>
+        <div class="form-row">
+          <div class="form-group">
+            <div class="form-label">Masuk Vendor (tanggal)</div>
+            <input type="date" class="form-input" value="${p.masukVendor||''}" onchange="updateField('${p.id}','masukVendor',this.value)" />
+          </div>
+          <div class="form-group">
+            <div class="form-label">Keluar Vendor (tanggal)</div>
+            <input type="date" class="form-input" value="${p.keluarVendor||''}" onchange="updateField('${p.id}','keluarVendor',this.value)" />
+          </div>
+        </div>
+        <div class="form-row single">
+          <div class="form-group">
+            <div class="form-label">Keterangan</div>
+            <textarea class="form-input" placeholder="Catatan tambahan..." onchange="updateField('${p.id}','keterangan',this.value)">${p.keterangan||''}</textarea>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // ─── FIELD UPDATES ──────────────────────────────────────────
+  function updateSize(id, size, val) {
+    const p = products.find(p => p.id === id);
+    p.sizes[size] = parseInt(val)||0;
+    const total = SIZES.reduce((s,sz) => s + (parseInt(p.sizes[sz])||0), 0);
+    const el = document.getElementById('total-amt');
+    if (el) el.value = total;
+    scheduleSave(p);
+  }
+
+  function updateField(id, field, val) {
+    const p = products.find(p => p.id === id);
+    p[field] = val;
+    scheduleSave(p);
+  }
+
+  function handleImg(id, type, input) {
+    const file = input.files[0];
+    if (!file) return;
+    const p = products.find(p => p.id === id);
+    p[type+'Name'] = file.name;
+    scheduleSave(p);
+    const reader = new FileReader();
+    reader.onload = e => {
+      if (!imageData[id]) imageData[id] = {};
+      imageData[id][type] = e.target.result;
+      renderForm(p);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // ─── PDF EXPORT ─────────────────────────────────────────────
+  async function exportPDF(id) {
+    const p = products.find(p => p.id === id);
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const W = 210, margin = 16;
+    let y = margin;
+
+    // Header
+    doc.setFontSize(18); doc.setFont('helvetica','bold');
+    doc.text('Rena Omber', margin, y); y += 8;
+    doc.setFontSize(11); doc.setFont('helvetica','normal');
+    doc.setTextColor(120,120,120);
+    doc.text('Product Sheet', margin, y); y += 6;
+    doc.setDrawColor(79,110,247);
+    doc.setLineWidth(0.5);
+    doc.line(margin, y, W-margin, y); y += 8;
+    doc.setTextColor(0,0,0);
+
+    // Product name
+    doc.setFontSize(15); doc.setFont('helvetica','bold');
+    doc.text(p.name, margin, y); y += 10;
+
+    // Images
+    const addImg = async (label, dataUrl, x, iy, w, h) => {
+      if (!dataUrl) return;
+      doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor(100,100,100);
+      doc.text(label.toUpperCase(), x, iy); iy += 4;
+      try {
+        const ext = dataUrl.split(';')[0].split('/')[1].toUpperCase();
+        doc.addImage(dataUrl, ext === 'JPG' ? 'JPEG' : ext, x, iy, w, h);
+      } catch(e) {}
+      return iy + h + 4;
+    };
+
+    const imgW = (W - margin*2 - 8) / 2;
+    const imgs = imageData[id] || {};
+
+    if (imgs.mockup || imgs.design) {
+      let ny = y;
+      if (imgs.mockup) ny = await addImg('Mockup Design', imgs.mockup, margin, y, imgW, 55) || y;
+      if (imgs.design) await addImg('Design', imgs.design, margin + imgW + 8, y, imgW, 55);
+      y = ny;
+    }
+
+    if (imgs.sizechart) {
+      y = await addImg('Size Chart', imgs.sizechart, margin, y, W - margin*2, 50) || y;
+    }
+
+    // Size amounts
+    doc.setFontSize(10); doc.setFont('helvetica','bold'); doc.setTextColor(100,100,100);
+    doc.text('JUMLAH PER UKURAN', margin, y); y += 5;
+    const cellW = (W - margin*2) / 6;
+    const sizes = [...SIZES, 'Total'];
+    const total = SIZES.reduce((s,sz) => s + (parseInt(p.sizes[sz])||0), 0);
+    const vals = [...SIZES.map(s => String(p.sizes[s]||0)), String(total)];
+
+    doc.setFillColor(26,34,53); doc.setTextColor(180,180,200);
+    doc.setFont('helvetica','bold'); doc.setFontSize(9);
+    sizes.forEach((s,i) => {
+      doc.rect(margin + i*cellW, y, cellW, 7, 'F');
+      doc.text(s, margin + i*cellW + cellW/2, y+5, { align:'center' });
+    });
+    y += 7;
+    doc.setFillColor(17,24,39); doc.setTextColor(0,0,0);
+    doc.setFont('helvetica','normal');
+    vals.forEach((v,i) => {
+      doc.setFillColor(i===5?230:245, i===5?235:245, i===5?255:245);
+      doc.rect(margin + i*cellW, y, cellW, 7, 'F');
+      doc.setDrawColor(200,200,220);
+      doc.rect(margin + i*cellW, y, cellW, 7, 'S');
+      doc.setTextColor(i===5?79:40, i===5?110:40, i===5?247:40);
+      doc.text(v, margin + i*cellW + cellW/2, y+5, { align:'center' });
+    });
+    y += 12;
+
+    // Vendor dates
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(100,100,100);
+    doc.text('VENDOR', margin, y); y += 5;
+    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(0,0,0);
+    if (p.masukVendor) { doc.text(`Masuk: ${formatDate(p.masukVendor)}`, margin, y); y += 6; }
+    if (p.keluarVendor) { doc.text(`Keluar: ${formatDate(p.keluarVendor)}`, margin, y); y += 6; }
+    y += 4;
+
+    // Keterangan
+    if (p.keterangan) {
+      doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(100,100,100);
+      doc.text('KETERANGAN', margin, y); y += 5;
+      doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(0,0,0);
+      const lines = doc.splitTextToSize(p.keterangan, W - margin*2);
+      doc.text(lines, margin, y); y += lines.length * 5 + 4;
+    }
+
+    // Footer
+    doc.setDrawColor(79,110,247);
+    doc.line(margin, 287, W-margin, 287);
+    doc.setFontSize(8); doc.setTextColor(150,150,150);
+    doc.text(`Rena Omber · Generated ${new Date().toLocaleDateString('id-ID')}`, margin, 292);
+
+    const filename = `${p.name.replace(/\s+/g,'_')}_product_sheet.pdf`;
+    doc.save(filename);
+
+    // Upload ke Supabase
+    const pdfBlob = doc.output('blob');
+    const path = `ops/${filename}`;
+    await sb.storage.from(BUCKET).upload(path, pdfBlob, { contentType:'application/pdf', upsert:true });
+  }
+
+  function formatDate(d) {
+    if (!d) return '';
+    const dt = new Date(d);
+    return dt.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
+  }
+</script>
+</body>
+</html>
