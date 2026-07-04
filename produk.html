@@ -544,7 +544,8 @@
   // ─── PDF EXPORT ─────────────────────────────────────────────
   async function exportPDF() {
     const p = products.find(p=>p.id===activeProductId);
-    const a = p.batches[activeBatchIdx].artikels[activeArtikelIdx];
+    const batch = p.batches[activeBatchIdx];
+    const a = batch.artikels[activeArtikelIdx];
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
     const W = 210, M = 16;
