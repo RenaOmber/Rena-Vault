@@ -565,23 +565,25 @@
     const vals = [...SIZES.map(s=>String(a.sizes[s]||0)), String(total)];
     const colWidths = [tableW/6, tableW/6, tableW/6, tableW/6, tableW/6, tableW/6];
     let cx = M;
-    // Header row
-    doc.setFillColor(40,50,80); doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(7);
+    // Header row — set fill inside loop to force jsPDF reset per cell
+    doc.setFont('helvetica','bold'); doc.setFontSize(7);
     allSizes.forEach((s,i) => {
-      doc.rect(cx, y, colWidths[i], 7, 'F');
-      doc.text(s, cx + colWidths[i]/2, y+4.8, {align:'center'});
+      doc.setFillColor(40, 50, 80);
+      doc.setTextColor(255, 255, 255);
+      doc.rect(cx, y, colWidths[i], 7, 'FD');
+      doc.text(s, cx + colWidths[i]/2, y + 4.8, {align:'center'});
       cx += colWidths[i];
     });
     y += 7; cx = M;
     // Value row
     doc.setFont('helvetica','normal'); doc.setFontSize(9);
     vals.forEach((v,i) => {
-      const isTot = i===5;
-      doc.setFillColor(isTot?225:242, isTot?230:244, isTot?255:250);
-      doc.rect(cx, y, colWidths[i], 7, 'F');
-      doc.setDrawColor(190,200,220); doc.rect(cx, y, colWidths[i], 7, 'S');
-      doc.setTextColor(isTot?79:40, isTot?110:40, isTot?247:40);
-      doc.text(v, cx + colWidths[i]/2, y+4.8, {align:'center'});
+      const isTot = i === 5;
+      doc.setFillColor(isTot?220:240, isTot?228:243, isTot?255:250);
+      doc.setDrawColor(190, 200, 220);
+      doc.rect(cx, y, colWidths[i], 7, 'FD');
+      doc.setTextColor(isTot?60:40, isTot?90:40, isTot?220:40);
+      doc.text(v, cx + colWidths[i]/2, y + 4.8, {align:'center'});
       cx += colWidths[i];
     });
     y += 11;
