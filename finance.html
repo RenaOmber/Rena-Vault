@@ -306,10 +306,12 @@
 
     const cols = [60, 40, 30, 40];
     const headers = ['Nama Artikel', 'COGS/unit', 'Unit', 'Total Biaya'];
-    doc.setFillColor(20,50,35); doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(8);
+    doc.setFont('helvetica','bold'); doc.setFontSize(8);
     let cx = M;
     headers.forEach((h,i) => {
-      doc.rect(cx, y, cols[i], 7, 'F');
+      doc.setFillColor(20, 50, 35);
+      doc.setTextColor(255, 255, 255);
+      doc.rect(cx, y, cols[i], 7, 'FD');
       doc.text(h, cx+4, y+4.8);
       cx += cols[i];
     });
