@@ -414,16 +414,16 @@
             <div class="upload-zone ${a.mockupUrl?'has-file':''}" id="zone-mockup">
               <input type="file" accept="image/*" onchange="handleImg('mockup',this)" />
               ${a.mockupUrl
-                ? `<img src="${a.mockupUrl}" class="upload-preview" /><div style="font-size:11px;margin-top:4px;">${a.mockupName}</div>`
+                ? `<img src="${a.mockupUrl}" class="upload-preview" /><div style="font-size:11px;margin-top:4px;">${a.mockupName}</div><label style="margin-top:6px;font-size:11px;color:var(--accent);cursor:pointer;position:relative;z-index:2;">Ganti file<input type="file" accept="image/*" onchange="handleImg('mockup',this)" style="display:none;" /></label>`
                 : `<div style="font-size:20px;">+</div><div>${a.mockupName||'Upload mockup'}</div>`}
             </div>
           </div>
           <div class="form-group">
             <div class="form-label">Design (artwork)</div>
             <div class="upload-zone ${a.designUrl?'has-file':''}" id="zone-design">
-              <input type="file" accept="image/*" onchange="handleImg('design',this)" />
+              <input type="file" accept="image/*" onchange="handleImg('design',this)" style="${a.designUrl?'display:none;':''}" />
               ${a.designUrl
-                ? `<img src="${a.designUrl}" class="upload-preview" /><div style="font-size:11px;margin-top:4px;">${a.designName}</div>`
+                ? `<img src="${a.designUrl}" class="upload-preview" /><div style="font-size:11px;margin-top:4px;">${a.designName}</div><label style="margin-top:6px;font-size:11px;color:var(--accent);cursor:pointer;position:relative;z-index:2;">Ganti file<input type="file" accept="image/*" onchange="handleImg('design',this)" style="display:none;" /></label>`
                 : `<div style="font-size:20px;">+</div><div>${a.designName||'Upload design'}</div>`}
             </div>
           </div>
@@ -431,9 +431,9 @@
         <div class="form-group">
           <div class="form-label">Size Chart</div>
           <div class="upload-zone ${a.sizechartUrl?'has-file':''}" id="zone-sizechart">
-            <input type="file" accept="image/*" onchange="handleImg('sizechart',this)" />
+            <input type="file" accept="image/*" onchange="handleImg('sizechart',this)" style="${a.sizechartUrl?'display:none;':''}" />
             ${a.sizechartUrl
-              ? `<img src="${a.sizechartUrl}" class="upload-preview" /><div style="font-size:11px;margin-top:4px;">${a.sizechartName}</div>`
+              ? `<img src="${a.sizechartUrl}" class="upload-preview" /><div style="font-size:11px;margin-top:4px;">${a.sizechartName}</div><label style="margin-top:6px;font-size:11px;color:var(--accent);cursor:pointer;position:relative;z-index:2;">Ganti file<input type="file" accept="image/*" onchange="handleImg('sizechart',this)" style="display:none;" /></label>`
               : `<div style="font-size:20px;">+</div><div>${a.sizechartName||'Upload size chart'}</div>`}
           </div>
         </div>
