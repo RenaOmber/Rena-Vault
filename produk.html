@@ -416,7 +416,14 @@
             </select>
           </div>
         </div>
-        <div class="form-row single">
+        <div class="form-row">
+          <div class="form-group">
+            <div class="form-label">COGS per unit (Rp)</div>
+            <div style="position:relative;">
+              <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text3);pointer-events:none;">Rp</span>
+              <input type="number" min="0" class="form-input" style="padding-left:32px;" value="${a.cogs||0}" onchange="updateArtikelField('cogs',parseInt(this.value)||0)" />
+            </div>
+          </div>
           <div class="form-group">
             <div class="form-label">Link File Sablon (Google Drive)</div>
             <input class="form-input" value="${a.sablonLink||''}" placeholder="https://drive.google.com/..." onchange="updateArtikelField('sablonLink',this.value)" />
