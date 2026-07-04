@@ -160,7 +160,7 @@
 <script>
   // ─── CONFIG ────────────────────────────────────────────────
   const SUPABASE_URL  = 'https://fqvfnohhilkzvijqukfg.supabase.co';
-  const SUPABASE_ANON = 'YeyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxdmZub2hoaWxrenZpanF1a2ZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDU4NjAsImV4cCI6MjA5ODEyMTg2MH0.er10SEsmDlnx1yRLGJK2fKtLhQR40vFOXVJzH9yakCgOUR_SUPABASE_ANON_KEY';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxdmZub2hoaWxrenZpanF1a2ZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDU4NjAsImV4cCI6MjA5ODEyMTg2MH0.er10SEsmDlnx1yRLGJK2fKtLhQR40vFOXVJzH9yakCg';
   const BUCKET        = 'vault-docs';
   const PASSWORD_HASH = '3f0e57f3e719957119f0ba621629a3ae0ed1ec95d1ad8a91bd980b2896b679e4';
   // ───────────────────────────────────────────────────────────
@@ -169,6 +169,7 @@
   const SIZES = ['S','M','L','XL','XXL'];
 
   let products = [];
+  let vendors = [];
   let activeProductId = null;
   let activeBatchIdx = 0;
   let activeArtikelIdx = 0;
@@ -193,9 +194,31 @@
   async function showMain() {
     document.getElementById('gate').style.display = 'none';
     document.getElementById('main').style.display = 'block';
-    await loadProducts();
+    await Promise.all([loadProducts(), loadVendors()]);
     renderSidebar();
     if (products.length) selectProduct(products[0].id);
+  }
+
+  async function loadVendors() {
+    const { data } = await sb.from('vendors').select('*').order('name');
+    vendors = data || [];
+  }
+
+  function vendorOptions(type, selectedId) {
+    const filtered = vendors.filter(v => v.type === type);
+    const opts = filtered.map(v =>
+      `<option value="${v.id}" ${v.id===selectedId?'selected':''}>${v.name} — Rp ${(v.price_per_unit||0).toLocaleString('id-ID')}</option>`
+    ).join('');
+    return `<option value="">Pilih vendor ${type}...</option>${opts}`;
+  }
+
+  function getVendorPrice(id) {
+    const v = vendors.find(v => v.id === id);
+    return v ? (v.price_per_unit||0) : 0;
+  }
+
+  function recalcCOGS(a) {
+    return getVendorPrice(a.vendorKaos) + getVendorPrice(a.vendorHangtag) + getVendorPrice(a.vendorPackaging);
   }
   if (sessionStorage.getItem('ro_auth') === '1') showMain();
 
@@ -219,7 +242,8 @@
       mockupUrl: '', mockupName: '', mockupPath: '',
       designUrl: '', designName: '', designPath: '',
       sizechartUrl: '', sizechartName: '', sizechartPath: '',
-      sablon: '', sablonLink: '', warnaKaos: '', tebalKain: '', cogs: 0,
+      sablon: '', sablonLink: '', warnaKaos: '', tebalKain: '',
+      vendorKaos: '', vendorHangtag: '', vendorPackaging: '',
       sizes: { S:0, M:0, L:0, XL:0, XXL:0 },
       masukVendor: '', keluarVendor: '', keterangan: ''
     };
@@ -417,14 +441,36 @@
             </select>
           </div>
         </div>
+        <div class="form-section-title" style="margin-top:14px;">Vendor</div>
         <div class="form-row">
           <div class="form-group">
-            <div class="form-label">COGS per unit (Rp)</div>
-            <div style="position:relative;">
-              <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text3);pointer-events:none;">Rp</span>
-              <input type="number" min="0" class="form-input" style="padding-left:32px;" value="${a.cogs||0}" onchange="updateArtikelField('cogs',parseInt(this.value)||0)" />
+            <div class="form-label">Vendor Kaos</div>
+            <select class="form-input" onchange="updateVendor('vendorKaos',this.value)">
+              ${vendorOptions('kaos', a.vendorKaos)}
+            </select>
+          </div>
+          <div class="form-group">
+            <div class="form-label">Vendor Hangtag</div>
+            <select class="form-input" onchange="updateVendor('vendorHangtag',this.value)">
+              ${vendorOptions('hangtag', a.vendorHangtag)}
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <div class="form-label">Vendor Packaging</div>
+            <select class="form-input" onchange="updateVendor('vendorPackaging',this.value)">
+              ${vendorOptions('packaging', a.vendorPackaging)}
+            </select>
+          </div>
+          <div class="form-group">
+            <div class="form-label">COGS Total per unit (auto)</div>
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:9px 12px;font-size:13px;font-weight:600;color:var(--accent);" id="cogs-display">
+              Rp ${recalcCOGS(a).toLocaleString('id-ID')}
             </div>
           </div>
+        </div>
+        <div class="form-row single">
           <div class="form-group">
             <div class="form-label">Link File Sablon (Google Drive)</div>
             <input class="form-input" value="${a.sablonLink||''}" placeholder="https://drive.google.com/..." onchange="updateArtikelField('sablonLink',this.value)" />
@@ -508,6 +554,16 @@
     p.batches[activeBatchIdx][field] = field === 'cogs' ? parseInt(val)||0 : val;
     scheduleSave(p);
     renderProductPage();
+  }
+
+  function updateVendor(field, val) {
+    const p = products.find(p=>String(p.id)===String(activeProductId));
+    if (!p) return;
+    p.batches[activeBatchIdx].artikels[activeArtikelIdx][field] = val;
+    const a = p.batches[activeBatchIdx].artikels[activeArtikelIdx];
+    const cogsEl = document.getElementById('cogs-display');
+    if (cogsEl) cogsEl.textContent = 'Rp ' + recalcCOGS(a).toLocaleString('id-ID');
+    scheduleSave(p);
   }
 
   function updateArtikelField(field, val) {

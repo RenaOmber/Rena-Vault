@@ -147,10 +147,25 @@
   }
 
   let allProducts = [];
+  let allVendors = [];
   let activeFinanceProd = 'all';
 
+  function getVendorPrice(id) {
+    const v = allVendors.find(v => v.id === id);
+    return v ? (v.price_per_unit||0) : 0;
+  }
+
+  function artikelCOGS(a) {
+    return getVendorPrice(a.vendorKaos) + getVendorPrice(a.vendorHangtag) + getVendorPrice(a.vendorPackaging);
+  }
+
   async function renderFinance() {
-    const { data } = await sb.from('products').select('*').order('created_at');
+    const [prodRes, vendorRes] = await Promise.all([
+      sb.from('products').select('*').order('created_at'),
+      sb.from('vendors').select('*')
+    ]);
+    allVendors = vendorRes.data || [];
+    const { data } = prodRes;
     allProducts = (data||[]).map(row => ({
       id: String(row.id), name: row.name,
       batches: row.data?.batches || []
@@ -173,7 +188,7 @@
     filtered.forEach(p => {
       p.batches.forEach(b => {
         const batchUnits = b.artikels.reduce((s,a) => s + artikelUnits(a), 0);
-        const batchCost = b.artikels.reduce((s,a) => s + artikelUnits(a) * (parseInt(a.cogs)||0), 0);
+        const batchCost = b.artikels.reduce((s,a) => s + artikelUnits(a) * artikelCOGS(a), 0);
         const artikelCount = b.artikels.length;
         grandTotalUnits += batchUnits;
         grandTotalCost += batchCost;
@@ -239,9 +254,9 @@
                 <td></td>
                 <td></td>
                 <td>${a.name}</td>
-                <td class="right" style="color:var(--accent);font-size:11px;">Rp ${(parseInt(a.cogs)||0).toLocaleString('id-ID')}/unit</td>
+                <td class="right" style="color:var(--accent);font-size:11px;">Rp ${artikelCOGS(a).toLocaleString('id-ID')}/unit</td>
                 <td class="right">${artikelUnits(a).toLocaleString('id-ID')}</td>
-                <td class="right">${(artikelUnits(a)*(parseInt(a.cogs)||0)) ? fmt(artikelUnits(a)*(parseInt(a.cogs)||0)) : '—'}</td>
+                <td class="right">${(artikelUnits(a)*artikelCOGS(a)) ? fmt(artikelUnits(a)*artikelCOGS(a)) : '—'}</td>
                 <td></td>
               </tr>`).join('')}
           </tbody>`).join('')}
@@ -320,7 +335,7 @@
     doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30);
     row.artikels.forEach((a, idx) => {
       const units = artikelUnits(a);
-      const cogs = parseInt(a.cogs)||0;
+      const cogs = artikelCOGS(a);
       const cost = units * cogs;
       cx = M;
       [a.name, fmt(cogs), String(units), cost?fmt(cost):'—'].forEach((v,i) => {
