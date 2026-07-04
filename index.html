@@ -48,15 +48,20 @@
     .cat-item:hover { background: var(--bg2); }
     .cat-item.active { border-left-color: var(--red); background: var(--bg2); }
     .cat-item-left { display: flex; align-items: center; gap: 10px; }
-    .cat-icon { font-size: 15px; color: var(--text2); }
-    .cat-item.active .cat-icon { color: var(--red); }
+    .cat-icon { font-size: 15px; }
     .cat-name-text { font-size: 13px; }
     .cat-badge { font-size: 10px; color: var(--text3); background: var(--bg3); border-radius: 10px; padding: 2px 7px; min-width: 20px; text-align: center; }
     .cat-item.active .cat-badge { background: var(--red-dim); color: var(--red); }
 
+    /* TABS */
+    .tab-bar { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+    .tab-btn { background: none; border: none; border-bottom: 2px solid transparent; color: var(--text3); cursor: pointer; font-family: inherit; font-size: 13px; padding: 10px 20px; transition: color 0.15s, border-color 0.15s; margin-bottom: -1px; }
+    .tab-btn:hover { color: var(--text2); }
+    .tab-btn.active { border-bottom-color: var(--red); color: var(--text); font-weight: 500; }
+
     /* CONTENT */
     .content { padding: 32px 40px; }
-    .content-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 28px; }
+    .content-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; }
     .content-title { font-size: 20px; font-weight: 500; }
     .content-sub { font-size: 12px; color: var(--text3); margin-top: 3px; }
     .upload-btn { display: flex; align-items: center; gap: 6px; background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text2); cursor: pointer; font-family: inherit; font-size: 12px; padding: 8px 14px; transition: border-color 0.15s, color 0.15s; white-space: nowrap; }
@@ -68,8 +73,6 @@
     .doc-row { position: relative; display: flex; flex-direction: column; background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; overflow: hidden; transition: border-color 0.15s; }
     .doc-row:hover { border-color: var(--border-hover); }
     .doc-row:hover .doc-delete-btn { opacity: 1; }
-
-    /* thumbnail */
     .doc-thumb { width: 100%; height: 120px; background: var(--bg3); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
     .doc-thumb canvas { width: 100%; height: 100%; object-fit: cover; }
     .doc-thumb img { width: 100%; height: 100%; object-fit: cover; }
@@ -78,8 +81,6 @@
     .doc-body { padding: 10px 12px 12px; }
     .doc-name { font-size: 12px; font-weight: 500; word-break: break-word; line-height: 1.4; }
     .doc-meta { font-size: 11px; color: var(--text3); margin-top: 3px; }
-
-    /* delete btn */
     .doc-delete-btn { position: absolute; top: 7px; right: 7px; width: 26px; height: 26px; background: rgba(0,0,0,0.65); border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: opacity 0.15s, background 0.15s; z-index: 2; }
     .doc-delete-btn:hover { background: var(--red); border-color: var(--red); }
     .doc-delete-btn svg { width: 13px; height: 13px; color: #fff; pointer-events: none; }
@@ -96,6 +97,30 @@
     .calendar-frame { width: 100%; height: 700px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
     .calendar-frame iframe { width: 100%; height: 100%; border: none; display: block; }
 
+    /* CREATE TAB */
+    .create-wrap { max-width: 760px; }
+    .create-field-label { font-size: 11px; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+    .create-input { width: 100%; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: inherit; font-size: 14px; padding: 10px 14px; outline: none; transition: border-color 0.15s; margin-bottom: 16px; }
+    .create-input:focus { border-color: var(--border-hover); }
+    .create-textarea { width: 100%; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: inherit; font-size: 14px; padding: 12px 14px; outline: none; transition: border-color 0.15s; margin-bottom: 16px; resize: vertical; min-height: 200px; line-height: 1.7; }
+    .create-textarea:focus { border-color: var(--border-hover); }
+    .create-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .btn-primary { background: var(--red); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; padding: 9px 18px; transition: opacity 0.15s; }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-secondary { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text2); cursor: pointer; font-family: inherit; font-size: 13px; padding: 9px 18px; transition: border-color 0.15s, color 0.15s; }
+    .btn-secondary:hover { border-color: var(--border-hover); color: var(--text); }
+
+    /* PROMPT RESULT */
+    .prompt-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; margin-top: 20px; overflow: hidden; }
+    .prompt-box-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+    .prompt-box-title { font-size: 12px; color: var(--text2); font-weight: 500; }
+    .copy-btn { background: none; border: 1px solid var(--border); border-radius: 5px; color: var(--text3); cursor: pointer; font-family: inherit; font-size: 11px; padding: 4px 10px; transition: all 0.15s; }
+    .copy-btn:hover { border-color: var(--border-hover); color: var(--text); }
+    .copy-btn.copied { border-color: #2d7a3a; color: #4caf50; }
+    .prompt-content { padding: 16px; font-size: 13px; line-height: 1.7; color: var(--text2); white-space: pre-wrap; max-height: 400px; overflow-y: auto; }
+    .open-claude-btn { display: flex; align-items: center; gap: 6px; margin: 12px 16px 16px; background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text2); cursor: pointer; font-family: inherit; font-size: 12px; padding: 8px 14px; text-decoration: none; transition: border-color 0.15s, color 0.15s; width: fit-content; }
+    .open-claude-btn:hover { border-color: var(--border-hover); color: var(--text); }
+
     /* VIEWER MODAL */
     .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 20px; }
     .modal-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; width: 100%; max-width: 860px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; }
@@ -108,7 +133,7 @@
     #pdf-canvas-wrap canvas { max-width: 100%; border-radius: 4px; }
     .pdf-loading { text-align: center; color: var(--text3); font-size: 13px; padding: 40px; }
     .pdf-nav { display: flex; align-items: center; gap: 12px; justify-content: center; padding: 12px; border-top: 1px solid var(--border); flex-shrink: 0; font-size: 12px; color: var(--text2); }
-    .pdf-nav button { background: none; border: 1px solid var(--border); border-radius: 5px; color: var(--text2); cursor: pointer; font-family: inherit; font-size: 12px; padding: 5px 12px; transition: border-color 0.15s; }
+    .pdf-nav button { background: none; border: 1px solid var(--border); border-radius: 5px; color: var(--text2); cursor: pointer; font-family: inherit; font-size: 12px; padding: 5px 12px; }
     .pdf-nav button:hover:not(:disabled) { border-color: var(--border-hover); color: var(--text); }
     .pdf-nav button:disabled { opacity: 0.3; cursor: default; }
 
@@ -234,10 +259,21 @@
     { id: 'finance',   label: 'Finance',      icon: '💰' },
     { id: 'ops',       label: 'Operasional',  icon: '⚙️'  },
   ];
+
+  // Template prompt per kategori — bisa dikustomisasi
+  const CREATE_TEMPLATES = {
+    lore:      { title: 'Lore / World Building', fields: ['Nama elemen', 'Deskripsi', 'Hubungan dengan karakter', 'Lokasi di Omber'] },
+    design:    { title: 'Design Brief',           fields: ['Nama aset', 'Tujuan visual', 'Referensi gaya', 'Catatan khusus'] },
+    marketing: { title: 'Marketing Brief',        fields: ['Kampanye / inisiatif', 'Target audiens', 'Pesan utama', 'Channel'] },
+    social:    { title: 'Social Media Brief',     fields: ['Jenis konten', 'Caption / narasi', 'Hashtag', 'Referensi visual'] },
+    finance:   { title: 'Finance Note',           fields: ['Periode', 'Item pengeluaran / pemasukan', 'Jumlah (Rp)', 'Catatan'] },
+    ops:       { title: 'SOP / Catatan Operasional', fields: ['Judul SOP', 'Langkah-langkah', 'PIC', 'Deadline'] },
+  };
   // ───────────────────────────────────────────────────────────
 
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
   let activeCategory = null;
+  let activeTab = 'dokumen';
   let pdfDoc = null, pdfPage = 1, pendingFile = null;
 
   // ─── AUTH ───────────────────────────────────────────────────
@@ -285,36 +321,56 @@
   }
   async function selectCat(id) {
     activeCategory = id;
+    activeTab = 'dokumen';
     document.querySelectorAll('.cat-item').forEach(el => el.classList.remove('active'));
     document.getElementById(`cat-${id}`).classList.add('active');
-    await renderContent(id);
+    renderShell(id);
+    await renderDokumenTab(id);
   }
 
-  // ─── CONTENT ────────────────────────────────────────────────
-  async function renderContent(catId) {
+  // ─── SHELL (header + tabs) ───────────────────────────────────
+  function renderShell(catId) {
     const cat = CATEGORIES.find(c => c.id === catId);
-    const area = document.getElementById('content-area');
-    area.innerHTML = `
+    document.getElementById('content-area').innerHTML = `
       <div class="content-header">
         <div>
           <div class="content-title">${cat.label}</div>
-          <div class="content-sub" id="doc-count-sub">Memuat...</div>
+          <div class="content-sub" id="doc-count-sub"> </div>
         </div>
-        <button class="upload-btn" onclick="openUpload()">
-          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
-          Upload
-        </button>
+        <div id="header-actions"></div>
       </div>
-      <div id="doc-list"></div>`;
+      <div class="tab-bar">
+        <button class="tab-btn active" id="tab-dokumen" onclick="switchTab('dokumen')">Dokumen</button>
+        <button class="tab-btn" id="tab-create" onclick="switchTab('create')">Create</button>
+      </div>
+      <div id="tab-content"></div>`;
+  }
 
-    const { data } = await sb.storage.from(BUCKET).list(catId, { sortBy: { column: 'created_at', order: 'desc' } });
-    const docs = (data || []).filter(f => f.name !== '.keep');
-    document.getElementById('doc-count-sub').textContent = `${docs.length} dokumen`;
+  async function switchTab(tab) {
+    activeTab = tab;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(`tab-${tab}`).classList.add('active');
+    document.getElementById('header-actions').innerHTML = '';
+    if (tab === 'dokumen') {
+      await renderDokumenTab(activeCategory);
+    } else {
+      renderCreateTab(activeCategory);
+    }
+  }
 
-    const list = document.getElementById('doc-list');
+  // ─── DOKUMEN TAB ─────────────────────────────────────────────
+  async function renderDokumenTab(catId) {
+    // upload button
+    document.getElementById('header-actions').innerHTML = `
+      <button class="upload-btn" onclick="openUpload()">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+        Upload
+      </button>`;
+
+    const tc = document.getElementById('tab-content');
 
     if (catId === 'social') {
-      list.innerHTML = `
+      tc.innerHTML = `
         <div class="calendar-section">
           <div class="calendar-label">Content Calendar</div>
           <div class="calendar-frame">
@@ -322,36 +378,41 @@
           </div>
         </div>
         <div class="calendar-label" style="margin-bottom:10px;">Dokumen</div>
-        <div id="social-doc-list"></div>`;
-      renderDocGrid('social-doc-list', catId, docs);
+        <div id="doc-grid-wrap"></div>`;
+      await loadDocGrid('doc-grid-wrap', catId);
       return;
     }
 
-    if (!docs.length) {
-      list.innerHTML = `<div class="empty"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg><p>Belum ada dokumen. Upload yang pertama.</p></div>`;
-      return;
-    }
-    list.innerHTML = '<div class="doc-grid" id="main-doc-grid"></div>';
-    renderDocGrid('main-doc-grid', catId, docs);
+    tc.innerHTML = '<div id="doc-grid-wrap"></div>';
+    await loadDocGrid('doc-grid-wrap', catId);
   }
 
-  function renderDocGrid(containerId, catId, docs) {
-    const container = document.getElementById(containerId);
+  async function loadDocGrid(wrapperId, catId) {
+    const wrap = document.getElementById(wrapperId);
+    if (!wrap) return;
+    const { data } = await sb.storage.from(BUCKET).list(catId, { sortBy: { column: 'created_at', order: 'desc' } });
+    const docs = (data || []).filter(f => f.name !== '.keep');
+
+    const sub = document.getElementById('doc-count-sub');
+    if (sub) sub.textContent = `${docs.length} dokumen`;
+
     if (!docs.length) {
-      container.innerHTML = '<div class="empty" style="padding:24px 0;"><p>Belum ada dokumen.</p></div>';
+      wrap.innerHTML = `<div class="empty"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg><p>Belum ada dokumen. Upload yang pertama.</p></div>`;
       return;
     }
-    container.innerHTML = '<div class="doc-grid" id="grid-' + containerId + '"></div>';
-    const grid = document.getElementById('grid-' + containerId);
+
+    const grid = document.createElement('div');
+    grid.className = 'doc-grid';
+    wrap.innerHTML = '';
+    wrap.appendChild(grid);
+
     docs.forEach(d => {
       const kb = d.metadata?.size ? (d.metadata.size / 1024).toFixed(0) + ' KB' : '';
       const date = d.created_at ? new Date(d.created_at).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' }) : '';
       const card = document.createElement('div');
       card.className = 'doc-row';
-      card.dataset.name = d.name;
-      card.dataset.cat = catId;
       card.innerHTML = `
-        <div class="doc-thumb" id="thumb-${catId}-${CSS.escape(d.name)}">
+        <div class="doc-thumb" id="thumb-${catId}-${d.name.replace(/[^a-z0-9]/gi,'_')}">
           <div class="doc-thumb-icon">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
           </div>
@@ -360,28 +421,29 @@
           <div class="doc-name">${d.name}</div>
           <div class="doc-meta">${[date, kb].filter(Boolean).join(' · ')}</div>
         </div>
-        <button class="doc-delete-btn" onclick="deleteDoc(event,'${catId}','${d.name}')" title="Hapus">
+        <button class="doc-delete-btn" title="Hapus">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>`;
+      card.querySelector('.doc-delete-btn').addEventListener('click', e => { e.stopPropagation(); deleteDoc(catId, d.name); });
       card.addEventListener('click', () => openDoc(catId, d.name));
       grid.appendChild(card);
-      // lazy load thumbnail on hover
-      let thumbLoaded = false;
+
+      let loaded = false;
       card.addEventListener('mouseenter', () => {
-        if (!thumbLoaded) { thumbLoaded = true; loadThumb(catId, d.name); }
+        if (!loaded) { loaded = true; loadThumb(catId, d.name); }
       });
     });
   }
 
   async function loadThumb(catId, filename) {
-    const thumbId = `thumb-${catId}-${CSS.escape(filename)}`;
-    const thumbEl = document.getElementById(thumbId);
-    if (!thumbEl) return;
+    const id = `thumb-${catId}-${filename.replace(/[^a-z0-9]/gi,'_')}`;
+    const el = document.getElementById(id);
+    if (!el) return;
     const ext = filename.split('.').pop().toLowerCase();
     const { data } = await sb.storage.from(BUCKET).createSignedUrl(`${catId}/${filename}`, 3600);
     if (!data?.signedUrl) return;
     if (['png','jpg','jpeg','gif','webp'].includes(ext)) {
-      thumbEl.innerHTML = `<img src="${data.signedUrl}" alt="${filename}" />`;
+      el.innerHTML = `<img src="${data.signedUrl}" alt="${filename}" />`;
     } else if (ext === 'pdf') {
       try {
         const pdf = await pdfjsLib.getDocument(data.signedUrl).promise;
@@ -390,20 +452,89 @@
         const canvas = document.createElement('canvas');
         canvas.width = vp.width; canvas.height = vp.height;
         await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
-        thumbEl.innerHTML = '';
-        thumbEl.appendChild(canvas);
-      } catch(e) { /* keep icon */ }
+        el.innerHTML = ''; el.appendChild(canvas);
+      } catch(e) {}
     }
   }
 
-  // ─── DELETE ─────────────────────────────────────────────────
-  async function deleteDoc(e, catId, filename) {
-    e.stopPropagation();
+  async function deleteDoc(catId, filename) {
     if (!confirm(`Hapus "${filename}"?`)) return;
     const { error } = await sb.storage.from(BUCKET).remove([`${catId}/${filename}`]);
     if (error) { alert('Gagal hapus: ' + error.message); return; }
-    await renderContent(catId);
+    await loadDocGrid('doc-grid-wrap', catId);
     await loadCount(catId);
+  }
+
+  // ─── CREATE TAB ──────────────────────────────────────────────
+  function renderCreateTab(catId) {
+    const tpl = CREATE_TEMPLATES[catId] || { title: 'Dokumen Baru', fields: ['Judul', 'Isi'] };
+    const tc = document.getElementById('tab-content');
+    tc.innerHTML = `
+      <div class="create-wrap">
+        <div class="create-field-label" style="margin-bottom:6px;">Judul dokumen</div>
+        <input class="create-input" id="create-title" placeholder="${tpl.title}..." />
+        ${tpl.fields.map((f,i) => `
+          <div class="create-field-label">${f}</div>
+          <textarea class="create-textarea" id="create-field-${i}" placeholder="${f}..." style="min-height:80px;"></textarea>
+        `).join('')}
+        <div class="create-actions">
+          <button class="btn-primary" onclick="generatePrompt('${catId}')">Generate Prompt untuk Claude</button>
+          <button class="btn-secondary" onclick="clearCreate()">Reset</button>
+        </div>
+        <div id="prompt-result"></div>
+      </div>`;
+  }
+
+  function generatePrompt(catId) {
+    const tpl = CREATE_TEMPLATES[catId];
+    const title = document.getElementById('create-title').value.trim();
+    if (!title) { alert('Isi judul dulu.'); return; }
+
+    let prompt = `Kamu adalah bagian dari tim internal Rena Omber — sebuah creative universe berbasis IP.\n\n`;
+    prompt += `Kategori: ${CATEGORIES.find(c=>c.id===catId)?.label}\n`;
+    prompt += `Judul: ${title}\n\n`;
+
+    tpl.fields.forEach((f, i) => {
+      const val = document.getElementById(`create-field-${i}`)?.value.trim();
+      if (val) prompt += `${f}:\n${val}\n\n`;
+    });
+
+    prompt += `---\nBerdasarkan informasi di atas, bantu saya menyempurnakan dan memperluas dokumen ini sesuai dengan tone dan universe Rena Omber. Pertahankan konsistensi dengan world-building yang sudah ada.`;
+
+    const result = document.getElementById('prompt-result');
+    result.innerHTML = `
+      <div class="prompt-box">
+        <div class="prompt-box-header">
+          <div class="prompt-box-title">Prompt siap — copy dan paste ke Claude</div>
+          <button class="copy-btn" id="copy-btn" onclick="copyPrompt()">Copy</button>
+        </div>
+        <div class="prompt-content" id="prompt-text">${escHtml(prompt)}</div>
+        <a class="open-claude-btn" href="https://claude.ai" target="_blank">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          Buka Claude
+        </a>
+      </div>`;
+
+    window._generatedPrompt = prompt;
+    result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function copyPrompt() {
+    if (!window._generatedPrompt) return;
+    navigator.clipboard.writeText(window._generatedPrompt).then(() => {
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  function clearCreate() {
+    renderCreateTab(activeCategory);
+  }
+
+  function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
   // ─── VIEWER ─────────────────────────────────────────────────
@@ -414,7 +545,7 @@
     document.getElementById('viewer-modal').style.display = 'flex';
     const { data } = await sb.storage.from(BUCKET).createSignedUrl(`${catId}/${filename}`, 3600);
     if (!data?.signedUrl) {
-      document.getElementById('pdf-canvas-wrap').innerHTML = '<div class="pdf-loading">Gagal memuat dokumen.</div>';
+      document.getElementById('pdf-canvas-wrap').innerHTML = '<div class="pdf-loading">Gagal memuat.</div>';
       return;
     }
     const ext = filename.split('.').pop().toLowerCase();
@@ -423,7 +554,7 @@
       return;
     }
     if (ext !== 'pdf') {
-      document.getElementById('pdf-canvas-wrap').innerHTML = `<div class="pdf-loading">Format ini tidak bisa di-preview.<br/><a href="${data.signedUrl}" download style="color:var(--red);text-decoration:none;margin-top:8px;display:inline-block;">Download file</a></div>`;
+      document.getElementById('pdf-canvas-wrap').innerHTML = `<div class="pdf-loading">Format ini tidak bisa di-preview.<br/><a href="${data.signedUrl}" download style="color:var(--red);text-decoration:none;margin-top:8px;display:inline-block;">Download</a></div>`;
       return;
     }
     pdfPage = 1;
@@ -495,7 +626,7 @@
     document.getElementById('upload-bar').style.width = '100%';
     setTimeout(async () => {
       closeUpload(); btn.textContent = 'Upload';
-      if (!error) { await renderContent(activeCategory); await loadCount(activeCategory); }
+      if (!error) { await loadDocGrid('doc-grid-wrap', activeCategory); await loadCount(activeCategory); }
       else { alert('Upload gagal: ' + error.message); }
     }, 400);
   }
