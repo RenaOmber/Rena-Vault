@@ -307,9 +307,11 @@
     const dates = projTasks.flatMap(t=>[parseD(t.start_date), parseD(t.end_date)]);
     let minDate = new Date(Math.min(...dates));
     let maxDate = new Date(Math.max(...dates));
-    // Extend to full weeks
-    minDate.setDate(minDate.getDate() - minDate.getDay() + 1); // Monday
-    maxDate.setDate(maxDate.getDate() + (7 - maxDate.getDay())); // Sunday
+    // Extend to full weeks — handle Sunday (getDay()=0) correctly
+    const toMonday = (d) => { const day = d.getDay(); const diff = day === 0 ? -6 : 1 - day; d.setDate(d.getDate() + diff); };
+    const toSunday = (d) => { const day = d.getDay(); const diff = day === 0 ? 0 : 7 - day; d.setDate(d.getDate() + diff); };
+    toMonday(minDate);
+    toSunday(maxDate);
     // Ensure at least 4 weeks
     const diffDays = Math.round((maxDate-minDate)/(1000*60*60*24));
     if (diffDays < 28) maxDate = new Date(minDate.getTime() + 28*24*60*60*1000);
