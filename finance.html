@@ -232,16 +232,20 @@
       const hjual = parseInt(fd.harga_jual?.[a.name])||0;
       const terjual = parseInt(fd.terjual?.[a.name])||0;
       const revenue = hjual * terjual;
-      const totalCOGS = cogs * terjual;
-      const profit = revenue - totalCOGS;
+      const cogsTerjual = cogs * terjual;
+      const cogsProduksi = cogs * units;
+      const stokSisa = units - terjual;
+      const profit = revenue - cogsTerjual;
       const margin = revenue ? Math.round((profit/revenue)*100) : null;
-      return { a, units, cogs, hjual, terjual, revenue, totalCOGS, profit, margin };
+      return { a, units, cogs, hjual, terjual, revenue, cogsTerjual, cogsProduksi, stokSisa, profit, margin };
     });
 
     const totalRevenue = artikelRows.reduce((s,r)=>s+r.revenue,0);
-    const totalCOGS = artikelRows.reduce((s,r)=>s+r.totalCOGS,0);
+    const totalCOGSTerjual = artikelRows.reduce((s,r)=>s+r.cogsTerjual,0);
+    const totalCOGSProduksi = artikelRows.reduce((s,r)=>s+r.cogsProduksi,0);
+    const totalStokSisa = artikelRows.reduce((s,r)=>s+r.stokSisa,0);
     const otherCost = parseInt(fd.other_cost)||0;
-    const totalProfit = totalRevenue - totalCOGS - otherCost;
+    const totalProfit = totalRevenue - totalCOGSTerjual - otherCost;
     const totalMargin = totalRevenue ? Math.round((totalProfit/totalRevenue)*100) : null;
     const totalTerjual = artikelRows.reduce((s,r)=>s+r.terjual,0);
     const totalUnit = artikelRows.reduce((s,r)=>s+r.units,0);
@@ -260,8 +264,16 @@
           <div class="summary-value green">${fmt(totalRevenue)}</div>
         </div>
         <div class="summary-card">
-          <div class="summary-label">COGS</div>
-          <div class="summary-value red">${fmt(totalCOGS)}</div>
+          <div class="summary-label">COGS Terjual</div>
+          <div class="summary-value red">${fmt(totalCOGSTerjual)}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">COGS Produksi</div>
+          <div class="summary-value" style="color:var(--yellow);font-size:16px;">${fmt(totalCOGSProduksi)}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Stok Sisa</div>
+          <div class="summary-value" style="color:var(--yellow);font-size:16px;">${totalStokSisa} unit</div>
         </div>
         <div class="summary-card">
           <div class="summary-label">Biaya Lain</div>
@@ -286,6 +298,7 @@
             <th class="right">Harga Jual</th>
             <th class="right">Unit Diproduksi</th>
             <th class="right">Unit Terjual</th>
+            <th class="right">Stok Sisa</th>
             <th class="right">Revenue</th>
             <th class="right">Profit</th>
             <th class="right">Margin</th>
@@ -305,6 +318,7 @@
                 <input type="number" class="revenue-input" placeholder="0" value="${r.terjual||''}" min="0" max="${r.units}"
                   onchange="updateRevenue('${key}','terjual','${r.a.name}',this.value)" />
               </td>
+              <td class="right" style="color:${r.stokSisa>0?'var(--yellow)':'var(--accent)'};">${r.stokSisa}</td>
               <td class="right">${r.revenue ? fmt(r.revenue) : '—'}</td>
               <td class="right ${r.profit>=0?'profit-positive':'profit-negative'}">${r.revenue ? fmt(r.profit) : '—'}</td>
               <td class="right">${r.margin!==null?`<span class="margin-badge ${r.margin>=0?'margin-pos':'margin-neg'}">${r.margin}%</span>`:'—'}</td>
@@ -317,6 +331,7 @@
             <td></td>
             <td class="right">${totalUnit}</td>
             <td class="right">${totalTerjual}</td>
+            <td class="right" style="color:${totalStokSisa>0?'var(--yellow)':'var(--accent)'};">${totalStokSisa}</td>
             <td class="right ${totalRevenue?'profit-positive':''}">${fmt(totalRevenue)}</td>
             <td class="right ${totalProfit>=0?'profit-positive':'profit-negative'}">${fmt(totalProfit)}</td>
             <td class="right">${totalMargin!==null?`<span class="margin-badge ${totalMargin>=0?'margin-pos':'margin-neg'}">${totalMargin}%</span>`:'—'}</td>
