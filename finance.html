@@ -235,8 +235,8 @@
       const cogsTerjual = cogs * terjual;
       const cogsProduksi = cogs * units;
       const stokSisa = units - terjual;
-      const profit = revenue - cogsTerjual;
-      const margin = revenue ? Math.round((profit/revenue)*100) : null;
+      const profit = revenue - cogsProduksi;
+      const margin = cogsProduksi ? Math.round((profit/cogsProduksi)*100) : null;
       return { a, units, cogs, hjual, terjual, revenue, cogsTerjual, cogsProduksi, stokSisa, profit, margin };
     });
 
@@ -245,8 +245,8 @@
     const totalCOGSProduksi = artikelRows.reduce((s,r)=>s+r.cogsProduksi,0);
     const totalStokSisa = artikelRows.reduce((s,r)=>s+r.stokSisa,0);
     const otherCost = parseInt(fd.other_cost)||0;
-    const totalProfit = totalRevenue - totalCOGSTerjual - otherCost;
-    const totalMargin = totalRevenue ? Math.round((totalProfit/totalRevenue)*100) : null;
+    const totalProfit = totalRevenue - totalCOGSProduksi - otherCost;
+    const totalMargin = totalCOGSProduksi ? Math.round((totalProfit/totalCOGSProduksi)*100) : null;
     const totalTerjual = artikelRows.reduce((s,r)=>s+r.terjual,0);
     const totalUnit = artikelRows.reduce((s,r)=>s+r.units,0);
 
