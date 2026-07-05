@@ -278,8 +278,23 @@
   function renderProjectTabs() {
     const el = document.getElementById('project-tabs');
     el.innerHTML = projects.map(p=>`
-      <button class="project-tab ${p.id===activeProjectId?'active':''}" onclick="selectProject('${p.id}')">${p.name}</button>
+      <button class="project-tab ${p.id===activeProjectId?'active':''}" onclick="selectProject('${p.id}')">
+        ${p.name}
+        ${p.id===activeProjectId?`<span onclick="event.stopPropagation();deleteProject('${p.id}')" style="margin-left:6px;font-size:12px;color:var(--text3);cursor:pointer;" title="Hapus project">×</span>`:''}
+      </button>
     `).join('') + `<button class="add-project-btn" onclick="openProjectModal()">+</button>`;
+  }
+
+  async function deleteProject(id) {
+    const p = projects.find(p=>p.id===id);
+    if (!confirm(`Hapus project "${p.name}" dan semua task di dalamnya?`)) return;
+    await sb.from('timeline_tasks').delete().eq('project_id', id);
+    await sb.from('timeline_projects').delete().eq('id', id);
+    projects = projects.filter(p=>p.id!==id);
+    tasks = tasks.filter(t=>t.project_id!==id);
+    activeProjectId = projects.length ? projects[0].id : null;
+    renderProjectTabs();
+    renderGantt();
   }
 
   function selectProject(id) {
