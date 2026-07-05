@@ -76,9 +76,14 @@
     .task-btn:hover { color: var(--text); }
 
     .bar-area { display: flex; flex: 1; position: relative; align-items: center; }
-    .day-cell { width: 32px; height: 100%; border-right: 1px solid rgba(255,255,255,0.08); flex-shrink: 0; position: relative; }
-    .day-cell.weekend { background: rgba(255,255,255,0.04); border-right: 1px solid rgba(255,255,255,0.06); }
-    .gantt-day-label.weekend { color: var(--text3); background: rgba(255,255,255,0.03); }
+    .day-sep { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(255,255,255,0.06); pointer-events: none; z-index: 1; }
+    .gantt-bar { z-index: 2; }
+    .day-cell { width: 32px; height: 100%; flex-shrink: 0; position: relative; }
+    .day-cell.weekend { background: rgba(255,255,255,0.035); }
+    .gantt-day-label.weekend { color: var(--text3); }
+    /* Vertical grid lines drawn as pseudo-elements on the gantt row, not day-cell */
+    .bar-area::after { content: none; }
+    .gantt-week { border-right: 1px solid rgba(255,255,255,0.12); }
     .day-cell.today-col { background: rgba(251,191,36,0.06); border-right: 1px solid rgba(251,191,36,0.3); }
 
     .gantt-bar { position: absolute; height: 20px; border-radius: 4px; top: 50%; transform: translateY(-50%); cursor: pointer; transition: opacity 0.15s; display: flex; align-items: center; padding: 0 6px; font-size: 10px; font-weight: 500; color: #fff; overflow: hidden; white-space: nowrap; }
@@ -413,11 +418,13 @@
         }
       }
 
-      const dayCells = allDays.map(d=>{
+      const dayCells = allDays.map((d,i)=>{
         const isWeekend = d.getDay()===0||d.getDay()===6;
         const isToday = d.getFullYear()===today.getFullYear()&&d.getMonth()===today.getMonth()&&d.getDate()===today.getDate();
         return `<div class="day-cell${isWeekend?' weekend':''}${isToday?' today-col':''}"></div>`;
       }).join('');
+      // Day separators drawn above bars
+      const daySeps = allDays.map((d,i)=>`<div class="day-sep" style="left:${(i+1)*dayW}px;${d.getDay()===0||d.getDay()===6?'background:rgba(255,255,255,0.1);':''}"></div>`).join('');
 
       const hasActual = !isGroup && task.actual_start && task.actual_end;
       const rowHeight = hasActual ? '64px' : '36px';
@@ -438,6 +445,7 @@
           <div class="bar-area" style="min-height:${rowHeight};flex-direction:column;justify-content:center;gap:4px;padding:4px 0;">
             <div style="position:relative;height:20px;width:100%;">
               ${dayCells.replace(/<div class="day-cell/g, '<div style="height:20px;" class="day-cell')}
+              ${daySeps}
               ${startIdx>=0&&endIdx>=0?`<div class="gantt-bar ${barClass}" style="left:${barLeft+2}px;width:${barWidth}px;top:0;transform:none;" title="Plan: ${task.start_date} - ${task.end_date}">${barWidth>60?task.name:''}</div>`:''}
             </div>
             ${hasActual?`<div style="position:relative;height:20px;width:100%;">
