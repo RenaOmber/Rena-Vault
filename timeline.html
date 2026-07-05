@@ -166,14 +166,26 @@
       <div class="form-label">Nama Task</div>
       <input class="form-input" id="t-name" placeholder="Contoh: Design mockup kaos..." />
     </div>
+    <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">Plan</div>
     <div class="form-row-2">
       <div class="form-group">
-        <div class="form-label">Tanggal Mulai</div>
+        <div class="form-label">Mulai (Plan)</div>
         <input type="date" class="form-input" id="t-start" />
       </div>
       <div class="form-group">
-        <div class="form-label">Tanggal Selesai</div>
+        <div class="form-label">Selesai (Plan)</div>
         <input type="date" class="form-input" id="t-end" />
+      </div>
+    </div>
+    <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;margin-top:4px;">Actual <span style="font-weight:400;text-transform:none;font-size:10px;">(isi kalau sudah berjalan)</span></div>
+    <div class="form-row-2">
+      <div class="form-group">
+        <div class="form-label">Mulai (Actual)</div>
+        <input type="date" class="form-input" id="t-actual-start" />
+      </div>
+      <div class="form-group">
+        <div class="form-label">Selesai (Actual)</div>
+        <input type="date" class="form-input" id="t-actual-end" />
       </div>
     </div>
     <div class="form-group">
@@ -371,23 +383,50 @@
       const barWidth = ((endIdx - startIdx + 1) * dayW) - 4;
       const barClass = {todo:'bar-todo',progress:'bar-progress',done:'bar-done',blocked:'bar-blocked'}[task.status]||'bar-todo';
 
+      // Actual bar
+      let actualBarHtml = '';
+      if (!isGroup && task.actual_start && task.actual_end) {
+        const aStart = parseLocalDate(task.actual_start);
+        const aEnd = parseLocalDate(task.actual_end);
+        const aStartIdx = allDays.findIndex(d=>d.getFullYear()===aStart.getFullYear()&&d.getMonth()===aStart.getMonth()&&d.getDate()===aStart.getDate());
+        const aEndIdx = allDays.findIndex(d=>d.getFullYear()===aEnd.getFullYear()&&d.getMonth()===aEnd.getMonth()&&d.getDate()===aEnd.getDate());
+        if (aStartIdx>=0 && aEndIdx>=0) {
+          const aLeft = aStartIdx * dayW;
+          const aWidth = ((aEndIdx - aStartIdx + 1) * dayW) - 4;
+          actualBarHtml = `<div class="gantt-bar ${barClass}" style="left:${aLeft+2}px;width:${aWidth}px;top:calc(50% + 12px);" title="Actual: ${task.actual_start} - ${task.actual_end}"></div>`;
+        }
+      }
+
       const dayCells = allDays.map(d=>{
         const isWeekend = d.getDay()===0||d.getDay()===6;
         const isToday = d.getFullYear()===today.getFullYear()&&d.getMonth()===today.getMonth()&&d.getDate()===today.getDate();
         return `<div class="day-cell${isWeekend?' weekend':''}${isToday?' today-col':''}"></div>`;
       }).join('');
 
+      const hasActual = !isGroup && task.actual_start && task.actual_end;
+      const rowHeight = hasActual ? '64px' : '36px';
       return `
-        <div class="gantt-row${isGroup?' group-row':''}" ${!isGroup?`onclick="cycleStatus('${task.id}')" style="cursor:pointer;"`:''}>
-          <div class="task-cell">
-            <span class="task-number">${numPrefix}</span>
-            <span class="task-name">${task.name}</span>
-            ${!isGroup?`<span style="font-size:9px;padding:2px 6px;border-radius:8px;font-weight:600;background:${{todo:'rgba(79,110,247,0.2)',progress:'rgba(251,191,36,0.2)',done:'rgba(52,211,153,0.2)',blocked:'rgba(248,113,113,0.2)'}[task.status]};color:${{todo:'#7b9fff',progress:'#fbbf24',done:'#34d399',blocked:'#f87171'}[task.status]};">${{todo:'TO DO',progress:'IN PROGRESS',done:'DONE',blocked:'BLOCKED'}[task.status]}</span>`:''}
-            ${!isGroup?`<div class="task-actions"><button class="task-btn" onclick="event.stopPropagation();openTaskModal('${task.id}')" title="Edit">✎</button></div>`:''}
+        <div class="gantt-row${isGroup?' group-row':''}" style="min-height:${rowHeight};${!isGroup?'cursor:pointer;':''}" ${!isGroup?`onclick="cycleStatus('${task.id}')"`:''}>
+          <div class="task-cell" style="min-height:${rowHeight};flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;">
+            <div style="display:flex;align-items:center;gap:6px;width:100%;">
+              <span class="task-number">${numPrefix}</span>
+              <span class="task-name">${task.name}</span>
+              ${!isGroup?`<span style="font-size:9px;padding:2px 6px;border-radius:8px;font-weight:600;flex-shrink:0;background:${{todo:'rgba(79,110,247,0.2)',progress:'rgba(251,191,36,0.2)',done:'rgba(52,211,153,0.2)',blocked:'rgba(248,113,113,0.2)'}[task.status]};color:${{todo:'#7b9fff',progress:'#fbbf24',done:'#34d399',blocked:'#f87171'}[task.status]};">${{todo:'TO DO',progress:'IN PROGRESS',done:'DONE',blocked:'BLOCKED'}[task.status]}</span>`:''}
+              ${!isGroup?`<div class="task-actions"><button class="task-btn" onclick="event.stopPropagation();openTaskModal('${task.id}')" title="Edit">✎</button></div>`:''}
+            </div>
+            ${!isGroup?`<div style="display:flex;flex-direction:column;gap:1px;padding-left:28px;">
+              <div style="font-size:9px;color:var(--text3);font-weight:600;">P</div>
+              ${hasActual?'<div style="font-size:9px;color:var(--text2);font-weight:600;">A</div>':''}
+            </div>`:''}
           </div>
-          <div class="bar-area">
-            ${dayCells}
-            ${startIdx>=0&&endIdx>=0?`<div class="gantt-bar ${barClass}" style="left:${barLeft+2}px;width:${barWidth}px;" title="${task.name}">${barWidth>60?task.name:''}</div>`:''}
+          <div class="bar-area" style="min-height:${rowHeight};flex-direction:column;justify-content:center;gap:4px;padding:4px 0;">
+            <div style="position:relative;height:20px;width:100%;">
+              ${dayCells.replace(/<div class="day-cell/g, '<div style="height:20px;" class="day-cell')}
+              ${startIdx>=0&&endIdx>=0?`<div class="gantt-bar ${barClass}" style="left:${barLeft+2}px;width:${barWidth}px;top:0;transform:none;" title="Plan: ${task.start_date} - ${task.end_date}">${barWidth>60?task.name:''}</div>`:''}
+            </div>
+            ${hasActual?`<div style="position:relative;height:20px;width:100%;">
+              ${actualBarHtml.replace('top:calc(50% + 12px)', 'top:0;transform:none;')}
+            </div>`:''}
           </div>
         </div>`;
     };
@@ -428,6 +467,8 @@
       document.getElementById('t-name').value = t.name;
       document.getElementById('t-start').value = t.start_date;
       document.getElementById('t-end').value = t.end_date;
+      document.getElementById('t-actual-start').value = t.actual_start||'';
+      document.getElementById('t-actual-end').value = t.actual_end||'';
       document.getElementById('t-status').value = t.status;
       document.getElementById('t-group').value = t.group_name||'';
       document.getElementById('t-notes').value = t.notes||'';
@@ -435,6 +476,8 @@
       document.getElementById('t-name').value='';
       document.getElementById('t-start').value=new Date().toISOString().split('T')[0];
       document.getElementById('t-end').value='';
+      document.getElementById('t-actual-start').value='';
+      document.getElementById('t-actual-end').value='';
       document.getElementById('t-status').value='todo';
       document.getElementById('t-group').value='';
       document.getElementById('t-notes').value='';
@@ -466,6 +509,8 @@
       name,
       start_date: start,
       end_date: end,
+      actual_start: document.getElementById('t-actual-start').value||null,
+      actual_end: document.getElementById('t-actual-end').value||null,
       status: document.getElementById('t-status').value,
       group_name: document.getElementById('t-group').value.trim()||null,
       notes: document.getElementById('t-notes').value.trim()||null,
