@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rena Omber — Timeline</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0f1e; --bg2: #111827; --bg3: #1a2235;
+      --border: rgba(99,130,255,0.12); --border-hover: rgba(99,130,255,0.28);
+      --text: #e8eaf6; --text2: #8892b0; --text3: #4a5568;
+      --accent: #4f6ef7; --accent-dim: rgba(79,110,247,0.15);
+      --green: #34d399; --yellow: #fbbf24; --red: #f87171;
+    }
+    html, body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; min-height: 100vh; }
+
+    #gate { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
+    .gate-mark { width: 40px; height: 4px; background: var(--accent); border-radius: 2px; margin: 0 auto 16px; }
+    .gate-form { display: flex; gap: 8px; margin-top: 8px; }
+    .gate-form input { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 14px; padding: 10px 14px; width: 220px; outline: none; }
+    .gate-form button { background: var(--accent); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; padding: 10px 18px; }
+    .gate-error { font-size: 12px; color: var(--red); min-height: 16px; text-align: center; }
+
+    #main { display: none; }
+    .top-bar { display: flex; align-items: center; justify-content: space-between; padding: 16px 28px; border-bottom: 1px solid var(--border); }
+    .top-left { display: flex; align-items: center; gap: 10px; }
+    .top-mark { width: 22px; height: 3px; background: var(--accent); border-radius: 2px; }
+    .top-name { font-size: 13px; font-weight: 500; }
+    .top-sub { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; }
+    .top-right { display: flex; gap: 8px; align-items: center; }
+    .btn-ghost { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text2); cursor: pointer; font-family: inherit; font-size: 12px; padding: 6px 14px; text-decoration: none; display: inline-flex; align-items: center; transition: border-color 0.15s; }
+    .btn-ghost:hover { border-color: var(--border-hover); color: var(--text); }
+    .btn-primary { background: var(--accent); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 500; padding: 6px 14px; }
+
+    /* LAYOUT */
+    .page { padding: 24px 28px; }
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+    .page-title { font-size: 20px; font-weight: 600; }
+
+    /* PROJECT SELECTOR */
+    .project-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 20px; flex-wrap: wrap; }
+    .project-tab { background: none; border: none; border-bottom: 2px solid transparent; color: var(--text3); cursor: pointer; font-family: inherit; font-size: 13px; padding: 8px 16px; margin-bottom: -1px; transition: color 0.15s, border-color 0.15s; }
+    .project-tab:hover { color: var(--text2); }
+    .project-tab.active { border-bottom-color: var(--accent); color: var(--text); font-weight: 500; }
+    .add-project-btn { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 18px; padding: 8px 12px; transition: color 0.15s; }
+    .add-project-btn:hover { color: var(--accent); }
+
+    /* GANTT */
+    .gantt-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--border); border-radius: 10px; }
+    .gantt { display: grid; min-width: 900px; }
+    .gantt-header { display: flex; background: var(--bg2); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+    .gantt-task-col { width: 280px; flex-shrink: 0; padding: 10px 14px; font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; border-right: 1px solid var(--border); }
+    .gantt-days { display: flex; flex: 1; }
+    .gantt-week { display: flex; flex-direction: column; border-right: 1px solid var(--border); }
+    .gantt-week-label { font-size: 10px; color: var(--text3); text-align: center; padding: 4px 0; border-bottom: 1px solid var(--border); letter-spacing: 0.06em; text-transform: uppercase; }
+    .gantt-day-labels { display: flex; }
+    .gantt-day-label { width: 32px; text-align: center; font-size: 9px; color: var(--text3); padding: 3px 0; }
+    .gantt-day-label.weekend { color: var(--accent); opacity: 0.6; }
+    .gantt-day-label.today { color: var(--yellow); font-weight: 700; }
+
+    /* TASK ROWS */
+    .gantt-row { display: flex; border-bottom: 1px solid var(--border); min-height: 36px; }
+    .gantt-row:hover { background: rgba(255,255,255,0.02); }
+    .gantt-row.group-row { background: var(--bg3); }
+    .task-cell { width: 280px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 6px 14px; border-right: 1px solid var(--border); }
+    .task-number { font-size: 11px; color: var(--text3); min-width: 28px; }
+    .task-name { font-size: 12px; color: var(--text2); flex: 1; cursor: pointer; }
+    .task-name:hover { color: var(--text); }
+    .group-row .task-name { font-weight: 600; color: var(--text); font-size: 13px; }
+    .task-actions { display: flex; gap: 4px; opacity: 0; transition: opacity 0.15s; }
+    .gantt-row:hover .task-actions { opacity: 1; }
+    .task-btn { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 12px; padding: 2px 4px; }
+    .task-btn:hover { color: var(--text); }
+
+    .bar-area { display: flex; flex: 1; position: relative; align-items: center; }
+    .day-cell { width: 32px; height: 100%; border-right: 1px solid rgba(255,255,255,0.03); flex-shrink: 0; position: relative; }
+    .day-cell.weekend { background: rgba(79,110,247,0.04); }
+    .day-cell.today-col { background: rgba(251,191,36,0.06); border-right: 1px solid rgba(251,191,36,0.3); }
+
+    .gantt-bar { position: absolute; height: 20px; border-radius: 4px; top: 50%; transform: translateY(-50%); cursor: pointer; transition: opacity 0.15s; display: flex; align-items: center; padding: 0 6px; font-size: 10px; font-weight: 500; color: #fff; overflow: hidden; white-space: nowrap; }
+    .gantt-bar:hover { opacity: 0.85; }
+    .bar-todo { background: var(--accent); }
+    .bar-progress { background: var(--yellow); }
+    .bar-done { background: var(--green); }
+    .bar-blocked { background: var(--red); }
+
+    /* STATUS LEGEND */
+    .legend { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text2); }
+    .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+    /* MODAL */
+    .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 20px; }
+    .modal-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; width: 100%; max-width: 480px; padding: 24px; }
+    .modal-title { font-size: 15px; font-weight: 600; margin-bottom: 18px; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+    .form-label { font-size: 12px; color: var(--text2); }
+    .form-input { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 13px; padding: 9px 12px; outline: none; width: 100%; }
+    .form-input:focus { border-color: var(--border-hover); }
+    .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+    .btn-cancel { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text3); cursor: pointer; font-family: inherit; font-size: 13px; padding: 8px 16px; }
+    .btn-danger { background: none; border: 1px solid var(--red); border-radius: 6px; color: var(--red); cursor: pointer; font-family: inherit; font-size: 13px; padding: 8px 16px; margin-right: auto; }
+
+    .empty { text-align: center; padding: 60px; color: var(--text3); font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<div id="gate">
+  <div>
+    <div class="gate-mark"></div>
+    <div style="font-size:18px;font-weight:500;text-align:center;">Rena Omber</div>
+    <div style="font-size:12px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;text-align:center;margin-top:4px;">Timeline</div>
+  </div>
+  <div>
+    <div class="gate-form">
+      <input type="password" id="pw-input" placeholder="Password" onkeydown="if(event.key==='Enter')checkPw()" />
+      <button onclick="checkPw()">Masuk</button>
+    </div>
+    <div class="gate-error" id="pw-error"></div>
+  </div>
+</div>
+
+<div id="main">
+  <div class="top-bar">
+    <div class="top-left">
+      <div class="top-mark"></div>
+      <div>
+        <div class="top-name">Rena Omber</div>
+        <div class="top-sub">Timeline</div>
+      </div>
+    </div>
+    <div class="top-right">
+      <a href="index.html" class="btn-ghost">Vault</a>
+      <button class="btn-ghost" onclick="logout()">Keluar</button>
+    </div>
+  </div>
+  <div class="page">
+    <div class="page-header">
+      <div class="page-title">Project Timeline</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot" style="background:var(--accent);"></div>To Do</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--yellow);"></div>In Progress</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--green);"></div>Done</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--red);"></div>Blocked</div>
+        </div>
+        <button class="btn-primary" onclick="openTaskModal()">+ Task</button>
+      </div>
+    </div>
+
+    <div class="project-tabs" id="project-tabs"></div>
+    <div id="gantt-container"></div>
+  </div>
+</div>
+
+<!-- TASK MODAL -->
+<div class="modal-bg" id="task-modal" style="display:none;" onclick="if(event.target===this)closeTaskModal()">
+  <div class="modal-box">
+    <div class="modal-title" id="task-modal-title">Tambah Task</div>
+    <div class="form-group">
+      <div class="form-label">Nama Task</div>
+      <input class="form-input" id="t-name" placeholder="Contoh: Design mockup kaos..." />
+    </div>
+    <div class="form-row-2">
+      <div class="form-group">
+        <div class="form-label">Tanggal Mulai</div>
+        <input type="date" class="form-input" id="t-start" />
+      </div>
+      <div class="form-group">
+        <div class="form-label">Tanggal Selesai</div>
+        <input type="date" class="form-input" id="t-end" />
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="form-label">Status</div>
+      <select class="form-input" id="t-status">
+        <option value="todo">To Do</option>
+        <option value="progress">In Progress</option>
+        <option value="done">Done</option>
+        <option value="blocked">Blocked</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <div class="form-label">Grup (opsional)</div>
+      <input class="form-input" id="t-group" placeholder="Contoh: Design, Production..." />
+    </div>
+    <div class="form-group">
+      <div class="form-label">Catatan</div>
+      <input class="form-input" id="t-notes" placeholder="Opsional..." />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-danger" id="t-delete-btn" style="display:none;" onclick="deleteTask()">Hapus</button>
+      <button class="btn-cancel" onclick="closeTaskModal()">Batal</button>
+      <button class="btn-primary" onclick="saveTask()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROJECT MODAL -->
+<div class="modal-bg" id="project-modal" style="display:none;" onclick="if(event.target===this)closeProjectModal()">
+  <div class="modal-box" style="max-width:360px;">
+    <div class="modal-title">Tambah Project</div>
+    <div class="form-group">
+      <div class="form-label">Nama Project</div>
+      <input class="form-input" id="p-name" placeholder="Contoh: Batch 1 Production..." />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeProjectModal()">Batal</button>
+      <button class="btn-primary" onclick="saveProject()">Buat</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ─── CONFIG ────────────────────────────────────────────────
+  const SUPABASE_URL  = 'https://fqvfnohhilkzvijqukfg.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxdmZub2hoaWxrenZpanF1a2ZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDU4NjAsImV4cCI6MjA5ODEyMTg2MH0.er10SEsmDlnx1yRLGJK2fKtLhQR40vFOXVJzH9yakCg';
+  const PASSWORD_HASH = '3f0e57f3e719957119f0ba621629a3ae0ed1ec95d1ad8a91bd980b2896b679e4';
+  // ───────────────────────────────────────────────────────────
+
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  let projects = [], tasks = [];
+  let activeProjectId = null, editingTaskId = null;
+  const DAYS = ['M','T','W','T','F','S','S'];
+
+  async function sha256(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+  async function checkPw() {
+    const val = document.getElementById('pw-input').value.trim();
+    if ((await sha256(val)) === PASSWORD_HASH) {
+      sessionStorage.setItem('ro_auth','1');
+      await showMain();
+    } else {
+      document.getElementById('pw-error').textContent = 'Password salah.';
+      document.getElementById('pw-input').value = '';
+    }
+  }
+  function logout() { sessionStorage.removeItem('ro_auth'); location.reload(); }
+  async function showMain() {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+    await loadAll();
+  }
+  if (sessionStorage.getItem('ro_auth') === '1') showMain();
+
+  async function loadAll() {
+    const [projRes, taskRes] = await Promise.all([
+      sb.from('timeline_projects').select('*').order('created_at'),
+      sb.from('timeline_tasks').select('*').order('sort_order')
+    ]);
+    projects = projRes.data||[];
+    tasks = taskRes.data||[];
+    if (projects.length && !activeProjectId) activeProjectId = projects[0].id;
+    renderProjectTabs();
+    renderGantt();
+  }
+
+  // ─── PROJECTS ───────────────────────────────────────────────
+  function renderProjectTabs() {
+    const el = document.getElementById('project-tabs');
+    el.innerHTML = projects.map(p=>`
+      <button class="project-tab ${p.id===activeProjectId?'active':''}" onclick="selectProject('${p.id}')">${p.name}</button>
+    `).join('') + `<button class="add-project-btn" onclick="openProjectModal()">+</button>`;
+  }
+
+  function selectProject(id) {
+    activeProjectId = id;
+    renderProjectTabs();
+    renderGantt();
+  }
+
+  function openProjectModal() { document.getElementById('project-modal').style.display='flex'; document.getElementById('p-name').value=''; }
+  function closeProjectModal() { document.getElementById('project-modal').style.display='none'; }
+  async function saveProject() {
+    const name = document.getElementById('p-name').value.trim();
+    if (!name) return;
+    const { data } = await sb.from('timeline_projects').insert({ id: Date.now().toString(), name }).select().single();
+    projects.push(data);
+    activeProjectId = data.id;
+    closeProjectModal();
+    renderProjectTabs();
+    renderGantt();
+  }
+
+  // ─── GANTT RENDER ───────────────────────────────────────────
+  function renderGantt() {
+    const container = document.getElementById('gantt-container');
+    if (!projects.length) {
+      container.innerHTML = '<div class="empty">Belum ada project. Klik + untuk membuat project pertama.</div>';
+      return;
+    }
+    const projTasks = tasks.filter(t=>t.project_id===activeProjectId);
+    if (!projTasks.length) {
+      container.innerHTML = '<div class="empty">Belum ada task di project ini. Klik "+ Task" untuk mulai.</div>';
+      return;
+    }
+
+    // Calculate date range
+    const dates = projTasks.flatMap(t=>[new Date(t.start_date), new Date(t.end_date)]);
+    let minDate = new Date(Math.min(...dates));
+    let maxDate = new Date(Math.max(...dates));
+    // Extend to full weeks
+    minDate.setDate(minDate.getDate() - minDate.getDay() + 1); // Monday
+    maxDate.setDate(maxDate.getDate() + (7 - maxDate.getDay())); // Sunday
+    // Ensure at least 4 weeks
+    const diffDays = Math.round((maxDate-minDate)/(1000*60*60*24));
+    if (diffDays < 28) maxDate = new Date(minDate.getTime() + 28*24*60*60*1000);
+
+    const today = new Date(); today.setHours(0,0,0,0);
+    const allDays = [];
+    for (let d = new Date(minDate); d <= maxDate; d.setDate(d.getDate()+1)) {
+      allDays.push(new Date(d));
+    }
+
+    // Build weeks for header
+    const weeks = [];
+    let wStart = 0;
+    allDays.forEach((d,i) => {
+      if (i===0 || d.getDay()===1) { weeks.push({ label: `Week ${weeks.length+1}`, start: i, days: [] }); }
+      weeks[weeks.length-1].days.push(d);
+    });
+
+    // Group tasks
+    const groups = {};
+    const ungrouped = [];
+    projTasks.forEach(t => {
+      if (t.group_name) {
+        if (!groups[t.group_name]) groups[t.group_name] = [];
+        groups[t.group_name].push(t);
+      } else ungrouped.push(t);
+    });
+
+    const dayW = 32;
+    const taskColW = 280;
+
+    // Build header
+    const weekHeaders = weeks.map(w=>`
+      <div class="gantt-week" style="width:${w.days.length*dayW}px;">
+        <div class="gantt-week-label">${w.label}</div>
+        <div class="gantt-day-labels">
+          ${w.days.map(d=>{
+            const isWeekend = d.getDay()===0||d.getDay()===6;
+            const isToday = d.toDateString()===today.toDateString();
+            return `<div class="gantt-day-label${isWeekend?' weekend':''}${isToday?' today':''}">${DAYS[d.getDay()===0?6:d.getDay()-1]}</div>`;
+          }).join('')}
+        </div>
+      </div>`).join('');
+
+    // Build task rows
+    const buildRow = (task, numPrefix='', isGroup=false) => {
+      const start = new Date(task.start_date); start.setHours(0,0,0,0);
+      const end = new Date(task.end_date); end.setHours(0,0,0,0);
+      const startIdx = allDays.findIndex(d=>d.toDateString()===start.toDateString());
+      const endIdx = allDays.findIndex(d=>d.toDateString()===end.toDateString());
+      const barLeft = startIdx * dayW;
+      const barWidth = ((endIdx - startIdx + 1) * dayW) - 4;
+      const barClass = {todo:'bar-todo',progress:'bar-progress',done:'bar-done',blocked:'bar-blocked'}[task.status]||'bar-todo';
+
+      const dayCells = allDays.map(d=>{
+        const isWeekend = d.getDay()===0||d.getDay()===6;
+        const isToday = d.toDateString()===today.toDateString();
+        return `<div class="day-cell${isWeekend?' weekend':''}${isToday?' today-col':''}"></div>`;
+      }).join('');
+
+      return `
+        <div class="gantt-row${isGroup?' group-row':''}">
+          <div class="task-cell">
+            <span class="task-number">${numPrefix}</span>
+            <span class="task-name" onclick="openTaskModal('${task.id}')">${task.name}</span>
+            <div class="task-actions">
+              <button class="task-btn" onclick="openTaskModal('${task.id}')" title="Edit">✎</button>
+            </div>
+          </div>
+          <div class="bar-area">
+            ${dayCells}
+            ${startIdx>=0&&endIdx>=0?`<div class="gantt-bar ${barClass}" style="left:${barLeft+2}px;width:${barWidth}px;" onclick="openTaskModal('${task.id}')" title="${task.name}">${barWidth>60?task.name:''}</div>`:''}
+          </div>
+        </div>`;
+    };
+
+    let taskRows = '';
+    let groupNum = 1;
+    Object.entries(groups).forEach(([groupName, groupTasks]) => {
+      // Group header row (synthetic)
+      const gStart = groupTasks.reduce((m,t)=>new Date(t.start_date)<m?new Date(t.start_date):m, new Date(groupTasks[0].start_date));
+      const gEnd = groupTasks.reduce((m,t)=>new Date(t.end_date)>m?new Date(t.end_date):m, new Date(groupTasks[0].end_date));
+      const fakeGroup = { id:'group_'+groupNum, name:groupName, start_date:gStart.toISOString().split('T')[0], end_date:gEnd.toISOString().split('T')[0], status:'todo' };
+      taskRows += buildRow(fakeGroup, String(groupNum), true);
+      groupTasks.forEach((t,i) => { taskRows += buildRow(t, `${groupNum}.${i+1}`); });
+      groupNum++;
+    });
+    ungrouped.forEach((t,i) => { taskRows += buildRow(t, String(groupNum+i)); });
+
+    container.innerHTML = `
+      <div class="gantt-wrap">
+        <div class="gantt">
+          <div class="gantt-header">
+            <div class="gantt-task-col">Task</div>
+            <div class="gantt-days">${weekHeaders}</div>
+          </div>
+          ${taskRows}
+        </div>
+      </div>`;
+  }
+
+  // ─── TASK MODAL ─────────────────────────────────────────────
+  function openTaskModal(id) {
+    editingTaskId = id||null;
+    document.getElementById('task-modal-title').textContent = id ? 'Edit Task' : 'Tambah Task';
+    document.getElementById('t-delete-btn').style.display = id ? 'block' : 'none';
+    if (id) {
+      const t = tasks.find(t=>t.id===id);
+      if (!t) return;
+      document.getElementById('t-name').value = t.name;
+      document.getElementById('t-start').value = t.start_date;
+      document.getElementById('t-end').value = t.end_date;
+      document.getElementById('t-status').value = t.status;
+      document.getElementById('t-group').value = t.group_name||'';
+      document.getElementById('t-notes').value = t.notes||'';
+    } else {
+      document.getElementById('t-name').value='';
+      document.getElementById('t-start').value=new Date().toISOString().split('T')[0];
+      document.getElementById('t-end').value='';
+      document.getElementById('t-status').value='todo';
+      document.getElementById('t-group').value='';
+      document.getElementById('t-notes').value='';
+    }
+    document.getElementById('task-modal').style.display='flex';
+  }
+
+  function closeTaskModal() { document.getElementById('task-modal').style.display='none'; editingTaskId=null; }
+
+  async function saveTask() {
+    const name = document.getElementById('t-name').value.trim();
+    const start = document.getElementById('t-start').value;
+    const end = document.getElementById('t-end').value;
+    if (!name||!start||!end) { alert('Nama, tanggal mulai, dan selesai wajib diisi.'); return; }
+
+    const row = {
+      id: editingTaskId||Date.now().toString(),
+      project_id: activeProjectId,
+      name,
+      start_date: start,
+      end_date: end,
+      status: document.getElementById('t-status').value,
+      group_name: document.getElementById('t-group').value.trim()||null,
+      notes: document.getElementById('t-notes').value.trim()||null,
+      sort_order: editingTaskId ? tasks.find(t=>t.id===editingTaskId)?.sort_order||0 : tasks.length
+    };
+
+    await sb.from('timeline_tasks').upsert(row);
+    if (editingTaskId) {
+      const idx = tasks.findIndex(t=>t.id===editingTaskId);
+      if (idx>=0) tasks[idx]=row;
+    } else tasks.push(row);
+    closeTaskModal();
+    renderGantt();
+  }
+
+  async function deleteTask() {
+    if (!editingTaskId||!confirm('Hapus task ini?')) return;
+    await sb.from('timeline_tasks').delete().eq('id', editingTaskId);
+    tasks = tasks.filter(t=>t.id!==editingTaskId);
+    closeTaskModal();
+    renderGantt();
+  }
+</script>
+</body>
+</html>
