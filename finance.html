@@ -160,13 +160,15 @@
   if (sessionStorage.getItem('ro_auth') === '1') showMain();
 
   async function loadAll() {
-    const [prodRes, vendorRes, finRes] = await Promise.all([
+    const [prodRes, vendorRes, finRes, salesRes] = await Promise.all([
       sb.from('products').select('*').order('created_at'),
       sb.from('vendors').select('*'),
-      sb.from('finance_entries').select('*')
+      sb.from('finance_entries').select('*'),
+      sb.from('sales_transactions').select('*')
     ]);
     allProducts = (prodRes.data||[]).map(r => ({ id: String(r.id), name: r.name, batches: r.data?.batches||[] }));
     allVendors = vendorRes.data||[];
+    allSalesTx = salesRes.data||[];
     financeData = {};
     (finRes.data||[]).forEach(r => { financeData[r.batch_key] = r; });
     renderSidebar();
