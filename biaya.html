@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rena Omber — Biaya Produk</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #060f0a; --bg2: #0d1f14; --bg3: #122b1a;
+      --border: rgba(52,211,153,0.12); --border-hover: rgba(52,211,153,0.28);
+      --text: #e6f4ec; --text2: #7aab90; --text3: #3d6b52;
+      --accent: #34d399; --accent-dim: rgba(52,211,153,0.12);
+      --green: #6ee7b7; --green-dim: rgba(110,231,183,0.1);
+    }
+    html, body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; min-height: 100vh; }
+
+    #gate { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
+    .gate-mark { width: 40px; height: 4px; background: var(--accent); border-radius: 2px; margin: 0 auto 16px; }
+    .gate-form { display: flex; gap: 8px; margin-top: 8px; }
+    .gate-form input { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 14px; padding: 10px 14px; width: 220px; outline: none; }
+    .gate-form button { background: var(--accent); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; padding: 10px 18px; }
+    .gate-error { font-size: 12px; color: #f87171; min-height: 16px; text-align: center; }
+
+    #main { display: none; }
+    .top-bar { display: flex; align-items: center; justify-content: space-between; padding: 16px 28px; border-bottom: 1px solid var(--border); }
+    .top-left { display: flex; align-items: center; gap: 10px; }
+    .top-mark { width: 22px; height: 3px; background: var(--accent); border-radius: 2px; }
+    .top-name { font-size: 13px; font-weight: 500; }
+    .top-sub { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; }
+    .top-right { display: flex; gap: 8px; }
+    .btn-ghost { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text2); cursor: pointer; font-family: inherit; font-size: 12px; padding: 6px 14px; text-decoration: none; display: inline-flex; align-items: center; }
+    .btn-ghost:hover { border-color: var(--border-hover); color: var(--text); }
+
+    .content { padding: 28px 36px; max-width: 960px; }
+
+    /* SUMMARY CARDS */
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 32px; }
+    .summary-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+    .summary-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+    .summary-value { font-size: 22px; font-weight: 600; color: var(--text); }
+    .summary-value.accent { color: var(--accent); }
+    .summary-value.green { color: var(--green); }
+
+    /* TABLE */
+    .section-title { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; }
+  .prod-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 20px; flex-wrap: wrap; }
+  .prod-tab { background: none; border: none; border-bottom: 2px solid transparent; color: var(--text3); cursor: pointer; font-family: inherit; font-size: 13px; padding: 8px 16px; margin-bottom: -1px; transition: color 0.15s, border-color 0.15s; }
+  .prod-tab:hover { color: var(--text2); }
+  .prod-tab.active { border-bottom-color: var(--accent); color: var(--text); font-weight: 500; }
+    .finance-table { width: 100%; border-collapse: collapse; margin-bottom: 28px; }
+    .finance-table th { font-size: 11px; color: var(--text3); font-weight: 500; text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .finance-table th.right { text-align: right; }
+    .finance-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text2); }
+    .finance-table td.right { text-align: right; }
+    .finance-table tr:hover td { background: var(--bg2); color: var(--text); }
+    .finance-table .prod-name { font-weight: 500; color: var(--text); }
+    .finance-table .batch-name { font-size: 12px; color: var(--text3); }
+    .finance-table .total-row td { font-weight: 600; color: var(--text); border-top: 2px solid var(--border); border-bottom: none; }
+    .finance-table .total-row td.accent { color: var(--accent); }
+    .cogs-badge { display: inline-block; background: var(--accent-dim); color: var(--accent); border-radius: 4px; padding: 2px 7px; font-size: 11px; }
+    .empty { text-align: center; padding: 40px; color: var(--text3); font-size: 13px; }
+  .expand-btn { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 12px; padding: 0; font-family: inherit; }
+  .artikel-detail { display: none; }
+  .artikel-detail.open { display: table-row-group; }
+  .artikel-row td { background: var(--bg3); font-size: 12px; padding: 6px 12px; border-bottom: 1px solid var(--border); color: var(--text2); }
+  .artikel-row td:first-child { padding-left: 32px; color: var(--text3); }
+  .export-batch-btn { background: none; border: 1px solid var(--border); border-radius: 5px; color: var(--text3); cursor: pointer; font-family: inherit; font-size: 11px; padding: 3px 10px; transition: all 0.15s; white-space: nowrap; }
+  .export-batch-btn:hover { border-color: var(--accent); color: var(--accent); }
+  </style>
+</head>
+<body>
+
+<div id="gate">
+  <div>
+    <div class="gate-mark"></div>
+    <div style="font-size:18px;font-weight:500;text-align:center;">Rena Omber</div>
+    <div style="font-size:12px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;text-align:center;margin-top:4px;">Biaya Produk</div>
+  </div>
+  <div>
+    <div class="gate-form">
+      <input type="password" id="pw-input" placeholder="Password" onkeydown="if(event.key==='Enter')checkPw()" />
+      <button onclick="checkPw()">Masuk</button>
+    </div>
+    <div class="gate-error" id="pw-error"></div>
+  </div>
+</div>
+
+<div id="main">
+  <div class="top-bar">
+    <div class="top-left">
+      <div class="top-mark"></div>
+      <div>
+        <div class="top-name">Rena Omber</div>
+        <div class="top-sub">Biaya Produk</div>
+      </div>
+    </div>
+    <div class="top-right">
+      <a href="produk.html" class="btn-ghost">Produk</a>
+      <a href="index.html" class="btn-ghost">Vault</a>
+      <button class="btn-ghost" onclick="logout()">Keluar</button>
+    </div>
+  </div>
+  <div class="content">
+    <div id="finance-content"><div class="empty">Memuat data...</div></div>
+  </div>
+</div>
+
+<script>
+  // ─── CONFIG ────────────────────────────────────────────────
+  const SUPABASE_URL  = 'https://fqvfnohhilkzvijqukfg.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxdmZub2hoaWxrenZpanF1a2ZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDU4NjAsImV4cCI6MjA5ODEyMTg2MH0.er10SEsmDlnx1yRLGJK2fKtLhQR40vFOXVJzH9yakCg';
+  const PASSWORD_HASH = '3f0e57f3e719957119f0ba621629a3ae0ed1ec95d1ad8a91bd980b2896b679e4';
+  // ───────────────────────────────────────────────────────────
+
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  const SIZES = ['S','M','L','XL','XXL'];
+
+  async function sha256(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+  async function checkPw() {
+    const val = document.getElementById('pw-input').value.trim();
+    if ((await sha256(val)) === PASSWORD_HASH) {
+      sessionStorage.setItem('ro_auth','1');
+      await showMain();
+    } else {
+      document.getElementById('pw-error').textContent = 'Password salah.';
+      document.getElementById('pw-input').value = '';
+    }
+  }
+  function logout() { sessionStorage.removeItem('ro_auth'); location.reload(); }
+  async function showMain() {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+    await renderFinance();
+  }
+  if (sessionStorage.getItem('ro_auth') === '1') showMain();
+
+  function fmt(n) { return 'Rp ' + Math.round(n).toLocaleString('id-ID'); }
+  function artikelUnits(a) {
+    return SIZES.reduce((s,sz) => s+(parseInt(a.sizes[sz])||0), 0);
+  }
+
+  let allProducts = [];
+  let allVendors = [];
+  let activeFinanceProd = 'all';
+
+  function getVendorPrice(id) {
+    const v = allVendors.find(v => v.id === id);
+    return v ? (v.price_per_unit||0) : 0;
+  }
+
+  function getVendorKaosPrice(vendorId, tebalKain, potongan) {
+    const v = allVendors.find(v => v.id === vendorId);
+    if (!v || v.type !== 'kaos') return 0;
+    const entry = v.data?.matrix?.[tebalKain];
+    if (!entry) return 0;
+    if (potongan === 'oversized') return entry.oversized || entry.regular || 0;
+    if (potongan === 'longsleeve') return entry.longsleeve || entry.regular || 0;
+    return entry.regular || 0;
+  }
+
+  function artikelCOGS(a) {
+    const kaosPrice = getVendorKaosPrice(a.vendorKaos, a.tebalKain, a.potongan);
+    const jumlahWarna = parseInt(a.jumlahWarna)||1;
+    const v = allVendors.find(v => v.id === a.vendorKaos);
+    const colorCharge = v?.data?.colorCharge || 0;
+    const baseColors = v?.data?.baseColors || 4;
+    const extraWarna = jumlahWarna > baseColors ? (jumlahWarna - baseColors) * colorCharge : 0;
+    return kaosPrice + extraWarna + getVendorPrice(a.vendorHangtag) + getVendorPrice(a.vendorPackaging);
+  }
+
+  async function renderFinance() {
+    const [prodRes, vendorRes] = await Promise.all([
+      sb.from('products').select('*').order('created_at'),
+      sb.from('vendors').select('*')
+    ]);
+    allVendors = vendorRes.data || [];
+    const { data } = prodRes;
+    allProducts = (data||[]).map(row => ({
+      id: String(row.id), name: row.name,
+      batches: row.data?.batches || []
+    }));
+
+    if (!allProducts.length) {
+      document.getElementById('finance-content').innerHTML = '<div class="empty">Belum ada produk. Tambah dulu di halaman Produk.</div>';
+      return;
+    }
+    renderFinanceView();
+  }
+
+  function renderFinanceView() {
+    const filtered = activeFinanceProd === 'all'
+      ? allProducts
+      : allProducts.filter(p => p.id === activeFinanceProd);
+
+    let grandTotalUnits = 0, grandTotalCost = 0;
+    const rows = [];
+    filtered.forEach(p => {
+      p.batches.forEach(b => {
+        const batchUnits = b.artikels.reduce((s,a) => s + artikelUnits(a), 0);
+        const batchCost = b.artikels.reduce((s,a) => s + artikelUnits(a) * artikelCOGS(a), 0);
+        const artikelCount = b.artikels.length;
+        grandTotalUnits += batchUnits;
+        grandTotalCost += batchCost;
+        rows.push({ prodName: p.name, batchName: b.name, artikelCount, units: batchUnits, cost: batchCost, artikels: b.artikels });
+      });
+    });
+
+    const tabs = `
+      <div class="prod-tabs">
+        <button class="prod-tab ${activeFinanceProd==='all'?'active':''}" onclick="filterProd('all')">Semua</button>
+        ${allProducts.map(p=>`<button class="prod-tab ${activeFinanceProd===p.id?'active':''}" onclick="filterProd('${p.id}')">${p.name}</button>`).join('')}
+      </div>`;
+
+    _lastRows = rows;
+    document.getElementById('finance-content').innerHTML = `
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="summary-label">Total Produk</div>
+          <div class="summary-value">${filtered.length}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Total Batch</div>
+          <div class="summary-value">${rows.length}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Total Unit</div>
+          <div class="summary-value accent">${grandTotalUnits.toLocaleString('id-ID')}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Total Biaya Produksi</div>
+          <div class="summary-value green">${fmt(grandTotalCost)}</div>
+        </div>
+      </div>
+      ${tabs}
+      <div class="section-title">Rincian per Batch</div>
+      <table class="finance-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Produk</th>
+            <th>Batch</th>
+            <th class="right">Artikel</th>
+            <th class="right">Total Unit</th>
+            <th class="right">Total Biaya</th>
+            <th class="right"></th>
+          </tr>
+        </thead>
+        ${rows.map((r,i)=>`
+          <tbody>
+            <tr onclick="toggleExpand(${i})" style="cursor:pointer;">
+              <td style="color:var(--text3);font-size:11px;width:20px;" id="arrow-${i}">▶</td>
+              <td class="prod-name">${r.prodName}</td>
+              <td class="batch-name">${r.batchName}</td>
+              <td class="right">${r.artikelCount} artikel</td>
+              <td class="right">${r.units.toLocaleString('id-ID')}</td>
+              <td class="right">${r.cost ? fmt(r.cost) : '<span style="color:var(--text3)">—</span>'}</td>
+              <td class="right"><button class="export-batch-btn" onclick="event.stopPropagation();exportBatchPDF(${i})">PDF</button></td>
+            </tr>
+          </tbody>
+          <tbody class="artikel-detail" id="detail-${i}">
+            ${r.artikels.map(a=>`
+              <tr class="artikel-row">
+                <td></td>
+                <td></td>
+                <td>${a.name}</td>
+                <td class="right" style="color:var(--accent);font-size:11px;">Rp ${artikelCOGS(a).toLocaleString('id-ID')}/unit</td>
+                <td class="right">${artikelUnits(a).toLocaleString('id-ID')}</td>
+                <td class="right">${(artikelUnits(a)*artikelCOGS(a)) ? fmt(artikelUnits(a)*artikelCOGS(a)) : '—'}</td>
+                <td></td>
+              </tr>`).join('')}
+          </tbody>`).join('')}
+        <tbody>
+          <tr class="total-row">
+            <td></td>
+            <td colspan="3">Total</td>
+            <td class="right">${grandTotalUnits.toLocaleString('id-ID')}</td>
+            <td class="right accent">${fmt(grandTotalCost)}</td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>`;
+  }
+
+  function filterProd(id) {
+    activeFinanceProd = id;
+    renderFinanceView();
+  }
+
+  function toggleExpand(i) {
+    const detail = document.getElementById(`detail-${i}`);
+    const arrow = document.getElementById(`arrow-${i}`);
+    if (detail.classList.contains('open')) {
+      detail.classList.remove('open');
+      arrow.textContent = '▶';
+    } else {
+      detail.classList.add('open');
+      arrow.textContent = '▼';
+    }
+  }
+
+  // Store rows for PDF export access
+  let _lastRows = [];
+  const _origRenderFinanceView = renderFinanceView;
+
+  async function exportBatchPDF(rowIdx) {
+    const row = _lastRows[rowIdx];
+    if (!row) return;
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    const W = 210, M = 16;
+    let y = M;
+
+    doc.setFontSize(16); doc.setFont('helvetica','bold'); doc.setTextColor(0,0,0);
+    doc.text('Rena Omber', M, y); y += 7;
+    doc.setFontSize(10); doc.setFont('helvetica','normal'); doc.setTextColor(100,100,100);
+    doc.text('Laporan Biaya Produksi', M, y); y += 5;
+    doc.setDrawColor(52,211,153); doc.setLineWidth(0.5);
+    doc.line(M, y, W-M, y); y += 8;
+
+    doc.setFontSize(13); doc.setFont('helvetica','bold'); doc.setTextColor(0,0,0);
+    doc.text(`${row.prodName} — ${row.batchName}`, M, y); y += 8;
+
+    // Summary
+    doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(100,100,100);
+    doc.text(`Total Artikel: ${row.artikelCount}   Total Unit: ${row.units}   Total Biaya: ${fmt(row.cost)}`, M, y); y += 10;
+
+    // Artikel table
+    doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(100,100,100);
+    doc.text('RINCIAN PER ARTIKEL', M, y); y += 5;
+
+    const cols = [60, 40, 30, 40];
+    const headers = ['Nama Artikel', 'COGS/unit', 'Unit', 'Total Biaya'];
+    doc.setFont('helvetica','bold'); doc.setFontSize(8);
+    let cx = M;
+    headers.forEach((h,i) => {
+      doc.setFillColor(20, 50, 35);
+      doc.setTextColor(255, 255, 255);
+      doc.rect(cx, y, cols[i], 7, 'FD');
+      doc.text(h, cx+4, y+4.8);
+      cx += cols[i];
+    });
+    y += 7;
+
+    doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30);
+    row.artikels.forEach((a, idx) => {
+      const units = artikelUnits(a);
+      const cogs = artikelCOGS(a);
+      const cost = units * cogs;
+      cx = M;
+      [a.name, fmt(cogs), String(units), cost?fmt(cost):'—'].forEach((v,i) => {
+        doc.setFillColor(idx%2===0 ? 245 : 252, idx%2===0 ? 250 : 253, idx%2===0 ? 248 : 251);
+        doc.setDrawColor(200, 230, 215);
+        doc.rect(cx, y, cols[i], 7, 'FD');
+        doc.setTextColor(30,30,30);
+        doc.text(String(v), cx+4, y+4.8);
+        cx += cols[i];
+      });
+      y += 7;
+    });
+
+    y += 6;
+    doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor(30,30,30);
+    doc.text(`Total: ${fmt(row.cost)}`, M, y);
+
+    doc.setDrawColor(52,211,153); doc.line(M, 286, W-M, 286);
+    doc.setFontSize(7); doc.setTextColor(150,150,150);
+    doc.text(`Rena Omber · ${row.prodName} · ${row.batchName} · ${new Date().toLocaleDateString('id-ID')}`, M, 291);
+
+    doc.save(`Finance_${row.prodName}_${row.batchName}.pdf`.replace(/\s+/g,'_'));
+  }
+</script>
+</body>
+</html>
