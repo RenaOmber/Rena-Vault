@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rena Omber — Penjualan</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -151,7 +152,7 @@
 <script>
   // ─── CONFIG ────────────────────────────────────────────────
   const SUPABASE_URL  = 'https://fqvfnohhilkzvijqukfg.supabase.co';
-  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxdmZub2hoaWxrenZpanF1a2ZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDU4NjAsImV4cCI6MjA5ODEyMTg2MH0.er10SEsmDlnx1yRLGJK2fKtLhQR40vFOXVJzH9yakCg';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxdmZub2hoaWxrenZianF1a2ZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDU4NjAsImV4cCI6MjA5ODEyMTg2MH0.er10SEsmDlnx1yRLGJK2fKtLhQR40vFOXVJzH9yakCg';
   const PASSWORD_HASH = '3f0e57f3e719957119f0ba621629a3ae0ed1ec95d1ad8a91bd980b2896b679e4';
   // ───────────────────────────────────────────────────────────
 
@@ -248,6 +249,7 @@
           <div class="content-title">${p.name} — ${b.name}</div>
           <div class="content-sub">${totalProduksi} diproduksi · ${totalTerjual} terjual · ${stokSisa} sisa</div>
         </div>
+        <button onclick="exportSalesPDF()" style="background:var(--accent);border:none;border-radius:6px;color:#fff;cursor:pointer;font-family:inherit;font-size:13px;font-weight:500;padding:9px 18px;">Export PDF</button>
       </div>
 
       <!-- INPUT -->
@@ -409,6 +411,176 @@
     transactions.unshift(tx);
     renderSidebar();
     renderContent();
+  }
+
+  async function exportSalesPDF() {
+    const p = allProducts.find(p=>p.id===activeProdId);
+    const b = p.batches[activeBatchIdx];
+    const batchTx = transactions.filter(t=>t.product_id===activeProdId && t.batch_idx===activeBatchIdx);
+    const totalProduksi = b.artikels.reduce((s,a)=>s+artikelUnits(a),0);
+    const totalTerjual = batchTx.reduce((s,t)=>s+t.qty,0);
+    const stokSisa = totalProduksi - totalTerjual;
+    const sellThrough = totalProduksi ? Math.round(totalTerjual/totalProduksi*100) : 0;
+
+    const sizeSold = {}, sizeProd = {};
+    SIZES.forEach(sz=>{sizeSold[sz]=0;sizeProd[sz]=0;});
+    b.artikels.forEach(a=>SIZES.forEach(sz=>{sizeProd[sz]+=(parseInt(a.sizes[sz])||0);}));
+    batchTx.forEach(t=>{sizeSold[t.size]=(sizeSold[t.size]||0)+t.qty;});
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    const W=210, M=16;
+    let y=M;
+
+    // Header
+    doc.setFontSize(16); doc.setFont('helvetica','bold'); doc.setTextColor(0,0,0);
+    doc.text('Rena Omber', M, y); y+=7;
+    doc.setFontSize(10); doc.setFont('helvetica','normal'); doc.setTextColor(100,100,100);
+    doc.text('Laporan Penjualan', M, y); y+=5;
+    doc.setDrawColor(79,110,247); doc.setLineWidth(0.5);
+    doc.line(M, y, W-M, y); y+=8;
+
+    doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.setTextColor(0,0,0);
+    doc.text(`${p.name} — ${b.name}`, M, y); y+=6;
+    doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(100,100,100);
+    doc.text(`${new Date().toLocaleDateString('id-ID')} · ${totalProduksi} diproduksi · ${totalTerjual} terjual · ${stokSisa} sisa · sell-through ${sellThrough}%`, M, y); y+=10;
+
+    // Summary boxes
+    const boxes = [
+      {label:'Diproduksi', value:String(totalProduksi), color:[60,60,60]},
+      {label:'Terjual', value:String(totalTerjual), color:[52,211,153]},
+      {label:'Stok Sisa', value:String(stokSisa), color:stokSisa>0?[251,191,36]:[52,211,153]},
+      {label:'Sell-through', value:sellThrough+'%', color:sellThrough>=70?[52,211,153]:sellThrough>=40?[251,191,36]:[248,113,113]},
+    ];
+    const bw = (W-M*2-8*3)/4;
+    boxes.forEach((box,i)=>{
+      const bx = M+i*(bw+8);
+      doc.setFillColor(245,247,255); doc.roundedRect(bx,y,bw,16,2,2,'F');
+      doc.setFontSize(7); doc.setTextColor(120,120,120); doc.setFont('helvetica','normal');
+      doc.text(box.label.toUpperCase(), bx+4, y+6);
+      doc.setFontSize(11); doc.setFont('helvetica','bold');
+      doc.setTextColor(...box.color);
+      doc.text(box.value, bx+4, y+13);
+    });
+    y+=24;
+
+    // Size per artikel table
+    doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(100,100,100);
+    doc.text('PENJUALAN PER SIZE PER ARTIKEL', M, y); y+=5;
+
+    const cols = [45, 22, 22, 22, 22, 22, 22];
+    const headers = ['Artikel', 'S', 'M', 'L', 'XL', 'XXL', 'Total'];
+    let cx = M;
+    doc.setFont('helvetica','bold'); doc.setFontSize(7);
+    headers.forEach((h,i)=>{
+      doc.setFillColor(40,50,80); doc.setTextColor(255,255,255);
+      doc.rect(cx, y, cols[i], 7, 'FD');
+      doc.text(h, cx+3, y+4.8);
+      cx+=cols[i];
+    });
+    y+=7;
+
+    b.artikels.forEach((a,idx)=>{
+      const szSold={};
+      SIZES.forEach(sz=>{szSold[sz]=0;});
+      batchTx.filter(t=>t.artikel_name===a.name).forEach(t=>{szSold[t.size]=(szSold[t.size]||0)+t.qty;});
+      const tot = SIZES.reduce((s,sz)=>s+(szSold[sz]||0),0);
+      cx=M;
+      const vals = [a.name, ...SIZES.map(sz=>`${szSold[sz]||0}/${parseInt(a.sizes[sz])||0}`), String(tot)];
+      doc.setFont('helvetica','normal'); doc.setFontSize(7);
+      vals.forEach((v,i)=>{
+        doc.setFillColor(idx%2===0?245:252, idx%2===0?247:253, idx%2===0?255:255);
+        doc.setDrawColor(210,215,240);
+        doc.rect(cx, y, cols[i], 7, 'FD');
+        doc.setTextColor(30,30,30);
+        doc.text(String(v), cx+3, y+4.8);
+        cx+=cols[i];
+      });
+      y+=7;
+    });
+
+    // Total row
+    cx=M;
+    const totVals=['Total',...SIZES.map(sz=>`${sizeSold[sz]||0}/${sizeProd[sz]||0}`),String(totalTerjual)];
+    doc.setFont('helvetica','bold'); doc.setFontSize(7);
+    totVals.forEach((v,i)=>{
+      doc.setFillColor(225,230,255); doc.setDrawColor(180,190,230);
+      doc.rect(cx, y, cols[i], 7, 'FD');
+      doc.setTextColor(20,20,80);
+      doc.text(v, cx+3, y+4.8);
+      cx+=cols[i];
+    });
+    y+=12;
+
+    // Artikel sell-through
+    doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(100,100,100);
+    doc.text('SELL-THROUGH PER ARTIKEL', M, y); y+=5;
+    const aCols=[60,30,30,30,25];
+    const aHeaders=['Artikel','Produksi','Terjual','Sisa','Sell-through'];
+    cx=M;
+    doc.setFont('helvetica','bold'); doc.setFontSize(7);
+    aHeaders.forEach((h,i)=>{
+      doc.setFillColor(40,50,80); doc.setTextColor(255,255,255);
+      doc.rect(cx,y,aCols[i],7,'FD'); doc.text(h,cx+3,y+4.8); cx+=aCols[i];
+    });
+    y+=7;
+    b.artikels.forEach((a,idx)=>{
+      const sold=batchTx.filter(t=>t.artikel_name===a.name).reduce((s,t)=>s+t.qty,0);
+      const prod=artikelUnits(a);
+      const sisa=prod-sold;
+      const st=prod?Math.round(sold/prod*100):0;
+      cx=M;
+      [a.name,String(prod),String(sold),String(sisa),st+'%'].forEach((v,i)=>{
+        doc.setFillColor(idx%2===0?245:252,idx%2===0?247:253,idx%2===0?255:255);
+        doc.setDrawColor(210,215,240);
+        doc.rect(cx,y,aCols[i],7,'FD');
+        if(i===4) doc.setTextColor(st>=70?52:st>=40?180:200, st>=70?180:st>=40?120:50, st>=70?100:st>=40?20:50);
+        else doc.setTextColor(30,30,30);
+        doc.text(v,cx+3,y+4.8); cx+=aCols[i];
+      });
+      y+=7;
+    });
+    y+=8;
+
+    // Recent transactions
+    if(batchTx.length){
+      doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(100,100,100);
+      doc.text('LOG TRANSAKSI', M, y); y+=5;
+      const tCols=[35,55,20,20,45];
+      const tHeaders=['Tanggal','Artikel','Size','Qty','Catatan'];
+      cx=M;
+      doc.setFont('helvetica','bold'); doc.setFontSize(7);
+      tHeaders.forEach((h,i)=>{
+        doc.setFillColor(40,50,80); doc.setTextColor(255,255,255);
+        doc.rect(cx,y,tCols[i],7,'FD'); doc.text(h,cx+3,y+4.8); cx+=tCols[i];
+      });
+      y+=7;
+      batchTx.slice().reverse().forEach((t,idx)=>{
+        if(y>270){doc.addPage();y=M;}
+        cx=M;
+        const tDate=new Date(t.sold_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
+        [tDate,t.artikel_name,t.size,String(t.qty),t.notes||''].forEach((v,i)=>{
+          doc.setFillColor(idx%2===0?245:252,idx%2===0?247:253,idx%2===0?255:255);
+          doc.setDrawColor(210,215,240);
+          doc.rect(cx,y,tCols[i],7,'FD');
+          doc.setTextColor(30,30,30); doc.setFont('helvetica','normal');
+          doc.text(String(v),cx+3,y+4.8); cx+=tCols[i];
+        });
+        y+=7;
+      });
+    }
+
+    // Footer
+    doc.setDrawColor(79,110,247); doc.line(M,286,W-M,286);
+    doc.setFontSize(7); doc.setTextColor(150,150,150);
+    doc.text(`Rena Omber · Penjualan · ${p.name} · ${b.name} · ${new Date().toLocaleDateString('id-ID')}`, M, 291);
+
+    const filename = `Penjualan_${p.name}_${b.name}_${new Date().toLocaleDateString('id-ID').replace(/\//g,'-')}.pdf`.replace(/\s+/g,'_');
+    doc.save(filename);
+
+    // Upload ke vault
+    const blob = doc.output('blob');
+    await sb.storage.from('vault-docs').upload(`finance/${filename}`, blob, { contentType:'application/pdf', upsert:true });
   }
 
   async function deleteTransaction(id) {
