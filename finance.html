@@ -134,7 +134,7 @@
 
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
   const SIZES = ['S','M','L','XL','XXL'];
-  let allProducts = [], allVendors = [], financeData = {};
+  let allProducts = [], allVendors = [], financeData = {}, allSalesTx = [];
   let activeBatchKey = null;
 
   async function sha256(str) {
@@ -173,6 +173,12 @@
   }
 
   function fmt(n) { return 'Rp ' + Math.round(n||0).toLocaleString('id-ID'); }
+
+  function getTerjualFromSales(prodId, batchIdx, artikelName) {
+    return allSalesTx
+      .filter(t => t.product_id === prodId && t.batch_idx === batchIdx && t.artikel_name === artikelName)
+      .reduce((s,t) => s + t.qty, 0);
+  }
 
   function artikelUnits(a) { return SIZES.reduce((s,sz)=>s+(parseInt(a.sizes[sz])||0),0); }
 
@@ -228,11 +234,12 @@
     const content = document.getElementById('content');
 
     // Calculate COGS per artikel
+    const bIdx = parseInt(key.split('_').pop());
     const artikelRows = b.artikels.map(a => {
       const units = artikelUnits(a);
       const cogs = artikelCOGS(a);
       const hjual = parseInt(fd.harga_jual?.[a.name])||0;
-      const terjual = parseInt(fd.terjual?.[a.name])||0;
+      const terjual = getTerjualFromSales(p.id, bIdx, a.name);
       const revenue = hjual * terjual;
       const cogsTerjual = cogs * terjual;
       const cogsProduksi = cogs * units;
@@ -300,7 +307,7 @@
             <th class="right">COGS/unit</th>
             <th class="right">Harga Jual</th>
             <th class="right">Unit Diproduksi</th>
-            <th class="right">Unit Terjual</th>
+            <th class="right">Unit Terjual <span style="font-size:9px;opacity:0.6;">(dari sales)</span></th>
             <th class="right">Stok Sisa</th>
             <th class="right">Revenue</th>
             <th class="right">Profit</th>
@@ -317,10 +324,7 @@
                   onchange="updateRevenue('${key}','harga_jual','${r.a.name}',this.value)" />
               </td>
               <td class="right" style="color:var(--text2);">${r.units}</td>
-              <td class="right">
-                <input type="number" class="revenue-input" placeholder="0" value="${r.terjual||''}" min="0" max="${r.units}"
-                  onchange="updateRevenue('${key}','terjual','${r.a.name}',this.value)" />
-              </td>
+              <td class="right" style="color:var(--green);font-weight:500;">${r.terjual} <span style="font-size:10px;color:var(--text3);">dari sales</span></td>
               <td class="right" style="color:${r.stokSisa>0?'var(--yellow)':'var(--accent)'};">${r.stokSisa}</td>
               <td class="right">${r.revenue ? fmt(r.revenue) : '—'}</td>
               <td class="right ${r.profit>=0?'profit-positive':'profit-negative'}">${r.revenue ? fmt(r.profit) : '—'}</td>
@@ -363,7 +367,6 @@
     await sb.from('finance_entries').upsert({
       batch_key: key,
       harga_jual: fd.harga_jual||{},
-      terjual: fd.terjual||{},
       other_cost: fd.other_cost||0,
       notes: fd.notes||'',
       updated_at: new Date().toISOString()
@@ -401,11 +404,12 @@
     const b = p.batches[bIdx];
     const fd = financeData[key] || { harga_jual:{}, terjual:{}, other_cost:0, notes:'' };
 
+    const bIdx2 = parseInt(key.split('_').pop());
     const artikelRows = b.artikels.map(a => {
       const units = artikelUnits(a);
       const cogs = artikelCOGS(a);
       const hjual = parseInt(fd.harga_jual?.[a.name])||0;
-      const terjual = parseInt(fd.terjual?.[a.name])||0;
+      const terjual = getTerjualFromSales(p.id, bIdx2, a.name);
       const revenue = hjual * terjual;
       const cogsProduksi = cogs * units;
       const stokSisa = units - terjual;
