@@ -376,10 +376,11 @@
       }).join('');
 
       return `
-        <div class="gantt-row${isGroup?' group-row':''}" ${!isGroup?`onclick="openTaskModal('${task.id}')" style="cursor:pointer;"`:''}>
+        <div class="gantt-row${isGroup?' group-row':''}" ${!isGroup?`onclick="cycleStatus('${task.id}')" style="cursor:pointer;"`:''}>
           <div class="task-cell">
             <span class="task-number">${numPrefix}</span>
             <span class="task-name">${task.name}</span>
+            ${!isGroup?`<span style="font-size:9px;padding:2px 6px;border-radius:8px;font-weight:600;background:${{todo:'rgba(79,110,247,0.2)',progress:'rgba(251,191,36,0.2)',done:'rgba(52,211,153,0.2)',blocked:'rgba(248,113,113,0.2)'}[task.status]};color:${{todo:'#7b9fff',progress:'#fbbf24',done:'#34d399',blocked:'#f87171'}[task.status]};">${{todo:'TO DO',progress:'IN PROGRESS',done:'DONE',blocked:'BLOCKED'}[task.status]}</span>`:''}
             ${!isGroup?`<div class="task-actions"><button class="task-btn" onclick="event.stopPropagation();openTaskModal('${task.id}')" title="Edit">✎</button></div>`:''}
           </div>
           <div class="bar-area">
@@ -437,6 +438,16 @@
       document.getElementById('t-notes').value='';
     }
     document.getElementById('task-modal').style.display='flex';
+  }
+
+  const STATUS_CYCLE = ['todo','progress','done','blocked'];
+  async function cycleStatus(id) {
+    const t = tasks.find(t=>t.id===id);
+    if (!t) return;
+    const nextIdx = (STATUS_CYCLE.indexOf(t.status)+1) % STATUS_CYCLE.length;
+    t.status = STATUS_CYCLE[nextIdx];
+    await sb.from('timeline_tasks').update({ status: t.status }).eq('id', id);
+    renderGantt();
   }
 
   function closeTaskModal() { document.getElementById('task-modal').style.display='none'; editingTaskId=null; }
