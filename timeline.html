@@ -77,7 +77,8 @@
 
     .bar-area { display: flex; flex: 1; position: relative; align-items: center; }
     .day-cell { width: 32px; height: 100%; border-right: 1px solid rgba(255,255,255,0.03); flex-shrink: 0; position: relative; }
-    .day-cell.weekend { background: rgba(79,110,247,0.04); }
+    .day-cell.weekend { background: rgba(255,255,255,0.04); border-right: 1px solid rgba(255,255,255,0.06); }
+    .gantt-day-label.weekend { color: var(--text3); background: rgba(255,255,255,0.03); }
     .day-cell.today-col { background: rgba(251,191,36,0.06); border-right: 1px solid rgba(251,191,36,0.3); }
 
     .gantt-bar { position: absolute; height: 20px; border-radius: 4px; top: 50%; transform: translateY(-50%); cursor: pointer; transition: opacity 0.15s; display: flex; align-items: center; padding: 0 6px; font-size: 10px; font-weight: 500; color: #fff; overflow: hidden; white-space: nowrap; }
