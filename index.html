@@ -492,7 +492,7 @@
     const wrap = document.getElementById(wrapperId);
     if (!wrap) return;
     const { data } = await sb.storage.from(BUCKET).list(catId, { sortBy: { column: 'created_at', order: 'desc' } });
-    const docs = (data || []).filter(f => f.name !== '.keep');
+    const docs = (data || []).filter(f => f.name !== '.keep' && !f.name.startsWith('.'));
 
     const sub = document.getElementById('doc-count-sub');
     if (sub) sub.textContent = `${docs.length} dokumen`;
