@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rena Omber — Finance</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -256,6 +257,7 @@
           <div class="content-title">${p.name} — ${b.name}</div>
           <div class="content-sub">${totalUnit} unit diproduksi · ${totalTerjual} terjual</div>
         </div>
+        <button onclick="exportFinancePDF('${key}')" style="background:var(--accent);border:none;border-radius:6px;color:#000;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;padding:9px 18px;transition:opacity 0.15s;">Export PDF</button>
       </div>
 
       <div class="summary-grid">
@@ -390,6 +392,152 @@
     const p = allProducts.find(p => p.batches.some((_,i) => `${p.id}_${i}` === key));
     const bIdx = p.batches.findIndex((_,i) => `${p.id}_${i}` === key);
     renderBatch(p, p.batches[bIdx], key);
+  }
+
+  async function exportFinancePDF(key) {
+    const p = allProducts.find(p => p.batches.some((_,i) => `${p.id}_${i}` === key));
+    const bIdx = parseInt(key.split('_').pop());
+    const b = p.batches[bIdx];
+    const fd = financeData[key] || { harga_jual:{}, terjual:{}, other_cost:0, notes:'' };
+
+    const artikelRows = b.artikels.map(a => {
+      const units = artikelUnits(a);
+      const cogs = artikelCOGS(a);
+      const hjual = parseInt(fd.harga_jual?.[a.name])||0;
+      const terjual = parseInt(fd.terjual?.[a.name])||0;
+      const revenue = hjual * terjual;
+      const cogsProduksi = cogs * units;
+      const stokSisa = units - terjual;
+      const profit = revenue - cogsProduksi;
+      const margin = cogsProduksi ? Math.round((profit/cogsProduksi)*100) : null;
+      return { a, units, cogs, hjual, terjual, revenue, cogsProduksi, stokSisa, profit, margin };
+    });
+
+    const totalRevenue = artikelRows.reduce((s,r)=>s+r.revenue,0);
+    const totalCOGSProduksi = artikelRows.reduce((s,r)=>s+r.cogsProduksi,0);
+    const totalStokSisa = artikelRows.reduce((s,r)=>s+r.stokSisa,0);
+    const totalTerjual = artikelRows.reduce((s,r)=>s+r.terjual,0);
+    const totalUnit = artikelRows.reduce((s,r)=>s+r.units,0);
+    const otherCost = parseInt(fd.other_cost)||0;
+    const totalProfit = totalRevenue - totalCOGSProduksi - otherCost;
+    const totalMargin = totalCOGSProduksi ? Math.round((totalProfit/totalCOGSProduksi)*100) : null;
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    const W = 210, M = 16;
+    let y = M;
+
+    // Header
+    doc.setFontSize(16); doc.setFont('helvetica','bold'); doc.setTextColor(0,0,0);
+    doc.text('Rena Omber', M, y); y += 7;
+    doc.setFontSize(10); doc.setFont('helvetica','normal'); doc.setTextColor(100,100,100);
+    doc.text('Laporan Finance', M, y); y += 5;
+    doc.setDrawColor(52,211,153); doc.setLineWidth(0.5);
+    doc.line(M, y, W-M, y); y += 8;
+
+    doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.setTextColor(0,0,0);
+    doc.text(`${p.name} — ${b.name}`, M, y); y += 6;
+    doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(100,100,100);
+    doc.text(`${totalUnit} unit diproduksi · ${totalTerjual} terjual · ${totalStokSisa} sisa · ${new Date().toLocaleDateString('id-ID')}`, M, y); y += 10;
+
+    // Summary boxes
+    const boxes = [
+      { label: 'Revenue', value: fmt(totalRevenue), color: [52,211,153] },
+      { label: 'COGS Produksi', value: fmt(totalCOGSProduksi), color: [248,113,113] },
+      { label: 'Biaya Lain', value: fmt(otherCost), color: [251,191,36] },
+      { label: 'Net Profit', value: fmt(totalProfit), color: totalProfit>=0?[52,211,153]:[248,113,113] },
+      { label: 'Margin', value: totalMargin!==null?totalMargin+'%':'—', color: totalMargin>=0?[52,211,153]:[248,113,113] },
+    ];
+    const bw = (W-M*2-8*4)/5;
+    boxes.forEach((box,i) => {
+      const bx = M + i*(bw+8);
+      doc.setFillColor(245,250,248);
+      doc.roundedRect(bx, y, bw, 18, 2, 2, 'F');
+      doc.setFontSize(7); doc.setTextColor(100,100,100); doc.setFont('helvetica','normal');
+      doc.text(box.label.toUpperCase(), bx+4, y+6);
+      doc.setFontSize(9); doc.setFont('helvetica','bold');
+      doc.setTextColor(...box.color);
+      doc.text(box.value, bx+4, y+14);
+    });
+    y += 26;
+
+    // Table
+    doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(100,100,100);
+    doc.text('RINCIAN PER ARTIKEL', M, y); y += 5;
+
+    const cols = [38, 22, 20, 18, 18, 28, 24, 18];
+    const headers = ['Artikel', 'COGS/unit', 'Harga Jual', 'Produksi', 'Terjual', 'Revenue', 'Profit', 'Margin'];
+    let cx = M;
+    doc.setFont('helvetica','bold'); doc.setFontSize(7);
+    headers.forEach((h,i) => {
+      doc.setFillColor(20,50,35); doc.setTextColor(255,255,255);
+      doc.rect(cx, y, cols[i], 7, 'FD');
+      doc.text(h, cx+3, y+4.8);
+      cx += cols[i];
+    });
+    y += 7;
+
+    artikelRows.forEach((r, idx) => {
+      cx = M;
+      const vals = [
+        r.a.name,
+        fmt(r.cogs),
+        r.hjual ? fmt(r.hjual) : '—',
+        String(r.units),
+        String(r.terjual),
+        r.revenue ? fmt(r.revenue) : '—',
+        r.cogsProduksi ? fmt(r.profit) : '—',
+        r.margin!==null ? r.margin+'%' : '—'
+      ];
+      doc.setFont('helvetica','normal'); doc.setFontSize(7);
+      vals.forEach((v,i) => {
+        doc.setFillColor(idx%2===0?245:252, idx%2===0?250:253, idx%2===0?248:251);
+        doc.setDrawColor(200,230,215);
+        doc.rect(cx, y, cols[i], 7, 'FD');
+        if (i===6 && r.cogsProduksi) doc.setTextColor(r.profit>=0?52:248, r.profit>=0?211:113, r.profit>=0?153:113);
+        else doc.setTextColor(30,30,30);
+        doc.text(String(v), cx+3, y+4.8);
+        cx += cols[i];
+      });
+      y += 7;
+    });
+
+    // Total row
+    cx = M;
+    const totalVals = ['Total','',``,String(totalUnit),String(totalTerjual),fmt(totalRevenue),fmt(totalProfit),totalMargin!==null?totalMargin+'%':'—'];
+    doc.setFont('helvetica','bold'); doc.setFontSize(7);
+    totalVals.forEach((v,i) => {
+      doc.setFillColor(230,245,238); doc.setDrawColor(180,220,200);
+      doc.rect(cx, y, cols[i], 7, 'FD');
+      if (i===6) doc.setTextColor(totalProfit>=0?52:248, totalProfit>=0?211:113, totalProfit>=0?153:113);
+      else doc.setTextColor(20,20,20);
+      doc.text(v, cx+3, y+4.8);
+      cx += cols[i];
+    });
+    y += 12;
+
+    // Other cost & notes
+    if (otherCost) {
+      doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(80,80,80);
+      doc.text(`Biaya lain-lain: ${fmt(otherCost)}`, M, y); y += 6;
+    }
+    if (fd.notes) {
+      doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(80,80,80);
+      const lines = doc.splitTextToSize(`Catatan: ${fd.notes}`, W-M*2);
+      doc.text(lines, M, y); y += lines.length*5+4;
+    }
+
+    // Footer
+    doc.setDrawColor(52,211,153); doc.line(M, 286, W-M, 286);
+    doc.setFontSize(7); doc.setTextColor(150,150,150);
+    doc.text(`Rena Omber · Finance · ${p.name} · ${b.name} · ${new Date().toLocaleDateString('id-ID')}`, M, 291);
+
+    const filename = `Finance_${p.name}_${b.name}_${new Date().toLocaleDateString('id-ID').replace(/\//g,'-')}.pdf`.replace(/\s+/g,'_');
+    doc.save(filename);
+
+    // Auto-upload ke vault docs/finance
+    const blob = doc.output('blob');
+    await sb.storage.from('vault-docs').upload(`finance/${filename}`, blob, { contentType:'application/pdf', upsert:true });
   }
 
   function updateNotes(key, val) {
