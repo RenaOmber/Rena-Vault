@@ -303,7 +303,8 @@
     }
 
     // Calculate date range
-    const dates = projTasks.flatMap(t=>[new Date(t.start_date), new Date(t.end_date)]);
+    const parseD = (str) => { const [y,m,d]=str.split('-').map(Number); return new Date(y,m-1,d); };
+    const dates = projTasks.flatMap(t=>[parseD(t.start_date), parseD(t.end_date)]);
     let minDate = new Date(Math.min(...dates));
     let maxDate = new Date(Math.max(...dates));
     // Extend to full weeks
@@ -314,6 +315,7 @@
     if (diffDays < 28) maxDate = new Date(minDate.getTime() + 28*24*60*60*1000);
 
     const today = new Date(); today.setHours(0,0,0,0);
+    const todayStr = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
     const allDays = [];
     for (let d = new Date(minDate); d <= maxDate; d.setDate(d.getDate()+1)) {
       allDays.push(new Date(d));
@@ -347,25 +349,29 @@
         <div class="gantt-day-labels">
           ${w.days.map(d=>{
             const isWeekend = d.getDay()===0||d.getDay()===6;
-            const isToday = d.toDateString()===today.toDateString();
+            const isToday = d.getFullYear()===today.getFullYear()&&d.getMonth()===today.getMonth()&&d.getDate()===today.getDate();
             return `<div class="gantt-day-label${isWeekend?' weekend':''}${isToday?' today':''}">${DAYS[d.getDay()===0?6:d.getDay()-1]}</div>`;
           }).join('')}
         </div>
       </div>`).join('');
 
     // Build task rows
+    const parseLocalDate = (str) => {
+      const [y,m,d] = str.split('-').map(Number);
+      return new Date(y, m-1, d);
+    };
     const buildRow = (task, numPrefix='', isGroup=false) => {
-      const start = new Date(task.start_date); start.setHours(0,0,0,0);
-      const end = new Date(task.end_date); end.setHours(0,0,0,0);
-      const startIdx = allDays.findIndex(d=>d.toDateString()===start.toDateString());
-      const endIdx = allDays.findIndex(d=>d.toDateString()===end.toDateString());
+      const start = parseLocalDate(task.start_date);
+      const end = parseLocalDate(task.end_date);
+      const startIdx = allDays.findIndex(d=>d.getFullYear()===start.getFullYear()&&d.getMonth()===start.getMonth()&&d.getDate()===start.getDate());
+      const endIdx = allDays.findIndex(d=>d.getFullYear()===end.getFullYear()&&d.getMonth()===end.getMonth()&&d.getDate()===end.getDate());
       const barLeft = startIdx * dayW;
       const barWidth = ((endIdx - startIdx + 1) * dayW) - 4;
       const barClass = {todo:'bar-todo',progress:'bar-progress',done:'bar-done',blocked:'bar-blocked'}[task.status]||'bar-todo';
 
       const dayCells = allDays.map(d=>{
         const isWeekend = d.getDay()===0||d.getDay()===6;
-        const isToday = d.toDateString()===today.toDateString();
+        const isToday = d.getFullYear()===today.getFullYear()&&d.getMonth()===today.getMonth()&&d.getDate()===today.getDate();
         return `<div class="day-cell${isWeekend?' weekend':''}${isToday?' today-col':''}"></div>`;
       }).join('');
 
