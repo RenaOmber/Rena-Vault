@@ -611,11 +611,11 @@
   function updateVendor(field, val) {
     const p = products.find(p=>String(p.id)===String(activeProductId));
     if (!p) return;
-    p.batches[activeBatchIdx].artikels[activeArtikelIdx][field] = val;
     const a = p.batches[activeBatchIdx].artikels[activeArtikelIdx];
-    const cogsEl = document.getElementById('cogs-display');
-    if (cogsEl) cogsEl.textContent = 'Rp ' + recalcCOGS(a).toLocaleString('id-ID');
+    a[field] = field === 'jumlahWarna' ? (parseInt(val)||1) : val;
+    // Always re-render to reflect updated COGS and color charge preview
     scheduleSave(p);
+    renderProductPage();
   }
 
   function updateArtikelField(field, val) {
