@@ -533,7 +533,7 @@
     doc.setFontSize(7); doc.setTextColor(150,150,150);
     doc.text(`Rena Omber · Finance · ${p.name} · ${b.name} · ${new Date().toLocaleDateString('id-ID')}`, M, 291);
 
-    const filename = `Finance_${p.name}_${b.name}_${new Date().toLocaleDateString('id-ID').replace(/\//g,'-')}.pdf`.replace(/\s+/g,'_');
+    const filename = `Finance_${p.name}_${b.name}_${new Date().toISOString().split('T')[0]}.pdf`.replace(/\s+/g,'_');
     doc.save(filename);
 
     // Auto-upload ke vault docs/finance
