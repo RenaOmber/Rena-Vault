@@ -370,17 +370,15 @@
       }).join('');
 
       return `
-        <div class="gantt-row${isGroup?' group-row':''}">
+        <div class="gantt-row${isGroup?' group-row':''}" ${!isGroup?`onclick="openTaskModal('${task.id}')" style="cursor:pointer;"`:''}>
           <div class="task-cell">
             <span class="task-number">${numPrefix}</span>
-            <span class="task-name" onclick="openTaskModal('${task.id}')">${task.name}</span>
-            <div class="task-actions">
-              <button class="task-btn" onclick="openTaskModal('${task.id}')" title="Edit">✎</button>
-            </div>
+            <span class="task-name">${task.name}</span>
+            ${!isGroup?`<div class="task-actions"><button class="task-btn" onclick="event.stopPropagation();openTaskModal('${task.id}')" title="Edit">✎</button></div>`:''}
           </div>
           <div class="bar-area">
             ${dayCells}
-            ${startIdx>=0&&endIdx>=0?`<div class="gantt-bar ${barClass}" style="left:${barLeft+2}px;width:${barWidth}px;" onclick="openTaskModal('${task.id}')" title="${task.name}">${barWidth>60?task.name:''}</div>`:''}
+            ${startIdx>=0&&endIdx>=0?`<div class="gantt-bar ${barClass}" style="left:${barLeft+2}px;width:${barWidth}px;" title="${task.name}">${barWidth>60?task.name:''}</div>`:''}
           </div>
         </div>`;
     };
@@ -391,7 +389,7 @@
       // Group header row (synthetic)
       const gStart = groupTasks.reduce((m,t)=>new Date(t.start_date)<m?new Date(t.start_date):m, new Date(groupTasks[0].start_date));
       const gEnd = groupTasks.reduce((m,t)=>new Date(t.end_date)>m?new Date(t.end_date):m, new Date(groupTasks[0].end_date));
-      const fakeGroup = { id:'group_'+groupNum, name:groupName, start_date:gStart.toISOString().split('T')[0], end_date:gEnd.toISOString().split('T')[0], status:'todo' };
+      const fakeGroup = { id:null, name:groupName, start_date:gStart.toISOString().split('T')[0], end_date:gEnd.toISOString().split('T')[0], status:'todo' };
       taskRows += buildRow(fakeGroup, String(groupNum), true);
       groupTasks.forEach((t,i) => { taskRows += buildRow(t, `${groupNum}.${i+1}`); });
       groupNum++;
