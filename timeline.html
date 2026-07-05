@@ -402,7 +402,9 @@
       const endIdx = allDays.findIndex(d=>d.getFullYear()===end.getFullYear()&&d.getMonth()===end.getMonth()&&d.getDate()===end.getDate());
       const barLeft = startIdx * dayW;
       const barWidth = ((endIdx - startIdx + 1) * dayW) - 4;
-      const barClass = {todo:'bar-todo',progress:'bar-progress',done:'bar-done',blocked:'bar-blocked'}[task.status]||'bar-todo';
+      const planBarStyle = 'background:rgba(150,160,200,0.25);border:1.5px solid rgba(150,160,200,0.5);color:rgba(200,210,240,0.8);';
+      const actualStatus = task.actual_status || task.status;
+      const barClass = {todo:'bar-todo',progress:'bar-progress',done:'bar-done',blocked:'bar-blocked'}[actualStatus]||'bar-todo';
 
       // Actual bar
       let actualBarHtml = '';
@@ -434,7 +436,7 @@
             <div style="display:flex;align-items:center;gap:6px;width:100%;">
               <span class="task-number">${numPrefix}</span>
               <span class="task-name">${task.name}</span>
-              ${!isGroup?`<span style="font-size:9px;padding:2px 6px;border-radius:8px;font-weight:600;flex-shrink:0;background:${{todo:'rgba(79,110,247,0.2)',progress:'rgba(251,191,36,0.2)',done:'rgba(52,211,153,0.2)',blocked:'rgba(248,113,113,0.2)'}[task.status]};color:${{todo:'#7b9fff',progress:'#fbbf24',done:'#34d399',blocked:'#f87171'}[task.status]};">${{todo:'TO DO',progress:'IN PROGRESS',done:'DONE',blocked:'BLOCKED'}[task.status]}</span>`:''}
+              ${!isGroup?`<span style="font-size:9px;padding:2px 6px;border-radius:8px;font-weight:600;flex-shrink:0;background:${{todo:'rgba(79,110,247,0.2)',progress:'rgba(251,191,36,0.2)',done:'rgba(52,211,153,0.2)',blocked:'rgba(248,113,113,0.2)'}[task.actual_status||task.status||'todo']};color:${{todo:'#7b9fff',progress:'#fbbf24',done:'#34d399',blocked:'#f87171'}[task.actual_status||task.status||'todo']};">${{todo:'TO DO',progress:'IN PROGRESS',done:'DONE',blocked:'BLOCKED'}[task.actual_status||task.status||'todo']}</span>`:''}
               ${!isGroup?`<div class="task-actions"><button class="task-btn" onclick="event.stopPropagation();openTaskModal('${task.id}')" title="Edit">✎</button></div>`:''}
             </div>
             ${!isGroup?`<div style="display:flex;flex-direction:column;gap:1px;padding-left:28px;">
@@ -446,7 +448,7 @@
             <div style="position:relative;height:20px;width:100%;">
               ${dayCells.replace(/<div class="day-cell/g, '<div style="height:20px;" class="day-cell')}
               ${daySeps}
-              ${startIdx>=0&&endIdx>=0?`<div class="gantt-bar ${barClass}" style="left:${barLeft+2}px;width:${barWidth}px;top:0;transform:none;" title="Plan: ${task.start_date} - ${task.end_date}">${barWidth>60?task.name:''}</div>`:''}
+              ${startIdx>=0&&endIdx>=0?`<div class="gantt-bar" style="${planBarStyle}left:${barLeft+2}px;width:${barWidth}px;top:0;transform:none;" title="Plan: ${task.start_date} - ${task.end_date}">${barWidth>60?task.name:''}</div>`:''}
             </div>
             ${hasActual?`<div style="position:relative;height:20px;width:100%;">
               ${actualBarHtml.replace('top:calc(50% + 12px)', 'top:0;transform:none;')}
@@ -493,7 +495,7 @@
       document.getElementById('t-end').value = t.end_date;
       document.getElementById('t-actual-start').value = t.actual_start||'';
       document.getElementById('t-actual-end').value = t.actual_end||'';
-      document.getElementById('t-status').value = t.status;
+      document.getElementById('t-status').value = t.actual_status || t.status || 'todo';
       document.getElementById('t-group').value = t.group_name||'';
       document.getElementById('t-notes').value = t.notes||'';
     } else {
@@ -513,9 +515,10 @@
   async function cycleStatus(id) {
     const t = tasks.find(t=>t.id===id);
     if (!t) return;
-    const nextIdx = (STATUS_CYCLE.indexOf(t.status)+1) % STATUS_CYCLE.length;
-    t.status = STATUS_CYCLE[nextIdx];
-    await sb.from('timeline_tasks').update({ status: t.status }).eq('id', id);
+    const current = t.actual_status || t.status || 'todo';
+    const nextIdx = (STATUS_CYCLE.indexOf(current)+1) % STATUS_CYCLE.length;
+    t.actual_status = STATUS_CYCLE[nextIdx];
+    await sb.from('timeline_tasks').update({ actual_status: t.actual_status }).eq('id', id);
     renderGantt();
   }
 
@@ -535,7 +538,8 @@
       end_date: end,
       actual_start: document.getElementById('t-actual-start').value||null,
       actual_end: document.getElementById('t-actual-end').value||null,
-      status: document.getElementById('t-status').value,
+      status: 'plan',
+      actual_status: document.getElementById('t-status').value,
       group_name: document.getElementById('t-group').value.trim()||null,
       notes: document.getElementById('t-notes').value.trim()||null,
       sort_order: editingTaskId ? tasks.find(t=>t.id===editingTaskId)?.sort_order||0 : tasks.length
