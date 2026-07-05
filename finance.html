@@ -155,8 +155,24 @@
     return v ? (v.price_per_unit||0) : 0;
   }
 
+  function getVendorKaosPrice(vendorId, tebalKain, potongan) {
+    const v = allVendors.find(v => v.id === vendorId);
+    if (!v || v.type !== 'kaos') return 0;
+    const entry = v.data?.matrix?.[tebalKain];
+    if (!entry) return 0;
+    if (potongan === 'oversized') return entry.oversized || entry.regular || 0;
+    if (potongan === 'longsleeve') return entry.longsleeve || entry.regular || 0;
+    return entry.regular || 0;
+  }
+
   function artikelCOGS(a) {
-    return getVendorPrice(a.vendorKaos) + getVendorPrice(a.vendorHangtag) + getVendorPrice(a.vendorPackaging);
+    const kaosPrice = getVendorKaosPrice(a.vendorKaos, a.tebalKain, a.potongan);
+    const jumlahWarna = parseInt(a.jumlahWarna)||1;
+    const v = allVendors.find(v => v.id === a.vendorKaos);
+    const colorCharge = v?.data?.colorCharge || 0;
+    const baseColors = v?.data?.baseColors || 4;
+    const extraWarna = jumlahWarna > baseColors ? (jumlahWarna - baseColors) * colorCharge : 0;
+    return kaosPrice + extraWarna + getVendorPrice(a.vendorHangtag) + getVendorPrice(a.vendorPackaging);
   }
 
   async function renderFinance() {

@@ -229,9 +229,17 @@
     return v ? (v.price_per_unit||0) : 0;
   }
 
+  function getColorCharge(vendorId) {
+    const v = vendors.find(v => v.id === vendorId);
+    return v?.data?.colorCharge || 0;
+  }
+
   function recalcCOGS(a) {
     const kaosPrice = getVendorKaosPrice(a.vendorKaos, a.tebalKain, a.potongan);
-    return kaosPrice + getVendorPrice(a.vendorHangtag) + getVendorPrice(a.vendorPackaging);
+    const jumlahWarna = parseInt(a.jumlahWarna)||1;
+    const baseColors = (() => { const v = vendors.find(v=>v.id===a.vendorKaos); return v?.data?.baseColors||4; })();
+    const extraWarna = jumlahWarna > baseColors ? (jumlahWarna - baseColors) * getColorCharge(a.vendorKaos) : 0;
+    return kaosPrice + extraWarna + getVendorPrice(a.vendorHangtag) + getVendorPrice(a.vendorPackaging);
   }
   if (sessionStorage.getItem('ro_auth') === '1') showMain();
 
@@ -255,7 +263,7 @@
       mockupUrl: '', mockupName: '', mockupPath: '',
       designUrl: '', designName: '', designPath: '',
       sizechartUrl: '', sizechartName: '', sizechartPath: '',
-      sablon: '', sablonLink: '', warnaKaos: '', tebalKain: '', potongan: 'regular',
+      sablon: '', sablonLink: '', warnaKaos: '', tebalKain: '', potongan: 'regular', jumlahWarna: 1,
       vendorKaos: '', vendorHangtag: '', vendorPackaging: '',
       sizes: { S:0, M:0, L:0, XL:0, XXL:0 },
       masukVendor: '', keluarVendor: '', keterangan: ''
@@ -469,6 +477,26 @@
               <option value="oversized" ${a.potongan==='oversized'?'selected':''}>Oversized (+Rp 5.000)</option>
               <option value="longsleeve" ${a.potongan==='longsleeve'?'selected':''}>Longsleeve (+Rp 10.000)</option>
             </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <div class="form-label">Jumlah Warna Sablon</div>
+            <input type="number" min="1" class="form-input" value="${a.jumlahWarna||1}" 
+              onchange="updateVendor('jumlahWarna',parseInt(this.value)||1)" />
+          </div>
+          <div class="form-group">
+            <div class="form-label">Biaya tambahan warna (auto)</div>
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:9px 12px;font-size:12px;color:var(--text2);">
+              ${(() => {
+                const jw = parseInt(a.jumlahWarna)||1;
+                const cc = getColorCharge(a.vendorKaos);
+                const vk = vendors.find(v=>v.id===a.vendorKaos);
+                const bc = vk?.data?.baseColors||4;
+                const extra = jw > bc ? (jw-bc)*cc : 0;
+                return extra ? 'Rp ' + extra.toLocaleString('id-ID') : jw <= bc ? `Tidak ada (inkl. s.d ${bc} warna)` : 'Vendor belum set charge';
+              })()}
+            </div>
           </div>
         </div>
         <div class="form-section-title" style="margin-top:4px;">Vendor Lainnya</div>

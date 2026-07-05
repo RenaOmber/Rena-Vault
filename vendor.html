@@ -167,6 +167,19 @@
         <div class="matrix-input-label" style="text-align:center;">Oversized +5k / Longsleeve +10k</div>
       </div>
       <div id="matrix-rows"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;">
+        <div class="form-group">
+          <div class="form-label">Inklusif berapa warna</div>
+          <input type="number" class="form-input" id="f-base-colors" placeholder="4" min="1" />
+        </div>
+        <div class="form-group">
+          <div class="form-label">Biaya tambahan per warna (Rp)</div>
+          <div style="position:relative;">
+            <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text3);">Rp</span>
+            <input type="number" class="form-input" id="f-color-charge" style="padding-left:32px;" placeholder="5000" min="0" />
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- NON-KAOS: single price -->
@@ -323,7 +336,11 @@
       document.getElementById('f-notes').value = v.notes || '';
       document.getElementById('f-price').value = v.price_per_unit || '';
       toggleMatrixForm();
-      if (v.type === 'kaos') buildMatrixRows(v.data?.matrix || {});
+      if (v.type === 'kaos') {
+        buildMatrixRows(v.data?.matrix || {});
+        document.getElementById('f-color-charge').value = v.data?.colorCharge || '';
+        document.getElementById('f-base-colors').value = v.data?.baseColors || '';
+      }
     } else {
       document.getElementById('f-name').value = '';
       document.getElementById('f-type').value = 'kaos';
@@ -359,8 +376,9 @@
         const val = parseInt(document.getElementById(`mx-${t}`)?.value)||0;
         if (val) matrix[t] = { regular: val, oversized: val+5000, longsleeve: val+10000 };
       });
-      row.data = { matrix };
-      // Set base price as lowest regular for reference
+      const colorCharge = parseInt(document.getElementById('f-color-charge')?.value)||0;
+      const baseColors = parseInt(document.getElementById('f-base-colors')?.value)||4;
+      row.data = { matrix, colorCharge, baseColors };
       const prices = Object.values(matrix).map(m => m.regular).filter(Boolean);
       row.price_per_unit = prices.length ? Math.min(...prices) : 0;
     } else {
