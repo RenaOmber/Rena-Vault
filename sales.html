@@ -151,7 +151,7 @@
 <script>
   // ─── CONFIG ────────────────────────────────────────────────
   const SUPABASE_URL  = 'https://fqvfnohhilkzvijqukfg.supabase.co';
-  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxdmZub2hoaWxrenZpanF1a2ZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDU4NjAsImV4cCI6MjA5ODEyMTg2MH0.er10SEsmDlnx1yRLGJK2fKtLhQR40vFOXVJzH9yakCg';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxdmZub2hoaWxrenZianF1a2ZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDU4NjAsImV4cCI6MjA5ODEyMTg2MH0.er10SEsmDlnx1yRLGJK2fKtLhQR40vFOXVJzH9yakCg';
   const PASSWORD_HASH = '3f0e57f3e719957119f0ba621629a3ae0ed1ec95d1ad8a91bd980b2896b679e4';
   // ───────────────────────────────────────────────────────────
 
@@ -302,21 +302,41 @@
         </div>
       </div>
 
-      <!-- SIZE BREAKDOWN -->
-      <div class="section-title">Penjualan per Size</div>
-      <div class="size-grid">
-        ${SIZES.map(sz => {
-          const sold = sizeSold[sz]||0;
-          const prod = sizeProd[sz]||0;
-          const pct = prod ? Math.round(sold/prod*100) : 0;
-          return `<div class="size-card">
-            <div class="size-label">${sz}</div>
-            <div class="size-sold">${sold}</div>
-            <div class="size-stock">dari ${prod} unit</div>
-            <div class="size-bar"><div class="size-bar-fill" style="width:${pct}%;"></div></div>
-          </div>`;
-        }).join('')}
-      </div>
+      <!-- SIZE BREAKDOWN PER ARTIKEL -->
+      <div class="section-title">Penjualan per Size per Artikel</div>
+      <table class="artikel-table" style="margin-bottom:24px;">
+        <thead>
+          <tr>
+            <th>Artikel</th>
+            ${SIZES.map(sz=>`<th class="right">${sz}</th>`).join('')}
+            <th class="right">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${b.artikels.map(a => {
+            const sizeSoldArtikel = {};
+            SIZES.forEach(sz => { sizeSoldArtikel[sz]=0; });
+            batchTx.filter(t=>t.artikel_name===a.name).forEach(t=>{ sizeSoldArtikel[t.size]=(sizeSoldArtikel[t.size]||0)+t.qty; });
+            const totalSoldArtikel = SIZES.reduce((s,sz)=>s+(sizeSoldArtikel[sz]||0),0);
+            return `<tr>
+              <td style="font-weight:500;">${a.name}</td>
+              ${SIZES.map(sz => {
+                const sold = sizeSoldArtikel[sz]||0;
+                const prod = parseInt(a.sizes[sz])||0;
+                return `<td class="right" style="color:${sold>0?'var(--green)':'var(--text3)'};">${sold}<span style="font-size:10px;color:var(--text3);">/${prod}</span></td>`;
+              }).join('')}
+              <td class="right" style="font-weight:600;color:var(--green);">${totalSoldArtikel}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+        <tfoot>
+          <tr style="border-top:2px solid var(--border);">
+            <td style="font-weight:600;padding:10px 12px;">Total</td>
+            ${SIZES.map(sz=>`<td class="right" style="font-weight:600;color:var(--green);padding:10px 12px;">${sizeSold[sz]||0}<span style="font-size:10px;color:var(--text3);">/${sizeProd[sz]||0}</span></td>`).join('')}
+            <td class="right" style="font-weight:600;color:var(--green);padding:10px 12px;">${batchTx.reduce((s,t)=>s+t.qty,0)}</td>
+          </tr>
+        </tfoot>
+      </table>
 
       <!-- ARTIKEL BREAKDOWN -->
       <div class="section-title">Penjualan per Artikel</div>
