@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rena Omber — Penjualan</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0f1e; --bg2: #111827; --bg3: #1a2235;
+      --border: rgba(99,130,255,0.12); --border-hover: rgba(99,130,255,0.28);
+      --text: #e8eaf6; --text2: #8892b0; --text3: #4a5568;
+      --accent: #4f6ef7; --accent-dim: rgba(79,110,247,0.12);
+      --green: #34d399; --green-dim: rgba(52,211,153,0.1);
+      --red: #f87171; --yellow: #fbbf24;
+    }
+    html, body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; min-height: 100vh; }
+
+    #gate { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
+    .gate-mark { width: 40px; height: 4px; background: var(--accent); border-radius: 2px; margin: 0 auto 16px; }
+    .gate-form { display: flex; gap: 8px; margin-top: 8px; }
+    .gate-form input { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 14px; padding: 10px 14px; width: 220px; outline: none; }
+    .gate-form button { background: var(--accent); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; padding: 10px 18px; }
+    .gate-error { font-size: 12px; color: var(--red); min-height: 16px; text-align: center; }
+
+    #main { display: none; }
+    .top-bar { display: flex; align-items: center; justify-content: space-between; padding: 16px 28px; border-bottom: 1px solid var(--border); }
+    .top-left { display: flex; align-items: center; gap: 10px; }
+    .top-mark { width: 22px; height: 3px; background: var(--accent); border-radius: 2px; }
+    .top-name { font-size: 13px; font-weight: 500; }
+    .top-sub { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; }
+    .top-right { display: flex; gap: 8px; }
+    .btn-ghost { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text2); cursor: pointer; font-family: inherit; font-size: 12px; padding: 6px 14px; text-decoration: none; display: inline-flex; align-items: center; transition: border-color 0.15s; }
+    .btn-ghost:hover { border-color: var(--border-hover); color: var(--text); }
+
+    .layout { display: grid; grid-template-columns: 220px 1fr; min-height: calc(100vh - 53px); }
+
+    /* SIDEBAR */
+    .sidebar { border-right: 1px solid var(--border); padding: 20px 0; overflow-y: auto; }
+    .sidebar-label { font-size: 10px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; padding: 0 16px; margin-bottom: 8px; }
+    .batch-item { padding: 9px 16px; cursor: pointer; border-left: 2px solid transparent; font-size: 13px; color: var(--text2); transition: background 0.1s; }
+    .batch-item:hover { background: var(--bg2); color: var(--text); }
+    .batch-item.active { border-left-color: var(--accent); background: var(--bg2); color: var(--text); font-weight: 500; }
+    .batch-item-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
+
+    /* CONTENT */
+    .content { padding: 28px 36px; overflow-y: auto; }
+    .content-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; }
+    .content-title { font-size: 20px; font-weight: 600; }
+    .content-sub { font-size: 12px; color: var(--text3); margin-top: 3px; }
+
+    /* INPUT FORM */
+    .input-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; margin-bottom: 24px; }
+    .input-card-title { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; }
+    .input-row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+    .input-group { display: flex; flex-direction: column; gap: 4px; }
+    .input-label { font-size: 11px; color: var(--text2); }
+    .form-input { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 13px; padding: 8px 10px; outline: none; transition: border-color 0.15s; }
+    .form-input:focus { border-color: var(--border-hover); }
+    .btn-add { background: var(--accent); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; padding: 9px 16px; white-space: nowrap; }
+    .btn-add:hover { opacity: 0.85; }
+
+    /* SUMMARY */
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 24px; }
+    .summary-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+    .summary-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 5px; }
+    .summary-value { font-size: 18px; font-weight: 600; }
+
+    /* SIZE BREAKDOWN */
+    .section-title { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; }
+    .size-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 24px; }
+    .size-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; text-align: center; }
+    .size-label { font-size: 12px; color: var(--text3); margin-bottom: 4px; }
+    .size-sold { font-size: 18px; font-weight: 600; color: var(--green); }
+    .size-stock { font-size: 11px; color: var(--text3); margin-top: 2px; }
+    .size-bar { height: 3px; background: var(--bg3); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+    .size-bar-fill { height: 100%; background: var(--green); border-radius: 2px; transition: width 0.3s; }
+
+    /* ARTIKEL BREAKDOWN */
+    .artikel-table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+    .artikel-table th { font-size: 11px; color: var(--text3); font-weight: 500; text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+    .artikel-table th.right { text-align: right; }
+    .artikel-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .artikel-table td.right { text-align: right; }
+    .sell-through { font-size: 11px; padding: 2px 7px; border-radius: 10px; font-weight: 500; }
+    .st-high { background: var(--green-dim); color: var(--green); }
+    .st-mid { background: rgba(251,191,36,0.1); color: var(--yellow); }
+    .st-low { background: rgba(248,113,113,0.1); color: var(--red); }
+
+    /* TRANSACTION LOG */
+    .tx-list { display: flex; flex-direction: column; gap: 6px; }
+    .tx-item { display: flex; align-items: center; gap: 12px; background: var(--bg2); border: 1px solid var(--border); border-radius: 7px; padding: 9px 12px; font-size: 12px; }
+    .tx-date { color: var(--text3); white-space: nowrap; min-width: 80px; }
+    .tx-info { flex: 1; color: var(--text2); }
+    .tx-info strong { color: var(--text); }
+    .tx-size { background: var(--accent-dim); color: var(--accent); border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 500; }
+    .tx-qty { font-weight: 600; color: var(--green); min-width: 40px; text-align: right; }
+    .tx-del { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 14px; padding: 0 4px; transition: color 0.15s; }
+    .tx-del:hover { color: var(--red); }
+
+    .empty { text-align: center; padding: 40px; color: var(--text3); font-size: 13px; }
+    .placeholder { display: flex; align-items: center; justify-content: center; height: calc(100vh - 53px); color: var(--text3); font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<div id="gate">
+  <div>
+    <div class="gate-mark"></div>
+    <div style="font-size:18px;font-weight:500;text-align:center;">Rena Omber</div>
+    <div style="font-size:12px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;text-align:center;margin-top:4px;">Penjualan</div>
+  </div>
+  <div>
+    <div class="gate-form">
+      <input type="password" id="pw-input" placeholder="Password" onkeydown="if(event.key==='Enter')checkPw()" />
+      <button onclick="checkPw()">Masuk</button>
+    </div>
+    <div class="gate-error" id="pw-error"></div>
+  </div>
+</div>
+
+<div id="main">
+  <div class="top-bar">
+    <div class="top-left">
+      <div class="top-mark"></div>
+      <div>
+        <div class="top-name">Rena Omber</div>
+        <div class="top-sub">Penjualan</div>
+      </div>
+    </div>
+    <div class="top-right">
+      <a href="finance.html" class="btn-ghost">Finance</a>
+      <a href="produk.html" class="btn-ghost">Produk</a>
+      <a href="index.html" class="btn-ghost">Vault</a>
+      <button class="btn-ghost" onclick="logout()">Keluar</button>
+    </div>
+  </div>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-label">Batch</div>
+      <div id="sidebar-batches"></div>
+    </aside>
+    <main class="content" id="content">
+      <div class="placeholder">Pilih batch di sidebar</div>
+    </main>
+  </div>
+</div>
+
+<script>
+  // ─── CONFIG ────────────────────────────────────────────────
+  const SUPABASE_URL  = 'https://fqvfnohhilkzvijqukfg.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxdmZub2hoaWxrenZpanF1a2ZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDU4NjAsImV4cCI6MjA5ODEyMTg2MH0.er10SEsmDlnx1yRLGJK2fKtLhQR40vFOXVJzH9yakCg';
+  const PASSWORD_HASH = '3f0e57f3e719957119f0ba621629a3ae0ed1ec95d1ad8a91bd980b2896b679e4';
+  // ───────────────────────────────────────────────────────────
+
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  const SIZES = ['S','M','L','XL','XXL'];
+  let allProducts = [], transactions = [];
+  let activeProdId = null, activeBatchIdx = null, activeBatchKey = null;
+
+  async function sha256(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+  async function checkPw() {
+    const val = document.getElementById('pw-input').value.trim();
+    if ((await sha256(val)) === PASSWORD_HASH) {
+      sessionStorage.setItem('ro_auth','1');
+      await showMain();
+    } else {
+      document.getElementById('pw-error').textContent = 'Password salah.';
+      document.getElementById('pw-input').value = '';
+    }
+  }
+  function logout() { sessionStorage.removeItem('ro_auth'); location.reload(); }
+  async function showMain() {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+    await loadAll();
+  }
+  if (sessionStorage.getItem('ro_auth') === '1') showMain();
+
+  async function loadAll() {
+    const [prodRes, txRes] = await Promise.all([
+      sb.from('products').select('*').order('created_at'),
+      sb.from('sales_transactions').select('*').order('sold_at', { ascending: false })
+    ]);
+    allProducts = (prodRes.data||[]).map(r=>({ id:String(r.id), name:r.name, batches:r.data?.batches||[] }));
+    transactions = txRes.data||[];
+    renderSidebar();
+  }
+
+  function artikelUnits(a) { return SIZES.reduce((s,sz)=>s+(parseInt(a.sizes[sz])||0),0); }
+
+  function renderSidebar() {
+    const el = document.getElementById('sidebar-batches');
+    el.innerHTML = '';
+    allProducts.forEach(p => {
+      p.batches.forEach((b,bi) => {
+        const key = `${p.id}_${bi}`;
+        const batchTx = transactions.filter(t=>t.product_id===p.id && t.batch_idx===bi);
+        const totalSold = batchTx.reduce((s,t)=>s+t.qty,0);
+        const totalUnits = b.artikels.reduce((s,a)=>s+artikelUnits(a),0);
+        const div = document.createElement('div');
+        div.className = 'batch-item' + (key===activeBatchKey?' active':'');
+        div.innerHTML = `<div>${p.name}</div><div class="batch-item-sub">${b.name} · ${totalSold}/${totalUnits} terjual</div>`;
+        div.onclick = () => selectBatch(p.id, bi, key);
+        el.appendChild(div);
+      });
+    });
+  }
+
+  function selectBatch(prodId, batchIdx, key) {
+    activeProdId = prodId;
+    activeBatchIdx = batchIdx;
+    activeBatchKey = key;
+    renderSidebar();
+    renderContent();
+  }
+
+  function renderContent() {
+    const p = allProducts.find(p=>p.id===activeProdId);
+    const b = p.batches[activeBatchIdx];
+    const batchTx = transactions.filter(t=>t.product_id===activeProdId && t.batch_idx===activeBatchIdx);
+
+    // Calculate totals
+    const totalProduksi = b.artikels.reduce((s,a)=>s+artikelUnits(a),0);
+    const totalTerjual = batchTx.reduce((s,t)=>s+t.qty,0);
+    const stokSisa = totalProduksi - totalTerjual;
+
+    // Size breakdown
+    const sizeSold = {};
+    const sizeProd = {};
+    SIZES.forEach(sz => { sizeSold[sz]=0; sizeProd[sz]=0; });
+    b.artikels.forEach(a => SIZES.forEach(sz => { sizeProd[sz]+=(parseInt(a.sizes[sz])||0); }));
+    batchTx.forEach(t => { sizeSold[t.size]=(sizeSold[t.size]||0)+t.qty; });
+
+    // Artikel breakdown
+    const artikelSold = {};
+    b.artikels.forEach(a => { artikelSold[a.name]=0; });
+    batchTx.forEach(t => { artikelSold[t.artikel_name]=(artikelSold[t.artikel_name]||0)+t.qty; });
+
+    document.getElementById('content').innerHTML = `
+      <div class="content-header">
+        <div>
+          <div class="content-title">${p.name} — ${b.name}</div>
+          <div class="content-sub">${totalProduksi} diproduksi · ${totalTerjual} terjual · ${stokSisa} sisa</div>
+        </div>
+      </div>
+
+      <!-- INPUT -->
+      <div class="input-card">
+        <div class="input-card-title">Tambah Penjualan</div>
+        <div class="input-row">
+          <div class="input-group">
+            <div class="input-label">Tanggal</div>
+            <input type="date" class="form-input" id="inp-date" value="${new Date().toISOString().split('T')[0]}" />
+          </div>
+          <div class="input-group">
+            <div class="input-label">Artikel</div>
+            <select class="form-input" id="inp-artikel">
+              ${b.artikels.map(a=>`<option value="${a.name}">${a.name}</option>`).join('')}
+            </select>
+          </div>
+          <div class="input-group">
+            <div class="input-label">Size</div>
+            <select class="form-input" id="inp-size">
+              ${SIZES.map(s=>`<option value="${s}">${s}</option>`).join('')}
+            </select>
+          </div>
+          <div class="input-group">
+            <div class="input-label">Jumlah</div>
+            <input type="number" class="form-input" id="inp-qty" value="1" min="1" style="width:70px;" />
+          </div>
+          <div class="input-group">
+            <div class="input-label">Catatan</div>
+            <input type="text" class="form-input" id="inp-notes" placeholder="Opsional..." style="width:140px;" />
+          </div>
+          <button class="btn-add" onclick="addTransaction()">+ Tambah</button>
+        </div>
+      </div>
+
+      <!-- SUMMARY -->
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="summary-label">Diproduksi</div>
+          <div class="summary-value">${totalProduksi}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Terjual</div>
+          <div class="summary-value" style="color:var(--green);">${totalTerjual}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Stok Sisa</div>
+          <div class="summary-value" style="color:${stokSisa>0?'var(--yellow)':'var(--green)'};">${stokSisa}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Sell-through</div>
+          <div class="summary-value" style="color:${totalProduksi?Math.round(totalTerjual/totalProduksi*100):0 >= 70?'var(--green)':'var(--yellow)'};">${totalProduksi?Math.round(totalTerjual/totalProduksi*100):0}%</div>
+        </div>
+      </div>
+
+      <!-- SIZE BREAKDOWN -->
+      <div class="section-title">Penjualan per Size</div>
+      <div class="size-grid">
+        ${SIZES.map(sz => {
+          const sold = sizeSold[sz]||0;
+          const prod = sizeProd[sz]||0;
+          const pct = prod ? Math.round(sold/prod*100) : 0;
+          return `<div class="size-card">
+            <div class="size-label">${sz}</div>
+            <div class="size-sold">${sold}</div>
+            <div class="size-stock">dari ${prod} unit</div>
+            <div class="size-bar"><div class="size-bar-fill" style="width:${pct}%;"></div></div>
+          </div>`;
+        }).join('')}
+      </div>
+
+      <!-- ARTIKEL BREAKDOWN -->
+      <div class="section-title">Penjualan per Artikel</div>
+      <table class="artikel-table" style="margin-bottom:24px;">
+        <thead>
+          <tr>
+            <th>Artikel</th>
+            <th class="right">Diproduksi</th>
+            <th class="right">Terjual</th>
+            <th class="right">Sisa</th>
+            <th class="right">Sell-through</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${b.artikels.map(a => {
+            const prod = artikelUnits(a);
+            const sold = artikelSold[a.name]||0;
+            const sisa = prod - sold;
+            const st = prod ? Math.round(sold/prod*100) : 0;
+            const stClass = st>=70?'st-high':st>=40?'st-mid':'st-low';
+            return `<tr>
+              <td style="font-weight:500;">${a.name}</td>
+              <td class="right">${prod}</td>
+              <td class="right" style="color:var(--green);">${sold}</td>
+              <td class="right" style="color:${sisa>0?'var(--yellow)':'var(--green)'};">${sisa}</td>
+              <td class="right"><span class="sell-through ${stClass}">${st}%</span></td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+
+      <!-- TRANSACTION LOG -->
+      <div class="section-title">Log Transaksi</div>
+      ${batchTx.length ? `
+        <div class="tx-list">
+          ${batchTx.map(t=>`
+            <div class="tx-item">
+              <div class="tx-date">${new Date(t.sold_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</div>
+              <div class="tx-info"><strong>${t.artikel_name}</strong>${t.notes?' · '+t.notes:''}</div>
+              <span class="tx-size">${t.size}</span>
+              <div class="tx-qty">+${t.qty}</div>
+              <button class="tx-del" onclick="deleteTransaction('${t.id}')" title="Hapus">×</button>
+            </div>`).join('')}
+        </div>` : '<div class="empty">Belum ada transaksi. Tambah penjualan pertama.</div>'}`;
+  }
+
+  async function addTransaction() {
+    const date = document.getElementById('inp-date').value;
+    const artikel = document.getElementById('inp-artikel').value;
+    const size = document.getElementById('inp-size').value;
+    const qty = parseInt(document.getElementById('inp-qty').value)||1;
+    const notes = document.getElementById('inp-notes').value.trim();
+
+    if (!date || !artikel || !size) return;
+
+    const tx = {
+      id: Date.now().toString(),
+      product_id: activeProdId,
+      batch_idx: activeBatchIdx,
+      artikel_name: artikel,
+      size,
+      qty,
+      sold_at: date,
+      notes
+    };
+
+    const { error } = await sb.from('sales_transactions').insert(tx);
+    if (error) { alert('Gagal simpan: ' + error.message); return; }
+
+    transactions.unshift(tx);
+    renderSidebar();
+    renderContent();
+  }
+
+  async function deleteTransaction(id) {
+    if (!confirm('Hapus transaksi ini?')) return;
+    await sb.from('sales_transactions').delete().eq('id', id);
+    transactions = transactions.filter(t=>t.id!==id);
+    renderSidebar();
+    renderContent();
+  }
+</script>
+</body>
+</html>
