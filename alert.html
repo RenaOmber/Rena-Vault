@@ -290,7 +290,28 @@
     const current = t.actual_status || t.status || 'todo';
     const next = STATUS_CYCLE[(STATUS_CYCLE.indexOf(current)+1) % STATUS_CYCLE.length];
     t.actual_status = next;
-    await sb.from('timeline_tasks').update({ actual_status: next }).eq('id', id);
+
+    const today = new Date().toISOString().split('T')[0];
+    const updates = { actual_status: next };
+
+    // Auto-set actual_start when In Progress
+    if (next === 'progress' && !t.actual_start) {
+      updates.actual_start = today;
+      t.actual_start = today;
+    }
+    // Auto-set actual_end when Done
+    if (next === 'done') {
+      updates.actual_end = today;
+      t.actual_end = today;
+      if (!t.actual_start) { updates.actual_start = today; t.actual_start = today; }
+    }
+    // Clear actual_end if un-done
+    if (next !== 'done' && t.actual_end) {
+      updates.actual_end = null;
+      t.actual_end = null;
+    }
+
+    await sb.from('timeline_tasks').update(updates).eq('id', id);
     renderAlerts();
   }
 
