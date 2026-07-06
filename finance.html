@@ -189,9 +189,16 @@
     if (!v||v.type!=='kaos') return 0;
     const entry = v.data?.matrix?.[tebalKain];
     if (!entry) return 0;
-    if (potongan==='oversized') return entry.oversized||entry.regular||0;
-    if (potongan==='longsleeve') return entry.longsleeve||entry.regular||0;
-    return entry.regular||0;
+    const base = entry.regular||0;
+    if (potongan==='oversized') {
+      const charge = v.data?.oversizeCharge||0;
+      return charge ? base+charge : (entry.oversized||base);
+    }
+    if (potongan==='longsleeve') {
+      const charge = v.data?.longsleeveCharge||0;
+      return charge ? base+charge : (entry.longsleeve||base);
+    }
+    return base;
   }
 
   function getVendorPrice(id) { const v = allVendors.find(v=>v.id===id); return v?(v.price_per_unit||0):0; }
