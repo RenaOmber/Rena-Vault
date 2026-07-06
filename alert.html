@@ -501,8 +501,8 @@
   async function loadTasks() {
     const [projRes, taskRes, proofRes, commentRes] = await Promise.all([
       sb.from('timeline_projects').select('*'),
-      sb.from('timeline_tasks').select('*').eq('assigned_to', currentUser),
-      sb.from('task_proofs').select('*').eq('submitted_by', currentUser),
+      sb.from('timeline_tasks').select('*'),
+      sb.from('task_proofs').select('*'),
       sb.from('task_comments').select('*').order('created_at')
     ]);
     allProjects = projRes.data||[];
@@ -531,21 +531,22 @@
     const todayStr = today.toISOString().split('T')[0];
 
     // Today's tasks: start_date <= today <= end_date
-    const todayTasks = allTasks.filter(t => {
+    const myTasks = allTasks.filter(t => t.assigned_to === currentUser);
+    const todayTasks = myTasks.filter(t => {
       const start = parseD(t.start_date);
       const end = parseD(t.end_date);
       return start && end && start <= today && today <= end;
     });
 
     // Overdue: end_date < today and not done
-    const overdue = allTasks.filter(t => {
+    const overdue = myTasks.filter(t => {
       const end = parseD(t.end_date);
       const status = t.actual_status || t.status || 'todo';
       return end && end < today && status !== 'done';
     });
 
     // Upcoming: start_date in next 3 days
-    const upcoming = allTasks.filter(t => {
+    const upcoming = myTasks.filter(t => {
       const start = parseD(t.start_date);
       const diff = start ? Math.round((start-today)/(1000*60*60*24)) : -1;
       return diff > 0 && diff <= 3;
