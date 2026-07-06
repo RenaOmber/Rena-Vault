@@ -315,10 +315,31 @@
     selectProduct(p.id);
   }
 
+  async function deleteStorageFiles(paths) {
+    const validPaths = paths.filter(Boolean);
+    if (!validPaths.length) return;
+    // Extract storage path from signed URL or direct path
+    const storagePaths = validPaths.map(url => {
+      try {
+        const u = new URL(url);
+        const match = u.pathname.match(/\/object\/(?:sign|public)\/vault-docs\/(.+)/);
+        return match ? decodeURIComponent(match[1].split('?')[0]) : null;
+      } catch { return null; }
+    }).filter(Boolean);
+    if (storagePaths.length) await sb.storage.from('vault-docs').remove(storagePaths);
+  }
+
+  function getArtikelImagePaths(a) {
+    return [a.mockupUrl, a.designUrl, a.sizechartUrl, a.labelLeherUrl, a.labelPinggangUrl].filter(Boolean);
+  }
+
   async function deleteProduct(id, e) {
     e.stopPropagation();
     const p = products.find(p=>p.id===id);
     if (!confirm(`Hapus "${p.name}"?`)) return;
+    // Delete all storage files for all artikels in all batches
+    const allPaths = p.batches.flatMap(b => b.artikels.flatMap(a => getArtikelImagePaths(a)));
+    await deleteStorageFiles(allPaths);
     await sb.from('products').delete().eq('id', id);
     products = products.filter(p=>p.id!==id);
     renderSidebar();
@@ -391,6 +412,9 @@
     const batch = p.batches[activeBatchIdx];
     if (batch.artikels.length <= 1) { alert('Minimal satu artikel.'); return; }
     if (!confirm(`Hapus "${batch.artikels[idx].name}"?`)) return;
+    // Delete storage files for this artikel
+    const paths = getArtikelImagePaths(batch.artikels[idx]);
+    deleteStorageFiles(paths);
     batch.artikels.splice(idx, 1);
     activeArtikelIdx = Math.min(activeArtikelIdx, batch.artikels.length - 1);
     scheduleSave(p);
