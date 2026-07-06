@@ -141,6 +141,7 @@
       </div>
     </div>
     <div class="top-right">
+      <a href="alert.html" class="btn-ghost">Alert Harian</a>
       <a href="index.html" class="btn-ghost">Vault</a>
       <button class="btn-ghost" onclick="logout()">Keluar</button>
     </div>
@@ -206,6 +207,18 @@
     <div class="form-group">
       <div class="form-label">Grup (opsional)</div>
       <input class="form-input" id="t-group" placeholder="Contoh: Design, Production..." />
+    </div>
+    <div class="form-group">
+      <div class="form-label">Assigned To</div>
+      <select class="form-input" id="t-assigned">
+        <option value="">Tidak di-assign</option>
+        <option value="rena">Rena</option>
+        <option value="nom">Nom</option>
+        <option value="gapl">Gapl</option>
+        <option value="pix">Pix</option>
+        <option value="jee">Jee</option>
+        <option value="tok">Tok</option>
+      </select>
     </div>
     <div class="form-group">
       <div class="form-label">Catatan</div>
@@ -444,7 +457,8 @@
               <span class="task-number">${numPrefix}</span>
               <span class="task-name">${task.name}</span>
               ${!isGroup?`<span style="font-size:9px;padding:2px 6px;border-radius:8px;font-weight:600;flex-shrink:0;background:${{todo:'rgba(79,110,247,0.2)',progress:'rgba(251,191,36,0.2)',done:'rgba(52,211,153,0.2)',blocked:'rgba(248,113,113,0.2)'}[task.actual_status||task.status||'todo']};color:${{todo:'#7b9fff',progress:'#fbbf24',done:'#34d399',blocked:'#f87171'}[task.actual_status||task.status||'todo']};">${{todo:'TO DO',progress:'IN PROGRESS',done:'DONE',blocked:'BLOCKED'}[task.actual_status||task.status||'todo']}</span>`:''}
-              ${!isGroup?`<div class="task-actions"><button class="task-btn" onclick="event.stopPropagation();openTaskModal('${task.id}')" title="Edit">✎</button></div>`:''}
+              ${!isGroup&&task.assigned_to?`<span style="font-size:9px;padding:2px 6px;border-radius:8px;background:rgba(79,110,247,0.15);color:#7b9fff;font-weight:600;">${task.assigned_to}</span>`:''}
+            ${!isGroup?`<div class="task-actions"><button class="task-btn" onclick="event.stopPropagation();openTaskModal('${task.id}')" title="Edit">✎</button></div>`:''}
             </div>
             ${!isGroup?`<div style="display:flex;flex-direction:column;gap:1px;padding-left:28px;">
               <div style="font-size:9px;color:var(--text3);font-weight:600;">P</div>
@@ -504,6 +518,7 @@
       document.getElementById('t-actual-end').value = t.actual_end||'';
       document.getElementById('t-status').value = t.actual_status || t.status || 'todo';
       document.getElementById('t-group').value = t.group_name||'';
+      document.getElementById('t-assigned').value = t.assigned_to||'';
       document.getElementById('t-notes').value = t.notes||'';
     } else {
       document.getElementById('t-name').value='';
@@ -513,6 +528,7 @@
       document.getElementById('t-actual-end').value='';
       document.getElementById('t-status').value='todo';
       document.getElementById('t-group').value='';
+      document.getElementById('t-assigned').value='';
       document.getElementById('t-notes').value='';
     }
     document.getElementById('task-modal').style.display='flex';
@@ -547,6 +563,7 @@
       actual_end: document.getElementById('t-actual-end').value||null,
       status: 'plan',
       actual_status: document.getElementById('t-status').value,
+      assigned_to: document.getElementById('t-assigned').value||null,
       group_name: document.getElementById('t-group').value.trim()||null,
       notes: document.getElementById('t-notes').value.trim()||null,
       sort_order: editingTaskId ? tasks.find(t=>t.id===editingTaskId)?.sort_order||0 : tasks.length

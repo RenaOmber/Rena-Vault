@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rena Omber — Alert Harian</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0f1e; --bg2: #111827; --bg3: #1a2235;
+      --border: rgba(99,130,255,0.12); --border-hover: rgba(99,130,255,0.28);
+      --text: #e8eaf6; --text2: #8892b0; --text3: #4a5568;
+      --accent: #4f6ef7; --accent-dim: rgba(79,110,247,0.12);
+      --green: #34d399; --yellow: #fbbf24; --red: #f87171;
+    }
+    html, body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; min-height: 100vh; }
+
+    /* LOGIN */
+    #login { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
+    .login-mark { width: 40px; height: 4px; background: var(--accent); border-radius: 2px; margin: 0 auto 12px; }
+    .login-title { font-size: 18px; font-weight: 500; text-align: center; }
+    .login-sub { font-size: 12px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; text-align: center; }
+    .member-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; max-width: 340px; margin-top: 8px; }
+    .member-btn { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; color: var(--text2); cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 500; padding: 14px; text-align: center; transition: all 0.15s; }
+    .member-btn:hover { border-color: var(--accent); color: var(--text); background: var(--accent-dim); }
+
+    /* MAIN */
+    #main { display: none; }
+    .top-bar { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid var(--border); }
+    .top-left { display: flex; align-items: center; gap: 10px; }
+    .top-mark { width: 22px; height: 3px; background: var(--accent); border-radius: 2px; }
+    .top-name { font-size: 13px; font-weight: 500; }
+    .top-sub { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; }
+    .top-right { display: flex; gap: 8px; align-items: center; }
+    .user-badge { background: var(--accent-dim); border: 1px solid var(--accent); border-radius: 20px; color: var(--accent); font-size: 12px; font-weight: 600; padding: 4px 12px; }
+    .btn-ghost { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text2); cursor: pointer; font-family: inherit; font-size: 12px; padding: 6px 14px; text-decoration: none; display: inline-flex; align-items: center; }
+    .btn-ghost:hover { border-color: var(--border-hover); color: var(--text); }
+
+    .content { padding: 24px; max-width: 700px; margin: 0 auto; }
+
+    /* DATE HEADER */
+    .date-header { margin-bottom: 24px; }
+    .date-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+    .date-value { font-size: 24px; font-weight: 600; }
+    .date-sub { font-size: 13px; color: var(--text2); margin-top: 2px; }
+
+    /* TASK CARDS */
+    .section-title { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; margin-top: 24px; }
+    .task-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 12px; cursor: pointer; transition: border-color 0.15s; }
+    .task-card:hover { border-color: var(--border-hover); }
+    .task-card.done { opacity: 0.5; }
+    .task-status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+    .dot-todo { background: var(--accent); }
+    .dot-progress { background: var(--yellow); }
+    .dot-done { background: var(--green); }
+    .dot-blocked { background: var(--red); }
+    .task-info { flex: 1; }
+    .task-name { font-size: 14px; font-weight: 500; }
+    .task-name.done-text { text-decoration: line-through; color: var(--text3); }
+    .task-meta { font-size: 11px; color: var(--text3); margin-top: 3px; }
+    .task-project { font-size: 11px; color: var(--accent); margin-top: 2px; }
+    .task-cycle-btn { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text3); cursor: pointer; font-size: 11px; padding: 4px 10px; white-space: nowrap; flex-shrink: 0; transition: all 0.15s; }
+    .task-cycle-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .empty-state { text-align: center; padding: 48px 20px; color: var(--text3); }
+    .empty-icon { font-size: 40px; margin-bottom: 12px; }
+    .empty-text { font-size: 14px; }
+    .empty-sub { font-size: 12px; margin-top: 4px; color: var(--text3); }
+
+    /* UPCOMING */
+    .upcoming-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .upcoming-date { font-size: 11px; color: var(--text3); min-width: 60px; }
+    .upcoming-name { font-size: 13px; color: var(--text2); flex: 1; }
+    .upcoming-project { font-size: 11px; color: var(--text3); }
+  </style>
+</head>
+<body>
+
+<div id="login">
+  <div>
+    <div class="login-mark"></div>
+    <div class="login-title">Rena Omber</div>
+    <div class="login-sub" style="margin-top:4px;">Siapa kamu?</div>
+  </div>
+  <div class="member-grid">
+    <button class="member-btn" onclick="login('rena')">Rena</button>
+    <button class="member-btn" onclick="login('nom')">Nom</button>
+    <button class="member-btn" onclick="login('gapl')">Gapl</button>
+    <button class="member-btn" onclick="login('pix')">Pix</button>
+    <button class="member-btn" onclick="login('jee')">Jee</button>
+    <button class="member-btn" onclick="login('tok')">Tok</button>
+  </div>
+</div>
+
+<div id="main">
+  <div class="top-bar">
+    <div class="top-left">
+      <div class="top-mark"></div>
+      <div>
+        <div class="top-name">Rena Omber</div>
+        <div class="top-sub">Alert Harian</div>
+      </div>
+    </div>
+    <div class="top-right">
+      <span class="user-badge" id="user-badge">-</span>
+      <a href="index.html" class="btn-ghost">Vault</a>
+      <button class="btn-ghost" onclick="logout()">Ganti</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="date-header">
+      <div class="date-label">Hari ini</div>
+      <div class="date-value" id="date-value"></div>
+      <div class="date-sub" id="date-sub"></div>
+    </div>
+    <div id="alert-content"></div>
+  </div>
+</div>
+
+<script>
+  // ─── CONFIG ────────────────────────────────────────────────
+  const SUPABASE_URL  = 'https://fqvfnohhilkzvijqukfg.supabase.co';
+  const SUPABASE_ANON = '3f0e57f3e719957119f0ba621629a3ae0ed1ec95d1ad8a91bd980b2896b679e4';
+  // ───────────────────────────────────────────────────────────
+
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  const STATUS_CYCLE = ['todo','progress','done','blocked'];
+  const STATUS_LABEL = { todo:'To Do', progress:'In Progress', done:'Done', blocked:'Blocked' };
+  const DAYS_ID = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  const MONTHS_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+
+  let currentUser = null;
+  let allTasks = [], allProjects = [];
+
+  function login(user) {
+    currentUser = user;
+    sessionStorage.setItem('ro_user', user);
+    showMain();
+  }
+
+  function logout() {
+    sessionStorage.removeItem('ro_user');
+    currentUser = null;
+    document.getElementById('login').style.display = 'flex';
+    document.getElementById('main').style.display = 'none';
+  }
+
+  async function showMain() {
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+    document.getElementById('user-badge').textContent = currentUser.toUpperCase();
+
+    const today = new Date();
+    document.getElementById('date-value').textContent =
+      `${DAYS_ID[today.getDay()]}, ${today.getDate()} ${MONTHS_ID[today.getMonth()]} ${today.getFullYear()}`;
+
+    await loadTasks();
+    renderAlerts();
+  }
+
+  async function loadTasks() {
+    const [projRes, taskRes] = await Promise.all([
+      sb.from('timeline_projects').select('*'),
+      sb.from('timeline_tasks').select('*').eq('assigned_to', currentUser)
+    ]);
+    allProjects = projRes.data||[];
+    allTasks = taskRes.data||[];
+  }
+
+  function getProjectName(projectId) {
+    return allProjects.find(p=>p.id===projectId)?.name || '—';
+  }
+
+  function parseD(str) {
+    if (!str) return null;
+    const [y,m,d] = str.split('-').map(Number);
+    return new Date(y,m-1,d);
+  }
+
+  function renderAlerts() {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const todayStr = today.toISOString().split('T')[0];
+
+    // Today's tasks: start_date <= today <= end_date
+    const todayTasks = allTasks.filter(t => {
+      const start = parseD(t.start_date);
+      const end = parseD(t.end_date);
+      return start && end && start <= today && today <= end;
+    });
+
+    // Overdue: end_date < today and not done
+    const overdue = allTasks.filter(t => {
+      const end = parseD(t.end_date);
+      const status = t.actual_status || t.status || 'todo';
+      return end && end < today && status !== 'done';
+    });
+
+    // Upcoming: start_date in next 3 days
+    const upcoming = allTasks.filter(t => {
+      const start = parseD(t.start_date);
+      const diff = start ? Math.round((start-today)/(1000*60*60*24)) : -1;
+      return diff > 0 && diff <= 3;
+    }).sort((a,b)=>parseD(a.start_date)-parseD(b.start_date));
+
+    let html = '';
+
+    // Overdue
+    if (overdue.length) {
+      html += `<div class="section-title" style="color:var(--red);">Terlambat (${overdue.length})</div>`;
+      html += overdue.map(t=>taskCard(t, true)).join('');
+    }
+
+    // Today
+    if (todayTasks.length) {
+      html += `<div class="section-title">Task Hari Ini (${todayTasks.length})</div>`;
+      html += todayTasks.map(t=>taskCard(t, false)).join('');
+    } else if (!overdue.length) {
+      html += `<div class="empty-state">
+        <div class="empty-icon">✓</div>
+        <div class="empty-text">Tidak ada task hari ini</div>
+        <div class="empty-sub">Cek upcoming untuk persiapan</div>
+      </div>`;
+    }
+
+    // Upcoming
+    if (upcoming.length) {
+      html += `<div class="section-title">Akan Datang</div>`;
+      html += upcoming.map(t=>{
+        const start = parseD(t.start_date);
+        const diff = Math.round((start-today)/(1000*60*60*24));
+        return `<div class="upcoming-item">
+          <div class="upcoming-date">${diff === 1 ? 'Besok' : `${diff} hari lagi`}</div>
+          <div class="upcoming-name">${t.name}</div>
+          <div class="upcoming-project">${getProjectName(t.project_id)}</div>
+        </div>`;
+      }).join('');
+    }
+
+    if (!html) {
+      html = `<div class="empty-state">
+        <div class="empty-icon">🎉</div>
+        <div class="empty-text">Tidak ada task yang di-assign ke kamu</div>
+        <div class="empty-sub">Hubungi Rena untuk update timeline</div>
+      </div>`;
+    }
+
+    document.getElementById('alert-content').innerHTML = html;
+    document.getElementById('date-sub').textContent =
+      `${todayTasks.length} task aktif · ${overdue.length} terlambat`;
+  }
+
+  function taskCard(t, isOverdue) {
+    const status = t.actual_status || t.status || 'todo';
+    const isDone = status === 'done';
+    const dotClass = `dot-${status}`;
+    return `<div class="task-card${isDone?' done':''}" onclick="cycleTask('${t.id}')">
+      <div class="task-status-dot ${dotClass}"></div>
+      <div class="task-info">
+        <div class="task-name${isDone?' done-text':''}">${t.name}</div>
+        <div class="task-project">${getProjectName(t.project_id)}</div>
+        <div class="task-meta">${t.start_date} → ${t.end_date}${isOverdue?' · <span style="color:var(--red)">Terlambat</span>':''}</div>
+      </div>
+      <button class="task-cycle-btn" onclick="event.stopPropagation();cycleTask('${t.id}')">${STATUS_LABEL[status]}</button>
+    </div>`;
+  }
+
+  async function cycleTask(id) {
+    const t = allTasks.find(t=>t.id===id);
+    if (!t) return;
+    const current = t.actual_status || t.status || 'todo';
+    const next = STATUS_CYCLE[(STATUS_CYCLE.indexOf(current)+1) % STATUS_CYCLE.length];
+    t.actual_status = next;
+    await sb.from('timeline_tasks').update({ actual_status: next }).eq('id', id);
+    renderAlerts();
+  }
+
+  // Auto-login from session
+  const saved = sessionStorage.getItem('ro_user');
+  if (saved) { currentUser = saved; showMain(); }
+</script>
+</body>
+</html>
