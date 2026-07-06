@@ -273,6 +273,7 @@
       sizechartUrl: '', sizechartName: '', sizechartPath: '',
       sablon: '', sablonLink: '', warnaKaos: '', tebalKain: '', potongan: 'regular', jumlahWarna: 1,
       vendorKaos: '', vendorHangtag: '', vendorPackaging: '',
+      labelLeherUrl: '', labelLeherName: '', labelPinggangUrl: '', labelPinggangName: '',
       sizes: { S:0, M:0, L:0, XL:0, XXL:0 },
       masukVendor: '', keluarVendor: '', keterangan: ''
     };
@@ -557,6 +558,26 @@
               ${a.designUrl
                 ? `<img src="${a.designUrl}" class="upload-preview" /><div style="font-size:11px;margin-top:4px;">${a.designName}</div><label style="margin-top:6px;font-size:11px;color:var(--accent);cursor:pointer;position:relative;z-index:2;">Ganti file<input type="file" accept="image/*" onchange="handleImg('design',this)" style="display:none;" /></label>`
                 : `<div style="font-size:20px;">+</div><div>${a.designName||'Upload design'}</div>`}
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <div class="form-label">Label Leher</div>
+            <div class="upload-zone ${a.labelLeherUrl?'has-file':''}" id="zone-labelLeher">
+              <input type="file" accept="image/*" onchange="handleImg('labelLeher',this)" style="${a.labelLeherUrl?'display:none;':''}" />
+              ${a.labelLeherUrl
+                ? `<img src="${a.labelLeherUrl}" class="upload-preview" /><div style="font-size:11px;margin-top:4px;">${a.labelLeherName}</div><label style="margin-top:6px;font-size:11px;color:var(--accent);cursor:pointer;position:relative;z-index:2;">Ganti file<input type="file" accept="image/*" onchange="handleImg('labelLeher',this)" style="display:none;" /></label>`
+                : `<div style="font-size:20px;">+</div><div>${a.labelLeherName||'Upload label leher'}</div>`}
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="form-label">Label Pinggang</div>
+            <div class="upload-zone ${a.labelPinggangUrl?'has-file':''}" id="zone-labelPinggang">
+              <input type="file" accept="image/*" onchange="handleImg('labelPinggang',this)" style="${a.labelPinggangUrl?'display:none;':''}" />
+              ${a.labelPinggangUrl
+                ? `<img src="${a.labelPinggangUrl}" class="upload-preview" /><div style="font-size:11px;margin-top:4px;">${a.labelPinggangName}</div><label style="margin-top:6px;font-size:11px;color:var(--accent);cursor:pointer;position:relative;z-index:2;">Ganti file<input type="file" accept="image/*" onchange="handleImg('labelPinggang',this)" style="display:none;" /></label>`
+                : `<div style="font-size:20px;">+</div><div>${a.labelPinggangName||'Upload label pinggang'}</div>`}
             </div>
           </div>
         </div>
