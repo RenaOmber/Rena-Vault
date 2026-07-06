@@ -85,6 +85,32 @@
     .upcoming-date { font-size: 11px; color: var(--text3); min-width: 60px; }
     .upcoming-name { font-size: 13px; color: var(--text2); flex: 1; }
     .upcoming-project { font-size: 11px; color: var(--text3); }
+
+    /* PROOF MODAL */
+    .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 20px; }
+    .modal-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; width: 100%; max-width: 440px; padding: 24px; }
+    .modal-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+    .modal-sub { font-size: 12px; color: var(--text3); margin-bottom: 18px; }
+    .proof-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+    .proof-tab { background: none; border: none; border-bottom: 2px solid transparent; color: var(--text3); cursor: pointer; font-family: inherit; font-size: 12px; padding: 7px 14px; margin-bottom: -1px; transition: color 0.15s, border-color 0.15s; }
+    .proof-tab.active { border-bottom-color: var(--accent); color: var(--text); font-weight: 500; }
+    .proof-section { display: none; }
+    .proof-section.active { display: block; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+    .form-label { font-size: 12px; color: var(--text2); }
+    .form-input { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 13px; padding: 9px 12px; outline: none; width: 100%; }
+    .form-input:focus { border-color: var(--border-hover); }
+    textarea.form-input { resize: vertical; min-height: 80px; line-height: 1.6; }
+    .upload-zone { border: 1px dashed var(--border-hover); border-radius: 8px; padding: 24px; text-align: center; cursor: pointer; color: var(--text3); font-size: 13px; position: relative; transition: background 0.15s; }
+    .upload-zone:hover { background: var(--accent-dim); }
+    .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .upload-preview { max-width: 100%; max-height: 120px; border-radius: 6px; margin-top: 10px; object-fit: contain; }
+    .upload-spinner { font-size: 11px; color: var(--accent); margin-top: 6px; }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+    .btn-cancel { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text3); cursor: pointer; font-family: inherit; font-size: 13px; padding: 8px 16px; }
+    .btn-confirm { background: var(--accent); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; padding: 8px 16px; }
+    .proof-existing { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; font-size: 12px; color: var(--text2); }
+    .proof-existing a { color: var(--accent); text-decoration: none; }
   </style>
 </head>
 <body>
@@ -137,13 +163,15 @@
   // ───────────────────────────────────────────────────────────
 
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  const BUCKET = 'vault-docs';
   const STATUS_CYCLE = ['todo','progress','done','blocked'];
   const STATUS_LABEL = { todo:'To Do', progress:'In Progress', done:'Done', blocked:'Blocked' };
   const DAYS_ID = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
   const MONTHS_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
   let currentUser = null;
-  let allTasks = [], allProjects = [];
+  let allTasks = [], allProjects = [], allProofs = {};
+  let pendingProofTaskId = null, pendingProofFile = null, activeProofTab = 'image';
 
   function login(user) {
     currentUser = user;
@@ -171,13 +199,129 @@
     renderAlerts();
   }
 
+  function switchProofTab(tab) {
+    activeProofTab = tab;
+    document.querySelectorAll('.proof-tab').forEach((b,i)=>b.classList.toggle('active', ['image','link','notes'][i]===tab));
+    document.querySelectorAll('.proof-section').forEach(s=>s.classList.remove('active'));
+    document.getElementById(`proof-${tab}`).classList.add('active');
+  }
+
+  function openProofModal(taskId) {
+    pendingProofTaskId = taskId;
+    pendingProofFile = null;
+    const t = allTasks.find(t=>t.id===taskId);
+    document.getElementById('proof-modal-title').textContent = 'Proof of Work';
+    document.getElementById('proof-modal-sub').textContent = t?.name || '';
+    document.getElementById('proof-preview-wrap').innerHTML = '';
+    document.getElementById('proof-drive-link').value = '';
+    document.getElementById('proof-link-input').value = '';
+    document.getElementById('proof-link-drive').value = '';
+    document.getElementById('proof-notes-input').value = '';
+    document.getElementById('proof-notes-drive').value = '';
+    // Show existing proof if any
+    const existing = allProofs[taskId];
+    const wrap = document.getElementById('proof-existing-wrap');
+    if (existing) {
+      wrap.innerHTML = `<div class="proof-existing">✓ Sudah ada proof: ${existing.proof_type}${existing.link?` · <a href="${existing.link}" target="_blank">Buka link</a>`:''}</div>`;
+    } else { wrap.innerHTML = ''; }
+    switchProofTab('image');
+    document.getElementById('proof-modal').style.display = 'flex';
+  }
+
+  function closeProofModal() {
+    document.getElementById('proof-modal').style.display = 'none';
+    pendingProofTaskId = null;
+    pendingProofFile = null;
+  }
+
+  function onProofFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 900;
+        let w = img.width, h = img.height;
+        if (w > MAX || h > MAX) { if(w>h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;} }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        canvas.toBlob(blob => {
+          pendingProofFile = new File([blob], file.name, { type: 'image/jpeg' });
+          const url = URL.createObjectURL(blob);
+          document.getElementById('proof-preview-wrap').innerHTML = `<img src="${url}" class="upload-preview" />`;
+        }, 'image/jpeg', 0.78);
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function submitProof() {
+    if (!pendingProofTaskId) return;
+    const btn = document.querySelector('.btn-confirm');
+    btn.disabled = true; btn.textContent = 'Menyimpan...';
+
+    let imageUrl = null, link = null, notes = null, driveLink = null;
+
+    if (activeProofTab === 'image') {
+      driveLink = document.getElementById('proof-drive-link').value.trim();
+      if (pendingProofFile) {
+        const path = `proofs/${pendingProofTaskId}_${Date.now()}.jpg`;
+        const { error } = await sb.storage.from(BUCKET).upload(path, pendingProofFile, { contentType:'image/jpeg', upsert:true });
+        if (!error) {
+          const { data: signed } = await sb.storage.from(BUCKET).createSignedUrl(path, 60*60*24*365);
+          imageUrl = signed?.signedUrl || null;
+        }
+      }
+      link = driveLink || null;
+    } else if (activeProofTab === 'link') {
+      link = document.getElementById('proof-link-input').value.trim();
+      driveLink = document.getElementById('proof-link-drive').value.trim();
+      if (!link) { btn.disabled=false; btn.textContent='Submit & Done'; alert('Isi link dulu.'); return; }
+      if (driveLink) link = link + (driveLink ? ' | Drive: ' + driveLink : '');
+    } else {
+      notes = document.getElementById('proof-notes-input').value.trim();
+      driveLink = document.getElementById('proof-notes-drive').value.trim();
+      if (!notes) { btn.disabled=false; btn.textContent='Submit & Done'; alert('Isi notes dulu.'); return; }
+    }
+
+    if (activeProofTab === 'image' && !pendingProofFile && !driveLink) {
+      btn.disabled=false; btn.textContent='Submit & Done';
+      alert('Upload gambar atau isi link Google Drive dulu.');
+      return;
+    }
+
+    const proof = {
+      id: Date.now().toString(),
+      task_id: pendingProofTaskId,
+      submitted_by: currentUser,
+      proof_type: activeProofTab,
+      image_url: imageUrl,
+      link: link,
+      notes: notes
+    };
+
+    await sb.from('task_proofs').upsert(proof);
+    allProofs[pendingProofTaskId] = proof;
+    closeProofModal();
+    btn.disabled=false; btn.textContent='Submit & Done';
+
+    // Now mark as done
+    await cycleTask(pendingProofTaskId);
+  }
+
   async function loadTasks() {
-    const [projRes, taskRes] = await Promise.all([
+    const [projRes, taskRes, proofRes] = await Promise.all([
       sb.from('timeline_projects').select('*'),
-      sb.from('timeline_tasks').select('*').eq('assigned_to', currentUser)
+      sb.from('timeline_tasks').select('*').eq('assigned_to', currentUser),
+      sb.from('task_proofs').select('*').eq('submitted_by', currentUser)
     ]);
     allProjects = projRes.data||[];
     allTasks = taskRes.data||[];
+    allProofs = {};
+    (proofRes.data||[]).forEach(p => { allProofs[p.task_id] = p; });
   }
 
   function getProjectName(projectId) {
@@ -289,6 +433,11 @@
     if (!t) return;
     const current = t.actual_status || t.status || 'todo';
     const next = STATUS_CYCLE[(STATUS_CYCLE.indexOf(current)+1) % STATUS_CYCLE.length];
+    // Require proof before marking Done
+    if (next === 'done' && !allProofs[id]) {
+      openProofModal(id);
+      return;
+    }
     t.actual_status = next;
 
     const today = new Date().toISOString().split('T')[0];
@@ -319,5 +468,54 @@
   const saved = sessionStorage.getItem('ro_user');
   if (saved) { currentUser = saved; showMain(); }
 </script>
+<!-- PROOF MODAL -->
+<div class="modal-bg" id="proof-modal" style="display:none;" onclick="if(event.target===this)closeProofModal()">
+  <div class="modal-box">
+    <div class="modal-title" id="proof-modal-title">Proof of Work</div>
+    <div class="modal-sub" id="proof-modal-sub">Upload bukti penyelesaian task</div>
+    <div id="proof-existing-wrap"></div>
+    <div class="proof-tabs">
+      <button class="proof-tab active" onclick="switchProofTab('image')">Gambar</button>
+      <button class="proof-tab" onclick="switchProofTab('link')">Link</button>
+      <button class="proof-tab" onclick="switchProofTab('notes')">Notes</button>
+    </div>
+    <div class="proof-section active" id="proof-image">
+      <div class="upload-zone" onclick="document.getElementById('proof-file').click()">
+        <input type="file" id="proof-file" accept="image/*" onchange="onProofFile(event)" style="display:none;" />
+        <div>📎 Klik untuk upload gambar</div>
+        <div style="font-size:11px;margin-top:4px;color:var(--text3);">JPG, PNG, WEBP — auto kompres</div>
+        <div id="proof-preview-wrap"></div>
+      </div>
+      <div class="form-group" style="margin-top:12px;">
+        <div class="form-label">Link file asli (Google Drive, opsional)</div>
+        <input class="form-input" id="proof-drive-link" placeholder="https://drive.google.com/..." />
+      </div>
+    </div>
+    <div class="proof-section" id="proof-link">
+      <div class="form-group">
+        <div class="form-label">Link</div>
+        <input class="form-input" id="proof-link-input" placeholder="https://..." />
+      </div>
+      <div class="form-group">
+        <div class="form-label">Link file asli (Google Drive, opsional)</div>
+        <input class="form-input" id="proof-link-drive" placeholder="https://drive.google.com/..." />
+      </div>
+    </div>
+    <div class="proof-section" id="proof-notes">
+      <div class="form-group">
+        <div class="form-label">Notes / Catatan</div>
+        <textarea class="form-input" id="proof-notes-input" placeholder="Jelaskan apa yang sudah diselesaikan..."></textarea>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Link file asli (Google Drive, opsional)</div>
+        <input class="form-input" id="proof-notes-drive" placeholder="https://drive.google.com/..." />
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeProofModal()">Batal</button>
+      <button class="btn-confirm" onclick="submitProof()">Submit & Done</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
