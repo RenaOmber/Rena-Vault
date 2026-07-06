@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rena Omber — Bulk Task</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0f1e; --bg2: #111827; --bg3: #1a2235;
+      --border: rgba(99,130,255,0.12); --border-hover: rgba(99,130,255,0.28);
+      --text: #e8eaf6; --text2: #8892b0; --text3: #4a5568;
+      --accent: #4f6ef7; --accent-dim: rgba(79,110,247,0.12);
+      --green: #34d399; --red: #f87171;
+    }
+    html, body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; min-height: 100vh; }
+
+    #gate { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
+    .gate-mark { width: 40px; height: 4px; background: var(--accent); border-radius: 2px; margin: 0 auto 16px; }
+    .gate-form { display: flex; gap: 8px; margin-top: 8px; }
+    .gate-form input { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 14px; padding: 10px 14px; width: 220px; outline: none; }
+    .gate-form button { background: var(--accent); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; padding: 10px 18px; }
+    .gate-error { font-size: 12px; color: var(--red); min-height: 16px; text-align: center; }
+
+    #main { display: none; }
+    .top-bar { display: flex; align-items: center; justify-content: space-between; padding: 16px 28px; border-bottom: 1px solid var(--border); }
+    .top-left { display: flex; align-items: center; gap: 10px; }
+    .top-mark { width: 22px; height: 3px; background: var(--accent); border-radius: 2px; }
+    .top-name { font-size: 13px; font-weight: 500; }
+    .top-sub { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; }
+    .top-right { display: flex; gap: 8px; }
+    .btn-ghost { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text2); cursor: pointer; font-family: inherit; font-size: 12px; padding: 6px 14px; text-decoration: none; display: inline-flex; align-items: center; }
+    .btn-ghost:hover { border-color: var(--border-hover); color: var(--text); }
+
+    .content { padding: 28px 36px; max-width: 1100px; }
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+    .page-title { font-size: 20px; font-weight: 600; }
+
+    /* PROJECT SELECT */
+    .project-select-wrap { display: flex; gap: 10px; align-items: center; margin-bottom: 20px; }
+    .project-select-label { font-size: 12px; color: var(--text2); }
+    .form-select { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 13px; padding: 8px 12px; outline: none; }
+    .form-select:focus { border-color: var(--border-hover); }
+
+    /* BULK TABLE */
+    .bulk-table-wrap { overflow-x: auto; }
+    .bulk-table { width: 100%; border-collapse: collapse; min-width: 900px; }
+    .bulk-table th { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .bulk-table td { padding: 4px 4px; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: top; }
+    .cell-input { background: var(--bg2); border: 1px solid transparent; border-radius: 6px; color: var(--text); font-family: inherit; font-size: 12px; padding: 7px 9px; width: 100%; outline: none; transition: border-color 0.15s; }
+    .cell-input:focus { border-color: var(--border-hover); background: var(--bg3); }
+    .cell-select { background: var(--bg2); border: 1px solid transparent; border-radius: 6px; color: var(--text); font-family: inherit; font-size: 12px; padding: 7px 9px; width: 100%; outline: none; }
+    .cell-select:focus { border-color: var(--border-hover); }
+    .cell-textarea { background: var(--bg2); border: 1px solid transparent; border-radius: 6px; color: var(--text); font-family: inherit; font-size: 12px; padding: 7px 9px; width: 100%; outline: none; resize: none; min-height: 36px; line-height: 1.4; }
+    .cell-textarea:focus { border-color: var(--border-hover); background: var(--bg3); }
+    .del-btn { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 16px; padding: 7px 8px; line-height: 1; transition: color 0.15s; }
+    .del-btn:hover { color: var(--red); }
+    .row-num { font-size: 11px; color: var(--text3); padding: 7px 10px; text-align: center; }
+
+    /* ACTIONS */
+    .actions-bar { display: flex; gap: 10px; align-items: center; margin-top: 16px; flex-wrap: wrap; }
+    .btn-add-row { background: none; border: 1px dashed var(--border-hover); border-radius: 6px; color: var(--text3); cursor: pointer; font-family: inherit; font-size: 12px; padding: 8px 16px; transition: all 0.15s; }
+    .btn-add-row:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-import { background: var(--accent); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; padding: 9px 20px; transition: opacity 0.15s; }
+    .btn-import:hover { opacity: 0.85; }
+    .btn-import:disabled { opacity: 0.4; cursor: default; }
+    .import-status { font-size: 12px; color: var(--text3); }
+    .import-status.success { color: var(--green); }
+    .import-status.error { color: var(--red); }
+
+    .col-task { width: 200px; }
+    .col-assigned { width: 90px; }
+    .col-group { width: 110px; }
+    .col-start { width: 120px; }
+    .col-end { width: 120px; }
+    .col-status { width: 110px; }
+    .col-brief { min-width: 200px; }
+    .col-del { width: 36px; }
+  </style>
+</head>
+<body>
+
+<div id="gate">
+  <div>
+    <div class="gate-mark"></div>
+    <div style="font-size:18px;font-weight:500;text-align:center;">Rena Omber</div>
+    <div style="font-size:12px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;text-align:center;margin-top:4px;">Bulk Task Input</div>
+  </div>
+  <div>
+    <div class="gate-form">
+      <input type="password" id="pw-input" placeholder="Password" onkeydown="if(event.key==='Enter')checkPw()" />
+      <button onclick="checkPw()">Masuk</button>
+    </div>
+    <div class="gate-error" id="pw-error"></div>
+  </div>
+</div>
+
+<div id="main">
+  <div class="top-bar">
+    <div class="top-left">
+      <div class="top-mark"></div>
+      <div>
+        <div class="top-name">Rena Omber</div>
+        <div class="top-sub">Bulk Task Input</div>
+      </div>
+    </div>
+    <div class="top-right">
+      <a href="timeline.html" class="btn-ghost">Gantt</a>
+      <a href="index.html" class="btn-ghost">Vault</a>
+      <button class="btn-ghost" onclick="logout()">Keluar</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="page-header">
+      <div class="page-title">Input Task Sekaligus</div>
+      <div style="font-size:12px;color:var(--text3);">Isi semua task lalu klik Import ke Gantt</div>
+    </div>
+
+    <div class="project-select-wrap">
+      <div class="project-select-label">Project:</div>
+      <select class="form-select" id="project-select">
+        <option value="">Pilih project...</option>
+      </select>
+      <button class="btn-ghost" onclick="openNewProject()" style="font-size:11px;">+ Project Baru</button>
+    </div>
+
+    <div class="bulk-table-wrap">
+      <table class="bulk-table">
+        <thead>
+          <tr>
+            <th style="width:30px;">#</th>
+            <th class="col-task">Nama Task *</th>
+            <th class="col-assigned">Assigned To</th>
+            <th class="col-group">Grup</th>
+            <th class="col-start">Mulai *</th>
+            <th class="col-end">Selesai *</th>
+            <th class="col-status">Status</th>
+            <th class="col-brief">Brief</th>
+            <th class="col-del"></th>
+          </tr>
+        </thead>
+        <tbody id="task-rows"></tbody>
+      </table>
+    </div>
+
+    <div class="actions-bar">
+      <button class="btn-add-row" onclick="addRow()">+ Tambah Baris</button>
+      <button class="btn-add-row" onclick="addRows(5)">+ 5 Baris</button>
+      <div style="flex:1;"></div>
+      <div class="import-status" id="import-status"></div>
+      <button class="btn-import" id="import-btn" onclick="importTasks()">Import ke Gantt →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ─── CONFIG ────────────────────────────────────────────────
+  const SUPABASE_URL  = 'https://fqvfnohhilkzvijqukfg.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxdmZub2hoaWxrenZpanF1a2ZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDU4NjAsImV4cCI6MjA5ODEyMTg2MH0.er10SEsmDlnx1yRLGJK2fKtLhQR40vFOXVJzH9yakCg';
+  const PASSWORD_HASH = '3f0e57f3e719957119f0ba621629a3ae0ed1ec95d1ad8a91bd980b2896b679e4';
+  // ───────────────────────────────────────────────────────────
+
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  const MEMBERS = ['rena','nom','gapl','pix','jee','tok'];
+  const STATUSES = ['todo','progress','done','blocked'];
+  const STATUS_LABEL = { todo:'To Do', progress:'In Progress', done:'Done', blocked:'Blocked' };
+  let projects = [], rowCount = 0;
+
+  async function sha256(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+  async function checkPw() {
+    const val = document.getElementById('pw-input').value.trim();
+    if ((await sha256(val)) === PASSWORD_HASH) {
+      sessionStorage.setItem('ro_auth','1');
+      await showMain();
+    } else {
+      document.getElementById('pw-error').textContent = 'Password salah.';
+      document.getElementById('pw-input').value = '';
+    }
+  }
+  function logout() { sessionStorage.removeItem('ro_auth'); location.reload(); }
+  async function showMain() {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+    await loadProjects();
+    addRows(3);
+  }
+  if (sessionStorage.getItem('ro_auth') === '1') showMain();
+
+  async function loadProjects() {
+    const { data } = await sb.from('timeline_projects').select('*').order('created_at');
+    projects = data||[];
+    const sel = document.getElementById('project-select');
+    sel.innerHTML = '<option value="">Pilih project...</option>' +
+      projects.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  }
+
+  async function openNewProject() {
+    const name = prompt('Nama project baru:');
+    if (!name?.trim()) return;
+    const { data } = await sb.from('timeline_projects').insert({ id: Date.now().toString(), name: name.trim() }).select().single();
+    projects.push(data);
+    const sel = document.getElementById('project-select');
+    const opt = document.createElement('option');
+    opt.value = data.id; opt.textContent = data.name;
+    sel.appendChild(opt);
+    sel.value = data.id;
+  }
+
+  function memberOptions(selected='') {
+    return `<option value="">—</option>` + MEMBERS.map(m=>`<option value="${m}" ${m===selected?'selected':''}>${m}</option>`).join('');
+  }
+
+  function statusOptions(selected='todo') {
+    return STATUSES.map(s=>`<option value="${s}" ${s===selected?'selected':''}>${STATUS_LABEL[s]}</option>`).join('');
+  }
+
+  function addRow(data={}) {
+    rowCount++;
+    const tbody = document.getElementById('task-rows');
+    const tr = document.createElement('tr');
+    tr.id = `row-${rowCount}`;
+    tr.innerHTML = `
+      <td class="row-num">${tbody.children.length+1}</td>
+      <td><input class="cell-input col-task" placeholder="Nama task..." value="${data.name||''}" /></td>
+      <td><select class="cell-select col-assigned">${memberOptions(data.assigned||'')}</select></td>
+      <td><input class="cell-input col-group" placeholder="Grup..." value="${data.group||''}" /></td>
+      <td><input type="date" class="cell-input col-start" value="${data.start||''}" /></td>
+      <td><input type="date" class="cell-input col-end" value="${data.end||''}" /></td>
+      <td><select class="cell-select col-status">${statusOptions(data.status||'todo')}</select></td>
+      <td><textarea class="cell-textarea col-brief" placeholder="Brief task...">${data.brief||''}</textarea></td>
+      <td><button class="del-btn" onclick="removeRow('row-${rowCount}')">×</button></td>`;
+    tbody.appendChild(tr);
+    // Auto-resize textarea
+    tr.querySelector('.cell-textarea').addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = this.scrollHeight + 'px';
+    });
+  }
+
+  function addRows(n) { for(let i=0;i<n;i++) addRow(); }
+
+  function removeRow(id) {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+    // Renumber
+    document.querySelectorAll('.row-num').forEach((el,i) => el.textContent = i+1);
+  }
+
+  async function importTasks() {
+    const projectId = document.getElementById('project-select').value;
+    if (!projectId) { setStatus('Pilih project dulu.', 'error'); return; }
+
+    const rows = document.querySelectorAll('#task-rows tr');
+    const tasks = [];
+    let hasError = false;
+
+    rows.forEach((tr, i) => {
+      const inputs = tr.querySelectorAll('input, select, textarea');
+      const name = inputs[0].value.trim();
+      const assigned = inputs[1].value;
+      const group = inputs[2].value.trim();
+      const start = inputs[3].value;
+      const end = inputs[4].value;
+      const status = inputs[5].value;
+      const brief = inputs[6].value.trim();
+
+      if (!name && !start && !end) return; // skip empty rows
+      if (!name || !start || !end) {
+        tr.style.background = 'rgba(248,113,113,0.08)';
+        hasError = true;
+        return;
+      }
+      tr.style.background = '';
+      tasks.push({
+        id: Date.now().toString() + Math.random().toString(36).slice(2,6),
+        project_id: projectId,
+        name,
+        assigned_to: assigned||null,
+        group_name: group||null,
+        start_date: start,
+        end_date: end,
+        status: 'plan',
+        actual_status: status,
+        brief: brief||null,
+        sort_order: i
+      });
+    });
+
+    if (hasError) { setStatus('Baris merah harus diisi nama, mulai, dan selesai.', 'error'); return; }
+    if (!tasks.length) { setStatus('Tidak ada task untuk di-import.', 'error'); return; }
+
+    const btn = document.getElementById('import-btn');
+    btn.disabled = true; btn.textContent = 'Mengimport...';
+    setStatus('', '');
+
+    const { error } = await sb.from('timeline_tasks').insert(tasks);
+    btn.disabled = false; btn.textContent = 'Import ke Gantt →';
+
+    if (error) {
+      setStatus('Gagal: ' + error.message, 'error');
+    } else {
+      setStatus(`✓ ${tasks.length} task berhasil diimport ke Gantt!`, 'success');
+      setTimeout(() => { if (confirm('Import berhasil! Buka Gantt sekarang?')) location.href = 'timeline.html'; }, 500);
+    }
+  }
+
+  function setStatus(msg, type) {
+    const el = document.getElementById('import-status');
+    el.textContent = msg;
+    el.className = 'import-status' + (type ? ' '+type : '');
+  }
+</script>
+</body>
+</html>
