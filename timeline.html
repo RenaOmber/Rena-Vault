@@ -281,6 +281,13 @@
   }
   if (sessionStorage.getItem('ro_auth') === '1') showMain();
 
+  // Auto-refresh Gantt every 30 seconds
+  setInterval(async () => {
+    const taskRes = await sb.from('timeline_tasks').select('*').order('sort_order');
+    tasks = taskRes.data||[];
+    renderGantt();
+  }, 30000);
+
   async function loadAll() {
     const [projRes, taskRes] = await Promise.all([
       sb.from('timeline_projects').select('*').order('created_at'),
