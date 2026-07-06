@@ -807,6 +807,28 @@
       y = maxH + 8;
     }
 
+    // Label Leher + Label Pinggang side by side
+    const [labelLeher, labelPinggang] = await Promise.all([loadImgData(a.labelLeherUrl), loadImgData(a.labelPinggangUrl)]);
+    if (labelLeher || labelPinggang) {
+      const startY = y;
+      let maxH = startY;
+      if (labelLeher) {
+        const fl = fitImg(labelLeher, colW, 55);
+        doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(130,130,130);
+        doc.text('LABEL LEHER', M, y);
+        doc.addImage(fl.dataUrl, 'JPEG', M, y+3, fl.w, fl.h);
+        maxH = Math.max(maxH, y+3+fl.h);
+      }
+      if (labelPinggang) {
+        const fp = fitImg(labelPinggang, colW, 55);
+        doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(130,130,130);
+        doc.text('LABEL PINGGANG', M+colW+8, startY);
+        doc.addImage(fp.dataUrl, 'JPEG', M+colW+8, startY+3, fp.w, fp.h);
+        maxH = Math.max(maxH, startY+3+fp.h);
+      }
+      y = maxH + 8;
+    }
+
     // Size chart
     const sizechart = await loadImgData(a.sizechartUrl);
     if (sizechart) {
