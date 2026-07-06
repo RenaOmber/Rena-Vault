@@ -406,17 +406,24 @@
       const actualStatus = task.actual_status || task.status;
       const barClass = {todo:'bar-todo',progress:'bar-progress',done:'bar-done',blocked:'bar-blocked'}[actualStatus]||'bar-todo';
 
-      // Actual bar
+      // Actual bar - show if actual_start exists, use actual_end or today as end
       let actualBarHtml = '';
-      if (!isGroup && task.actual_start && task.actual_end) {
+      if (!isGroup && task.actual_start) {
         const aStart = parseLocalDate(task.actual_start);
-        const aEnd = parseLocalDate(task.actual_end);
+        // If no actual_end, use today or last day in range
+        let aEnd;
+        if (task.actual_end) {
+          aEnd = parseLocalDate(task.actual_end);
+        } else {
+          aEnd = today <= allDays[allDays.length-1] ? new Date(today) : new Date(allDays[allDays.length-1]);
+        }
         const aStartIdx = allDays.findIndex(d=>d.getFullYear()===aStart.getFullYear()&&d.getMonth()===aStart.getMonth()&&d.getDate()===aStart.getDate());
         const aEndIdx = allDays.findIndex(d=>d.getFullYear()===aEnd.getFullYear()&&d.getMonth()===aEnd.getMonth()&&d.getDate()===aEnd.getDate());
         if (aStartIdx>=0 && aEndIdx>=0) {
           const aLeft = aStartIdx * dayW;
           const aWidth = ((aEndIdx - aStartIdx + 1) * dayW) - 4;
-          actualBarHtml = `<div class="gantt-bar ${barClass}" style="left:${aLeft+2}px;width:${aWidth}px;top:calc(50% + 12px);" title="Actual: ${task.actual_start} - ${task.actual_end}"></div>`;
+          const dottedStyle = task.actual_end ? '' : 'border:2px dashed;border-color:inherit;background:transparent;opacity:0.7;';
+          actualBarHtml = `<div class="gantt-bar ${barClass}" style="${dottedStyle}left:${aLeft+2}px;width:${aWidth}px;top:calc(50% + 12px);" title="Actual: ${task.actual_start} - ${task.actual_end||'ongoing'}"></div>`;
         }
       }
 
@@ -428,7 +435,7 @@
       // Day separators drawn above bars
       const daySeps = allDays.map((d,i)=>`<div class="day-sep" style="left:${(i+1)*dayW}px;${d.getDay()===0||d.getDay()===6?'background:rgba(255,255,255,0.1);':''}"></div>`).join('');
 
-      const hasActual = !isGroup && task.actual_start && task.actual_end;
+      const hasActual = !isGroup && task.actual_start;
       const rowHeight = hasActual ? '64px' : '36px';
       return `
         <div class="gantt-row${isGroup?' group-row':''}" style="min-height:${rowHeight};${!isGroup?'cursor:pointer;':''}" ${!isGroup?`onclick="cycleStatus('${task.id}')"`:''}>
