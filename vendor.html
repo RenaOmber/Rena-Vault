@@ -153,8 +153,22 @@
         <option value="lainnya">Lainnya</option>
       </select>
     </div>
+    <div class="form-row-2" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="form-group">
+        <div class="form-label">Lokasi</div>
+        <input class="form-input" id="f-lokasi" placeholder="Bandung, Jakarta..." />
+      </div>
+      <div class="form-group">
+        <div class="form-label">MOQ (minimum order)</div>
+        <input type="number" class="form-input" id="f-moq" placeholder="24" min="0" />
+      </div>
+    </div>
     <div class="form-group">
-      <div class="form-label">Catatan (kontak, MOQ, dll)</div>
+      <div class="form-label">CP (nama / nomor WA)</div>
+      <input class="form-input" id="f-cp" placeholder="Budi / 08123456789" />
+    </div>
+    <div class="form-group">
+      <div class="form-label">Catatan</div>
       <input class="form-input" id="f-notes" placeholder="Opsional..." />
     </div>
 
@@ -285,7 +299,12 @@
           <div class="vendor-card-header">
             <span class="vendor-type-badge ${badgeClass(v.type)}">${v.type}</span>
             <div class="vendor-name">${v.name}</div>
-            ${v.notes ? `<div class="vendor-notes">${v.notes}</div>` : ''}
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              ${v.lokasi ? `<div class="vendor-notes">📍 ${v.lokasi}</div>` : ''}
+              ${v.moq ? `<div class="vendor-notes">MOQ: ${v.moq} pcs</div>` : ''}
+              ${v.cp ? `<div class="vendor-notes">📞 ${v.cp}</div>` : ''}
+              ${v.notes ? `<div class="vendor-notes">${v.notes}</div>` : ''}
+            </div>
             <div class="vendor-actions">
               <button class="btn-edit" onclick="openModal('${v.id}')">Edit</button>
               <button class="btn-del" onclick="deleteVendor('${v.id}')">×</button>
@@ -373,6 +392,9 @@
       const v = vendors.find(v => v.id === id);
       document.getElementById('f-name').value = v.name;
       document.getElementById('f-type').value = v.type;
+      document.getElementById('f-lokasi').value = v.lokasi || '';
+      document.getElementById('f-cp').value = v.cp || '';
+      document.getElementById('f-moq').value = v.moq || '';
       document.getElementById('f-notes').value = v.notes || '';
       document.getElementById('f-price').value = v.price_per_unit || '';
       toggleMatrixForm();
@@ -386,6 +408,9 @@
     } else {
       document.getElementById('f-name').value = '';
       document.getElementById('f-type').value = 'kaos';
+      document.getElementById('f-lokasi').value = '';
+      document.getElementById('f-cp').value = '';
+      document.getElementById('f-moq').value = '';
       document.getElementById('f-notes').value = '';
       document.getElementById('f-price').value = '';
       toggleMatrixForm();
@@ -407,6 +432,9 @@
     const row = {
       id: editingId || Date.now().toString(),
       name, type,
+      lokasi: document.getElementById('f-lokasi').value.trim()||null,
+      cp: document.getElementById('f-cp').value.trim()||null,
+      moq: parseInt(document.getElementById('f-moq').value)||null,
       notes: document.getElementById('f-notes').value.trim(),
       price_per_unit: 0,
       data: {}
