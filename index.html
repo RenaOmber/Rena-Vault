@@ -738,6 +738,55 @@
       else { alert('Upload gagal: ' + error.message); }
     }, 400);
   }
+
+  async function enterProofArchive() {
+    const area = document.getElementById('content-area');
+    area.innerHTML = `
+      <div class="content-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button onclick="renderLanding(activeCategory)" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:18px;line-height:1;padding:0;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text3)'">←</button>
+          <div><div class="content-title">Arsip Proof of Work</div><div class="content-sub" id="proof-count-sub">Memuat...</div></div>
+        </div>
+      </div>
+      <div id="proof-archive-list"><div class="placeholder-msg">Memuat...</div></div>`;
+
+    const [proofRes, taskRes, projRes] = await Promise.all([
+      sb.from('task_proofs').select('*').order('created_at', { ascending: false }),
+      sb.from('timeline_tasks').select('id,name,project_id'),
+      sb.from('timeline_projects').select('id,name')
+    ]);
+
+    const proofs = proofRes.data||[];
+    const taskMap = {};
+    (taskRes.data||[]).forEach(t => { taskMap[t.id] = t; });
+    const projMap = {};
+    (projRes.data||[]).forEach(p => { projMap[p.id] = p; });
+
+    document.getElementById('proof-count-sub').textContent = `${proofs.length} proof tersimpan`;
+
+    if (!proofs.length) {
+      document.getElementById('proof-archive-list').innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);">Belum ada proof of work.</div>';
+      return;
+    }
+
+    document.getElementById('proof-archive-list').innerHTML = `<div class="doc-list">${proofs.map(p => {
+      const task = taskMap[p.task_id];
+      const proj = task ? projMap[task.project_id] : null;
+      const date = new Date(p.created_at).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' });
+      return `<div class="doc-row" style="flex-direction:column;align-items:flex-start;gap:6px;padding:12px 16px;">
+        <div style="display:flex;align-items:center;gap:10px;width:100%;">
+          <div class="doc-file-icon is-pdf"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+          <div style="flex:1;min-width:0;">
+            <div class="doc-name">${task?.name || 'Task tidak ditemukan'}</div>
+            <div class="doc-meta">${proj?.name || '—'} · ${p.submitted_by} · ${date} · ${p.proof_type}</div>
+          </div>
+        </div>
+        ${p.image_url ? `<img src="${p.image_url}" style="max-width:100%;max-height:160px;border-radius:6px;object-fit:contain;" />` : ''}
+        ${p.link ? `<a href="${p.link}" target="_blank" style="font-size:12px;color:var(--accent);text-decoration:none;">🔗 ${p.link.substring(0,60)}${p.link.length>60?'...':''}</a>` : ''}
+        ${p.notes ? `<div style="font-size:12px;color:var(--text2);background:var(--bg3);border-radius:6px;padding:8px 10px;width:100%;">${p.notes}</div>` : ''}
+      </div>`;
+    }).join('')}</div>`;
+  }
 </script>
 </body>
 </html>
