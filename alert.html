@@ -22,9 +22,10 @@
     .login-mark { width: 40px; height: 4px; background: var(--accent); border-radius: 2px; margin: 0 auto 12px; }
     .login-title { font-size: 18px; font-weight: 500; text-align: center; }
     .login-sub { font-size: 12px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; text-align: center; }
-    .member-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; max-width: 340px; margin-top: 8px; }
-    .member-btn { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; color: var(--text2); cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 500; padding: 14px; text-align: center; transition: all 0.15s; }
-    .member-btn:hover { border-color: var(--accent); color: var(--text); background: var(--accent-dim); }
+    .member-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; max-width: 320px; margin-top: 8px; }
+    .member-btn { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; color: var(--text2); cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600; padding: 18px 10px; text-align: center; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .member-btn:hover { border-color: var(--accent); color: var(--text); background: var(--accent-dim); transform: translateY(-2px); }
+    .member-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--accent-dim); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; color: var(--accent); }
 
     /* MAIN */
     #main { display: none; }
@@ -46,23 +47,33 @@
     .date-value { font-size: 24px; font-weight: 600; }
     .date-sub { font-size: 13px; color: var(--text2); margin-top: 2px; }
 
-    /* TASK CARDS */
+    /* INBOX STYLE */
     .section-title { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; margin-top: 24px; }
-    .task-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 12px; cursor: pointer; transition: border-color 0.15s; }
-    .task-card:hover { border-color: var(--border-hover); }
-    .task-card.done { opacity: 0.5; }
-    .task-status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
-    .dot-todo { background: var(--accent); }
-    .dot-progress { background: var(--yellow); }
-    .dot-done { background: var(--green); }
-    .dot-blocked { background: var(--red); }
-    .task-info { flex: 1; }
-    .task-name { font-size: 14px; font-weight: 500; }
+    .inbox-label { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; margin-top: 24px; }
+    .inbox-label-text { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; }
+    .inbox-count { background: var(--accent); color: #fff; border-radius: 10px; font-size: 10px; font-weight: 700; padding: 1px 7px; }
+    .inbox-count.red { background: var(--red); }
+
+    .task-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 0; margin-bottom: 8px; overflow: hidden; cursor: pointer; transition: border-color 0.15s, transform 0.1s; }
+    .task-card:hover { border-color: var(--border-hover); transform: translateY(-1px); }
+    .task-card.done { opacity: 0.45; }
+    .task-card-inner { display: flex; align-items: stretch; }
+    .task-stripe { width: 4px; flex-shrink: 0; }
+    .stripe-todo { background: var(--accent); }
+    .stripe-progress { background: var(--yellow); }
+    .stripe-done { background: var(--green); }
+    .stripe-blocked { background: var(--red); }
+    .task-body { flex: 1; padding: 14px 14px 14px 12px; }
+    .task-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .task-name { font-size: 14px; font-weight: 500; line-height: 1.4; }
     .task-name.done-text { text-decoration: line-through; color: var(--text3); }
-    .task-meta { font-size: 11px; color: var(--text3); margin-top: 3px; }
-    .task-project { font-size: 11px; color: var(--accent); margin-top: 2px; }
-    .task-cycle-btn { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text3); cursor: pointer; font-size: 11px; padding: 4px 10px; white-space: nowrap; flex-shrink: 0; transition: all 0.15s; }
+    .task-cycle-btn { background: none; border: 1px solid var(--border); border-radius: 20px; color: var(--text3); cursor: pointer; font-size: 10px; font-weight: 600; padding: 3px 10px; white-space: nowrap; flex-shrink: 0; transition: all 0.15s; text-transform: uppercase; letter-spacing: 0.04em; }
     .task-cycle-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .task-footer { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+    .task-project { font-size: 11px; color: var(--accent); }
+    .task-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--text3); }
+    .task-meta { font-size: 11px; color: var(--text3); }
+    .task-status-dot { display: none; }
 
     .empty-state { text-align: center; padding: 48px 20px; color: var(--text3); }
     .empty-icon { font-size: 40px; margin-bottom: 12px; }
@@ -85,12 +96,12 @@
     <div class="login-sub" style="margin-top:4px;">Siapa kamu?</div>
   </div>
   <div class="member-grid">
-    <button class="member-btn" onclick="login('rena')">Rena</button>
-    <button class="member-btn" onclick="login('nom')">Nom</button>
-    <button class="member-btn" onclick="login('gapl')">Gapl</button>
-    <button class="member-btn" onclick="login('pix')">Pix</button>
-    <button class="member-btn" onclick="login('jee')">Jee</button>
-    <button class="member-btn" onclick="login('tok')">Tok</button>
+    <button class="member-btn" onclick="login('rena')"><div class="member-avatar">R</div>Rena</button>
+    <button class="member-btn" onclick="login('nom')"><div class="member-avatar">N</div>Nom</button>
+    <button class="member-btn" onclick="login('gapl')"><div class="member-avatar">G</div>Gapl</button>
+    <button class="member-btn" onclick="login('pix')"><div class="member-avatar">P</div>Pix</button>
+    <button class="member-btn" onclick="login('jee')"><div class="member-avatar">J</div>Jee</button>
+    <button class="member-btn" onclick="login('tok')"><div class="member-avatar">T</div>Tok</button>
   </div>
 </div>
 
@@ -122,7 +133,7 @@
 <script>
   // ─── CONFIG ────────────────────────────────────────────────
   const SUPABASE_URL  = 'https://fqvfnohhilkzvijqukfg.supabase.co';
-  const SUPABASE_ANON = '3f0e57f3e719957119f0ba621629a3ae0ed1ec95d1ad8a91bd980b2896b679e4';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxdmZub2hoaWxrenZpanF1a2ZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDU4NjAsImV4cCI6MjA5ODEyMTg2MH0.er10SEsmDlnx1yRLGJK2fKtLhQR40vFOXVJzH9yakCg';
   // ───────────────────────────────────────────────────────────
 
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
@@ -208,13 +219,13 @@
 
     // Overdue
     if (overdue.length) {
-      html += `<div class="section-title" style="color:var(--red);">Terlambat (${overdue.length})</div>`;
+      html += `<div class="inbox-label"><span class="inbox-label-text">Terlambat</span><span class="inbox-count red">${overdue.length}</span></div>`;
       html += overdue.map(t=>taskCard(t, true)).join('');
     }
 
     // Today
     if (todayTasks.length) {
-      html += `<div class="section-title">Task Hari Ini (${todayTasks.length})</div>`;
+      html += `<div class="inbox-label"><span class="inbox-label-text">Hari Ini</span><span class="inbox-count">${todayTasks.length}</span></div>`;
       html += todayTasks.map(t=>taskCard(t, false)).join('');
     } else if (!overdue.length) {
       html += `<div class="empty-state">
@@ -254,15 +265,22 @@
   function taskCard(t, isOverdue) {
     const status = t.actual_status || t.status || 'todo';
     const isDone = status === 'done';
-    const dotClass = `dot-${status}`;
     return `<div class="task-card${isDone?' done':''}" onclick="cycleTask('${t.id}')">
-      <div class="task-status-dot ${dotClass}"></div>
-      <div class="task-info">
-        <div class="task-name${isDone?' done-text':''}">${t.name}</div>
-        <div class="task-project">${getProjectName(t.project_id)}</div>
-        <div class="task-meta">${t.start_date} → ${t.end_date}${isOverdue?' · <span style="color:var(--red)">Terlambat</span>':''}</div>
+      <div class="task-card-inner">
+        <div class="task-stripe stripe-${status}"></div>
+        <div class="task-body">
+          <div class="task-header">
+            <div class="task-name${isDone?' done-text':''}">${t.name}</div>
+            <button class="task-cycle-btn" onclick="event.stopPropagation();cycleTask('${t.id}')">${STATUS_LABEL[status]}</button>
+          </div>
+          <div class="task-footer">
+            <div class="task-project">${getProjectName(t.project_id)}</div>
+            <div class="task-dot"></div>
+            <div class="task-meta">${t.start_date} → ${t.end_date}</div>
+            ${isOverdue?'<div class="task-dot"></div><div class="task-meta" style="color:var(--red);font-weight:600;">Terlambat</div>':''}
+          </div>
+        </div>
       </div>
-      <button class="task-cycle-btn" onclick="event.stopPropagation();cycleTask('${t.id}')">${STATUS_LABEL[status]}</button>
     </div>`;
   }
 
