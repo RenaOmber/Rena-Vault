@@ -224,6 +224,9 @@
     <button class="logout-btn" onclick="logout()">Keluar</button>
   </div>
   <a href="alert.html" class="alert-btn" title="Alert Harian">✉️</a>
+  <button onclick="enterSection('create')" title="Create" style="position:fixed;top:16px;right:68px;z-index:100;background:var(--bg2);border:1px solid var(--border);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color 0.15s;" onmouseover="this.style.borderColor='var(--border-hover)'" onmouseout="this.style.borderColor='var(--border)'">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16" style="color:var(--text2);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/></svg>
+  </button>
   <div class="layout">
     <aside class="sidebar">
       <div class="sidebar-label">Kategori</div>
@@ -379,13 +382,7 @@
           <div class="landing-card-name">Dokumen</div>
           <div class="landing-card-sub">Upload & baca file</div>
         </div>
-        <div class="landing-card" onclick="enterSection('create')">
-          <div class="landing-card-icon">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/></svg>
-          </div>
-          <div class="landing-card-name">Create</div>
-          <div class="landing-card-sub">Buat prompt untuk Claude</div>
-        </div>
+
         ${catId === 'finance' ? `
         <div class="landing-card" onclick="window.location.href='biaya.html'">
           <div class="landing-card-icon">
