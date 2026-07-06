@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rena Omber — QC Stok</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0f1e; --bg2: #111827; --bg3: #1a2235;
+      --border: rgba(99,130,255,0.12); --border-hover: rgba(99,130,255,0.28);
+      --text: #e8eaf6; --text2: #8892b0; --text3: #4a5568;
+      --accent: #4f6ef7; --accent-dim: rgba(79,110,247,0.12);
+      --green: #34d399; --green-dim: rgba(52,211,153,0.1);
+      --red: #f87171; --red-dim: rgba(248,113,113,0.1);
+      --yellow: #fbbf24;
+    }
+    html, body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; min-height: 100vh; }
+    #gate { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
+    .gate-mark { width: 40px; height: 4px; background: var(--accent); border-radius: 2px; margin: 0 auto 16px; }
+    .gate-form { display: flex; gap: 8px; margin-top: 8px; }
+    .gate-form input { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 14px; padding: 10px 14px; width: 220px; outline: none; }
+    .gate-form button { background: var(--accent); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; padding: 10px 18px; }
+    .gate-error { font-size: 12px; color: var(--red); min-height: 16px; text-align: center; }
+    #main { display: none; }
+    .top-bar { display: flex; align-items: center; justify-content: space-between; padding: 16px 28px; border-bottom: 1px solid var(--border); }
+    .top-left { display: flex; align-items: center; gap: 10px; }
+    .top-mark { width: 22px; height: 3px; background: var(--accent); border-radius: 2px; }
+    .top-name { font-size: 13px; font-weight: 500; }
+    .top-sub { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; }
+    .top-right { display: flex; gap: 8px; }
+    .btn-ghost { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text2); cursor: pointer; font-family: inherit; font-size: 12px; padding: 6px 14px; text-decoration: none; display: inline-flex; align-items: center; }
+    .btn-ghost:hover { border-color: var(--border-hover); color: var(--text); }
+
+    .layout { display: grid; grid-template-columns: 220px 1fr; min-height: calc(100vh - 53px); }
+    .sidebar { border-right: 1px solid var(--border); padding: 20px 0; overflow-y: auto; }
+    .sidebar-label { font-size: 10px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; padding: 0 16px; margin-bottom: 8px; }
+    .batch-item { padding: 9px 16px; cursor: pointer; border-left: 2px solid transparent; font-size: 13px; color: var(--text2); }
+    .batch-item:hover { background: var(--bg2); color: var(--text); }
+    .batch-item.active { border-left-color: var(--accent); background: var(--bg2); color: var(--text); font-weight: 500; }
+    .batch-item-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
+
+    .content { padding: 28px 36px; overflow-y: auto; }
+    .content-title { font-size: 20px; font-weight: 600; margin-bottom: 6px; }
+    .content-sub { font-size: 12px; color: var(--text3); margin-bottom: 24px; }
+
+    /* SUMMARY */
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px,1fr)); gap: 10px; margin-bottom: 24px; }
+    .summary-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+    .summary-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 5px; }
+    .summary-value { font-size: 20px; font-weight: 600; }
+
+    /* QC TABLE */
+    .section-title { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; margin-top: 20px; }
+    .qc-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    .qc-table th { font-size: 11px; color: var(--text3); font-weight: 500; text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+    .qc-table th.center { text-align: center; }
+    .qc-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+    .qc-table td.center { text-align: center; }
+    .qc-input { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 12px; padding: 5px 8px; width: 70px; text-align: center; outline: none; }
+    .qc-input:focus { border-color: var(--border-hover); }
+    .defect-badge { font-size: 11px; padding: 2px 7px; border-radius: 10px; font-weight: 500; }
+    .defect-zero { background: var(--green-dim); color: var(--green); }
+    .defect-has { background: var(--red-dim); color: var(--red); }
+
+    .btn-save { background: var(--accent); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; padding: 9px 20px; margin-top: 8px; }
+    .btn-save:hover { opacity: 0.85; }
+    .save-status { font-size: 12px; color: var(--green); margin-left: 10px; }
+
+    .placeholder { display: flex; align-items: center; justify-content: center; height: calc(100vh - 53px); color: var(--text3); font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<div id="gate">
+  <div>
+    <div class="gate-mark"></div>
+    <div style="font-size:18px;font-weight:500;text-align:center;">Rena Omber</div>
+    <div style="font-size:12px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;text-align:center;margin-top:4px;">QC Stok</div>
+  </div>
+  <div>
+    <div class="gate-form">
+      <input type="password" id="pw-input" placeholder="Password" onkeydown="if(event.key==='Enter')checkPw()" />
+      <button onclick="checkPw()">Masuk</button>
+    </div>
+    <div class="gate-error" id="pw-error"></div>
+  </div>
+</div>
+
+<div id="main">
+  <div class="top-bar">
+    <div class="top-left">
+      <div class="top-mark"></div>
+      <div>
+        <div class="top-name">Rena Omber</div>
+        <div class="top-sub">QC Stok</div>
+      </div>
+    </div>
+    <div class="top-right">
+      <a href="produk.html" class="btn-ghost">Produk</a>
+      <a href="index.html" class="btn-ghost">Vault</a>
+      <button class="btn-ghost" onclick="logout()">Keluar</button>
+    </div>
+  </div>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-label">Batch</div>
+      <div id="sidebar-batches"></div>
+    </aside>
+    <main class="content" id="content">
+      <div class="placeholder">Pilih batch di sidebar</div>
+    </main>
+  </div>
+</div>
+
+<script>
+  // ─── CONFIG ────────────────────────────────────────────────
+  const SUPABASE_URL  = 'https://fqvfnohhilkzvijqukfg.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxdmZub2hoaWxrenZpanF1a2ZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDU4NjAsImV4cCI6MjA5ODEyMTg2MH0.er10SEsmDlnx1yRLGJK2fKtLhQR40vFOXVJzH9yakCg';
+  const PASSWORD_HASH = '3f0e57f3e719957119f0ba621629a3ae0ed1ec95d1ad8a91bd980b2896b679e4';
+  // ───────────────────────────────────────────────────────────
+
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  const SIZES = ['S','M','L','XL','XXL'];
+  let allProducts = [], allQC = {};
+  let activeProdId = null, activeBatchIdx = null, activeBatchKey = null;
+
+  async function sha256(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+  async function checkPw() {
+    const val = document.getElementById('pw-input').value.trim();
+    if ((await sha256(val)) === PASSWORD_HASH) {
+      sessionStorage.setItem('ro_auth','1');
+      await showMain();
+    } else {
+      document.getElementById('pw-error').textContent = 'Password salah.';
+      document.getElementById('pw-input').value = '';
+    }
+  }
+  function logout() { sessionStorage.removeItem('ro_auth'); location.reload(); }
+  async function showMain() {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+    await loadAll();
+  }
+  if (sessionStorage.getItem('ro_auth') === '1') showMain();
+
+  async function loadAll() {
+    const [prodRes, qcRes] = await Promise.all([
+      sb.from('products').select('*').order('created_at'),
+      sb.from('qc_records').select('*')
+    ]);
+    allProducts = (prodRes.data||[]).map(r=>({ id:String(r.id), name:r.name, batches:r.data?.batches||[] }));
+    allQC = {};
+    (qcRes.data||[]).forEach(r => {
+      const key = `${r.product_id}_${r.batch_idx}_${r.artikel_name}_${r.size}`;
+      allQC[key] = r;
+    });
+    renderSidebar();
+  }
+
+  function artikelUnits(a) { return SIZES.reduce((s,sz)=>s+(parseInt(a.sizes[sz])||0),0); }
+
+  function renderSidebar() {
+    const el = document.getElementById('sidebar-batches');
+    el.innerHTML = '';
+    allProducts.forEach(p => {
+      p.batches.forEach((b,bi) => {
+        const key = `${p.id}_${bi}`;
+        const totalUnits = b.artikels.reduce((s,a)=>s+artikelUnits(a),0);
+        const div = document.createElement('div');
+        div.className = 'batch-item' + (key===activeBatchKey?' active':'');
+        div.innerHTML = `<div>${p.name}</div><div class="batch-item-sub">${b.name} · ${totalUnits} unit</div>`;
+        div.onclick = () => selectBatch(p.id, bi, key);
+        el.appendChild(div);
+      });
+    });
+  }
+
+  function selectBatch(prodId, batchIdx, key) {
+    activeProdId = prodId;
+    activeBatchIdx = batchIdx;
+    activeBatchKey = key;
+    renderSidebar();
+    renderContent();
+  }
+
+  function getQC(prodId, batchIdx, artikelName, size) {
+    const key = `${prodId}_${batchIdx}_${artikelName}_${size}`;
+    return allQC[key] || { qty_lolos: 0, qty_defect: 0 };
+  }
+
+  function renderContent() {
+    const p = allProducts.find(p=>p.id===activeProdId);
+    const b = p.batches[activeBatchIdx];
+
+    // Calculate totals
+    let totalProduksi = 0, totalLolos = 0, totalDefect = 0;
+    b.artikels.forEach(a => {
+      SIZES.forEach(sz => {
+        const prod = parseInt(a.sizes[sz])||0;
+        const qc = getQC(activeProdId, activeBatchIdx, a.name, sz);
+        totalProduksi += prod;
+        totalLolos += qc.qty_lolos;
+        totalDefect += qc.qty_defect;
+      });
+    });
+    const belumQC = totalProduksi - totalLolos - totalDefect;
+
+    let html = `
+      <div class="content-title">${p.name} — ${b.name}</div>
+      <div class="content-sub">Input hasil QC per artikel per size</div>
+
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="summary-label">Total Produksi</div>
+          <div class="summary-value">${totalProduksi}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Lolos QC</div>
+          <div class="summary-value" style="color:var(--green);">${totalLolos}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Defect</div>
+          <div class="summary-value" style="color:var(--red);">${totalDefect}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Belum QC</div>
+          <div class="summary-value" style="color:${belumQC>0?'var(--yellow)':'var(--green)'};">${belumQC}</div>
+        </div>
+      </div>`;
+
+    b.artikels.forEach(a => {
+      html += `
+        <div class="section-title">${a.name}</div>
+        <table class="qc-table">
+          <thead>
+            <tr>
+              <th>Size</th>
+              <th class="center">Diproduksi</th>
+              <th class="center">Lolos QC</th>
+              <th class="center">Defect</th>
+              <th class="center">Belum QC</th>
+              <th>Catatan</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${SIZES.map(sz => {
+              const prod = parseInt(a.sizes[sz])||0;
+              const qc = getQC(activeProdId, activeBatchIdx, a.name, sz);
+              const belum = prod - qc.qty_lolos - qc.qty_defect;
+              const qcKey = `${activeProdId}_${activeBatchIdx}_${a.name}_${sz}`;
+              return `<tr>
+                <td style="font-weight:500;">${sz}</td>
+                <td class="center">${prod}</td>
+                <td class="center"><input type="number" class="qc-input" min="0" max="${prod}"
+                  value="${qc.qty_lolos}" id="lolos_${qcKey}"
+                  onchange="updateQC('${activeProdId}',${activeBatchIdx},'${a.name}','${sz}')" /></td>
+                <td class="center"><input type="number" class="qc-input" min="0" max="${prod}"
+                  value="${qc.qty_defect}" id="defect_${qcKey}"
+                  onchange="updateQC('${activeProdId}',${activeBatchIdx},'${a.name}','${sz}')" /></td>
+                <td class="center"><span class="defect-badge ${belum===0?'defect-zero':'defect-has'}">${belum}</span></td>
+                <td><input type="text" class="qc-input" style="width:140px;text-align:left;"
+                  value="${qc.notes||''}" id="notes_${qcKey}" placeholder="Opsional..."
+                  onchange="updateQC('${activeProdId}',${activeBatchIdx},'${a.name}','${sz}')" /></td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>`;
+    });
+
+    html += `<button class="btn-save" onclick="saveAllQC()">Simpan Semua</button>
+             <span class="save-status" id="save-status"></span>`;
+
+    document.getElementById('content').innerHTML = html;
+  }
+
+  function updateQC(prodId, batchIdx, artikelName, size) {
+    const qcKey = `${prodId}_${batchIdx}_${artikelName}_${size}`;
+    const lolos = parseInt(document.getElementById(`lolos_${qcKey}`)?.value)||0;
+    const defect = parseInt(document.getElementById(`defect_${qcKey}`)?.value)||0;
+    const notes = document.getElementById(`notes_${qcKey}`)?.value||'';
+
+    // Update local state
+    const key = `${prodId}_${batchIdx}_${artikelName}_${size}`;
+    if (!allQC[key]) allQC[key] = { id: null };
+    allQC[key] = { ...allQC[key], product_id: prodId, batch_idx: batchIdx, artikel_name: artikelName, size, qty_lolos: lolos, qty_defect: defect, notes };
+  }
+
+  async function saveAllQC() {
+    const p = allProducts.find(p=>p.id===activeProdId);
+    const b = p.batches[activeBatchIdx];
+    const rows = [];
+
+    b.artikels.forEach(a => {
+      SIZES.forEach(sz => {
+        const key = `${activeProdId}_${activeBatchIdx}_${a.name}_${sz}`;
+        const qc = allQC[key];
+        if (qc) {
+          rows.push({
+            id: qc.id || `${activeProdId}_${activeBatchIdx}_${a.name}_${sz}`.replace(/\s/g,'_'),
+            product_id: activeProdId,
+            batch_idx: activeBatchIdx,
+            artikel_name: a.name,
+            size: sz,
+            qty_lolos: qc.qty_lolos||0,
+            qty_defect: qc.qty_defect||0,
+            notes: qc.notes||null,
+            recorded_at: new Date().toISOString().split('T')[0]
+          });
+        }
+      });
+    });
+
+    if (!rows.length) return;
+    const { error } = await sb.from('qc_records').upsert(rows);
+    const status = document.getElementById('save-status');
+    if (error) { status.textContent = 'Gagal: ' + error.message; status.style.color = 'var(--red)'; }
+    else { status.textContent = '✓ Tersimpan'; status.style.color = 'var(--green)'; setTimeout(()=>status.textContent='', 2000); }
+    renderContent();
+  }
+</script>
+</body>
+</html>
