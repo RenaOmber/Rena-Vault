@@ -221,6 +221,10 @@
       </select>
     </div>
     <div class="form-group">
+      <div class="form-label">Brief Task</div>
+      <textarea class="form-input" id="t-brief" placeholder="Jelaskan detail task, ekspektasi output, referensi..." style="min-height:80px;resize:vertical;line-height:1.6;"></textarea>
+    </div>
+    <div class="form-group">
       <div class="form-label">Catatan</div>
       <input class="form-input" id="t-notes" placeholder="Opsional..." />
     </div>
@@ -526,6 +530,7 @@
       document.getElementById('t-status').value = t.actual_status || t.status || 'todo';
       document.getElementById('t-group').value = t.group_name||'';
       document.getElementById('t-assigned').value = t.assigned_to||'';
+      document.getElementById('t-brief').value = t.brief||'';
       document.getElementById('t-notes').value = t.notes||'';
     } else {
       document.getElementById('t-name').value='';
@@ -536,6 +541,7 @@
       document.getElementById('t-status').value='todo';
       document.getElementById('t-group').value='';
       document.getElementById('t-assigned').value='';
+      document.getElementById('t-brief').value='';
       document.getElementById('t-notes').value='';
     }
     document.getElementById('task-modal').style.display='flex';
@@ -571,6 +577,7 @@
       status: 'plan',
       actual_status: document.getElementById('t-status').value,
       assigned_to: document.getElementById('t-assigned').value||null,
+      brief: document.getElementById('t-brief').value.trim()||null,
       group_name: document.getElementById('t-group').value.trim()||null,
       notes: document.getElementById('t-notes').value.trim()||null,
       sort_order: editingTaskId ? tasks.find(t=>t.id===editingTaskId)?.sort_order||0 : tasks.length

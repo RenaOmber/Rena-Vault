@@ -228,8 +228,11 @@
     if (t.actual_start) {
       body += `<div class="detail-row"><div class="detail-label">Actual</div><div class="detail-value">${t.actual_start} → ${t.actual_end||'ongoing'}</div></div>`;
     }
+    if (t.brief) {
+      body += `<div class="detail-row"><div class="detail-label">Brief</div></div><div class="detail-notes" style="border-left:3px solid var(--accent);padding-left:12px;">${t.brief}</div>`;
+    }
     if (t.notes) {
-      body += `<div class="detail-row"><div class="detail-label">Catatan</div></div><div class="detail-notes">${t.notes}</div>`;
+      body += `<div class="detail-row" style="margin-top:10px;"><div class="detail-label">Catatan</div></div><div class="detail-notes">${t.notes}</div>`;
     }
     if (proof) {
       body += `<div class="detail-proof">✓ Proof of Work`;
