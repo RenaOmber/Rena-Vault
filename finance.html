@@ -262,7 +262,8 @@
     const totalCOGSTerjual = artikelRows.reduce((s,r)=>s+r.cogsTerjual,0);
     const totalCOGSProduksi = artikelRows.reduce((s,r)=>s+r.cogsProduksi,0);
     const totalStokSisa = artikelRows.reduce((s,r)=>s+r.stokSisa,0);
-    const otherCost = parseInt(fd.other_cost)||0;
+    const opsItems = fd.ops_items||[];
+    const otherCost = opsItems.reduce((s,item)=>s+(parseInt(item.amount)||0),0);
     const totalProfit = totalRevenue - totalCOGSProduksi - otherCost;
     const totalMargin = totalCOGSProduksi ? Math.round((totalProfit/totalCOGSProduksi)*100) : null;
     const totalTerjual = artikelRows.reduce((s,r)=>s+r.terjual,0);
@@ -355,15 +356,21 @@
         </tfoot>
       </table>
 
-      <div class="section-title">Biaya Lain-lain</div>
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
-        <div style="position:relative;">
-          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text3);">Rp</span>
-          <input type="number" class="revenue-input" style="padding-left:28px;width:180px;" placeholder="0" value="${otherCost||''}"
-            onchange="updateOtherCost('${key}',this.value)" />
-        </div>
-        <span style="font-size:12px;color:var(--text3);">Contoh: ongkir, fee marketplace, dll</span>
+      <div class="section-title">Biaya Operasional</div>
+      <div id="ops-items-${key}" style="margin-bottom:12px;">
+        ${(fd.ops_items||[]).map((item,i)=>`
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            <input class="revenue-input" style="flex:1;max-width:220px;" placeholder="Nama biaya..." value="${item.name||''}"
+              onchange="updateOpsItem('${key}',${i},'name',this.value)" />
+            <div style="position:relative;">
+              <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--text3);">Rp</span>
+              <input type="number" class="revenue-input" style="padding-left:26px;width:140px;" placeholder="0" value="${item.amount||''}"
+                onchange="updateOpsItem('${key}',${i},'amount',this.value)" />
+            </div>
+            <button onclick="removeOpsItem('${key}',${i})" style="background:none;border:1px solid transparent;border-radius:5px;color:var(--text3);cursor:pointer;font-size:16px;padding:4px 8px;transition:color 0.15s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text3)'">×</button>
+          </div>`).join('')}
       </div>
+      <button onclick="addOpsItem('${key}')" style="background:none;border:1px dashed var(--border-hover);border-radius:6px;color:var(--text3);cursor:pointer;font-size:12px;padding:6px 14px;margin-bottom:16px;transition:all 0.15s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text3)'">+ Tambah Biaya</button>
 
       <div class="section-title">Catatan</div>
       <textarea style="width:100%;max-width:500px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:inherit;font-size:13px;padding:10px 12px;outline:none;resize:vertical;min-height:72px;line-height:1.6;"
@@ -376,7 +383,8 @@
     await sb.from('finance_entries').upsert({
       batch_key: key,
       harga_jual: fd.harga_jual||{},
-      other_cost: fd.other_cost||0,
+      other_cost: otherCost,
+      ops_items: fd.ops_items||[],
       notes: fd.notes||'',
       updated_at: new Date().toISOString()
     });
@@ -398,13 +406,33 @@
     renderBatch(p, p.batches[bIdx], key);
   }
 
-  function updateOtherCost(key, val) {
-    if (!financeData[key]) financeData[key] = { harga_jual:{}, terjual:{}, other_cost:0, notes:'' };
-    financeData[key].other_cost = parseInt(val)||0;
-    scheduleSave(key);
-    const p = allProducts.find(p => p.batches.some((_,i) => `${p.id}_${i}` === key));
-    const bIdx = p.batches.findIndex((_,i) => `${p.id}_${i}` === key);
+  function addOpsItem(key) {
+    if (!financeData[key]) financeData[key] = { harga_jual:{}, ops_items:[], notes:'' };
+    if (!financeData[key].ops_items) financeData[key].ops_items = [];
+    financeData[key].ops_items.push({ name:'', amount:0 });
+    const p = allProducts.find(p=>p.batches.some((_,i)=>`${p.id}_${i}`===key));
+    const bIdx = p.batches.findIndex((_,i)=>`${p.id}_${i}`===key);
     renderBatch(p, p.batches[bIdx], key);
+  }
+
+  function removeOpsItem(key, idx) {
+    if (!financeData[key]?.ops_items) return;
+    financeData[key].ops_items.splice(idx,1);
+    scheduleSave(key);
+    const p = allProducts.find(p=>p.batches.some((_,i)=>`${p.id}_${i}`===key));
+    const bIdx = p.batches.findIndex((_,i)=>`${p.id}_${i}`===key);
+    renderBatch(p, p.batches[bIdx], key);
+  }
+
+  function updateOpsItem(key, idx, field, val) {
+    if (!financeData[key]) financeData[key] = { harga_jual:{}, ops_items:[], notes:'' };
+    if (!financeData[key].ops_items) financeData[key].ops_items = [];
+    if (!financeData[key].ops_items[idx]) financeData[key].ops_items[idx] = {};
+    financeData[key].ops_items[idx][field] = field==='amount' ? parseInt(val)||0 : val;
+    // Update summary live
+    const opsItems = financeData[key].ops_items||[];
+    const total = opsItems.reduce((s,item)=>s+(parseInt(item.amount)||0),0);
+    scheduleSave(key);
   }
 
   async function exportFinancePDF(key) {
@@ -432,7 +460,8 @@
     const totalStokSisa = artikelRows.reduce((s,r)=>s+r.stokSisa,0);
     const totalTerjual = artikelRows.reduce((s,r)=>s+r.terjual,0);
     const totalUnit = artikelRows.reduce((s,r)=>s+r.units,0);
-    const otherCost = parseInt(fd.other_cost)||0;
+    const opsItems = fd.ops_items||[];
+    const otherCost = opsItems.reduce((s,item)=>s+(parseInt(item.amount)||0),0);
     const totalProfit = totalRevenue - totalCOGSProduksi - otherCost;
     const totalMargin = totalCOGSProduksi ? Math.round((totalProfit/totalCOGSProduksi)*100) : null;
 
@@ -531,9 +560,16 @@
     y += 12;
 
     // Other cost & notes
-    if (otherCost) {
-      doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(80,80,80);
-      doc.text(`Biaya lain-lain: ${fmt(otherCost)}`, M, y); y += 6;
+    const opsItems2 = fd.ops_items||[];
+    if (opsItems2.length) {
+      doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(100,100,100);
+      doc.text('BIAYA OPERASIONAL', M, y); y+=5;
+      opsItems2.forEach(item => {
+        doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(80,80,80);
+        doc.text(`${item.name||'—'}: ${fmt(item.amount)}`, M+4, y); y+=5;
+      });
+      doc.setFont('helvetica','bold');
+      doc.text(`Total biaya ops: ${fmt(otherCost)}`, M+4, y); y+=8;
     }
     if (fd.notes) {
       doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(80,80,80);
