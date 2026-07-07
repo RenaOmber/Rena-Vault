@@ -238,7 +238,10 @@
     <main class="content" style="display:grid;grid-template-columns:1fr 280px;overflow:hidden;">
       <div id="content-area" style="overflow-y:auto;padding-right:8px;">
       </div>
-      <div id="weekly-summary-panel" style="border-left:1px solid var(--border);overflow-y:auto;"><div class="placeholder-msg" style="color:var(--text3);font-size:12px;padding:20px;text-align:center;">Memuat goal mingguan...</div></div>
+      <div id="weekly-summary-panel" style="border-left:1px solid var(--border);overflow-y:auto;transition:width 0.2s;width:280px;min-width:280px;position:relative;">
+        <button onclick="toggleWeeklyPanel()" id="weekly-toggle-btn" style="position:absolute;top:8px;right:8px;z-index:10;background:none;border:1px solid var(--border);border-radius:5px;color:var(--text3);cursor:pointer;font-size:11px;padding:3px 8px;line-height:1;" title="Minimize">−</button>
+        <div id="weekly-summary-inner"><div class="placeholder-msg" style="color:var(--text3);font-size:12px;padding:20px;text-align:center;">Memuat goal mingguan...</div></div>
+      </div>
     </main>
   </div>
 </div>
@@ -799,8 +802,31 @@
     input.click();
   }
 
+  let weeklyPanelOpen = true;
+  function toggleWeeklyPanel() {
+    const panel = document.getElementById('weekly-summary-panel');
+    const inner = document.getElementById('weekly-summary-inner');
+    const btn = document.getElementById('weekly-toggle-btn');
+    const layout = panel.parentElement;
+    weeklyPanelOpen = !weeklyPanelOpen;
+    if (weeklyPanelOpen) {
+      panel.style.width = '280px';
+      panel.style.minWidth = '280px';
+      inner.style.display = 'block';
+      btn.textContent = '−';
+      layout.style.gridTemplateColumns = '1fr 280px';
+    } else {
+      panel.style.width = '32px';
+      panel.style.minWidth = '32px';
+      inner.style.display = 'none';
+      btn.textContent = '+';
+      btn.style.right = '4px';
+      layout.style.gridTemplateColumns = '1fr 32px';
+    }
+  }
+
   async function loadWeeklySummary() {
-    const el = document.getElementById('weekly-summary-panel');
+    const el = document.getElementById('weekly-summary-inner');
     if (!el) return;
 
     const now = new Date();
