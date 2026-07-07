@@ -87,6 +87,22 @@
     .upcoming-name { font-size: 13px; color: var(--text2); flex: 1; }
     .upcoming-project { font-size: 11px; color: var(--text3); }
 
+    /* USER NOTES */
+    .notes-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px; }
+    .notes-col { display: flex; flex-direction: column; gap: 8px; }
+    .notes-col-title { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; }
+    .notes-col-title span { font-size: 9px; color: var(--text3); font-weight: 400; text-transform: none; letter-spacing: 0; }
+    .note-item { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; position: relative; }
+    .note-item-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+    .note-item-user { font-size: 10px; font-weight: 600; color: var(--accent); }
+    .note-item-time { font-size: 10px; color: var(--text3); }
+    .note-item-text { font-size: 12px; color: var(--text2); line-height: 1.5; white-space: pre-wrap; }
+    .note-del { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 13px; padding: 0; line-height: 1; }
+    .note-del:hover { color: var(--red); }
+    .note-input-area { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; width: 100%; font-family: inherit; font-size: 12px; color: var(--text); outline: none; resize: none; min-height: 72px; line-height: 1.5; }
+    .note-input-area:focus { border-color: var(--border-hover); }
+    .note-send-btn { background: var(--accent); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-family: inherit; font-size: 11px; font-weight: 500; padding: 5px 12px; margin-top: 4px; align-self: flex-end; }
+
     /* COMMENTS */
     .comment-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; max-height: 200px; overflow-y: auto; }
     .comment-item { background: var(--bg3); border-radius: 8px; padding: 8px 12px; }
@@ -187,6 +203,7 @@
       <div class="date-sub" id="date-sub"></div>
     </div>
     <div id="alert-content"></div>
+  <div class="notes-panel" id="notes-panel"></div>
   </div>
 </div>
 
@@ -230,6 +247,7 @@
       `${DAYS_ID[today.getDay()]}, ${today.getDate()} ${MONTHS_ID[today.getMonth()]} ${today.getFullYear()}`;
 
     await loadTasks();
+    await loadNotes();
     renderAlerts();
   }
 
@@ -505,6 +523,73 @@
 
     // Now mark as done
     await cycleTask(pendingProofTaskId);
+  }
+
+  let progressNotes = [], ideaNotes = [];
+
+  async function loadNotes() {
+    const { data } = await sb.from('user_notes').select('*').order('created_at', { ascending: false });
+    progressNotes = (data||[]).filter(n=>n.note_type==='progress');
+    ideaNotes = (data||[]).filter(n=>n.note_type==='idea');
+    renderNotes();
+  }
+
+  function renderNotes() {
+    const panel = document.getElementById('notes-panel');
+    if (!panel) return;
+
+    const fmtTime = d => new Date(d).toLocaleDateString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+
+    const renderNoteList = (notes, type) => notes.slice(0,10).map(n=>`
+      <div class="note-item">
+        <div class="note-item-header">
+          <span class="note-item-user">${n.user_name}</span>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span class="note-item-time">${fmtTime(n.created_at)}</span>
+            ${n.user_name===currentUser?`<button class="note-del" onclick="deleteNote('${n.id}','${type}')">×</button>`:''}
+          </div>
+        </div>
+        <div class="note-item-text">${n.content}</div>
+      </div>`).join('');
+
+    panel.innerHTML = `
+      <div class="notes-col">
+        <div class="notes-col-title">📋 Track Progress <span>visible ke semua</span></div>
+        ${renderNoteList(progressNotes,'progress')}
+        <textarea class="note-input-area" id="progress-input" placeholder="Update progress hari ini..."></textarea>
+        <button class="note-send-btn" onclick="addNote('progress')">Tambah</button>
+      </div>
+      <div class="notes-col">
+        <div class="notes-col-title">💡 Idea Notes <span>visible ke semua</span></div>
+        ${renderNoteList(ideaNotes,'idea')}
+        <textarea class="note-input-area" id="idea-input" placeholder="Tulis ide yang muncul..."></textarea>
+        <button class="note-send-btn" onclick="addNote('idea')">Tambah</button>
+      </div>`;
+  }
+
+  async function addNote(type) {
+    const inputId = type==='progress' ? 'progress-input' : 'idea-input';
+    const text = document.getElementById(inputId)?.value?.trim();
+    if (!text) return;
+    const note = {
+      id: Date.now().toString(),
+      user_name: currentUser,
+      note_type: type,
+      content: text,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    await sb.from('user_notes').insert(note);
+    if (type==='progress') progressNotes.unshift(note);
+    else ideaNotes.unshift(note);
+    renderNotes();
+  }
+
+  async function deleteNote(id, type) {
+    await sb.from('user_notes').delete().eq('id', id);
+    if (type==='progress') progressNotes = progressNotes.filter(n=>n.id!==id);
+    else ideaNotes = ideaNotes.filter(n=>n.id!==id);
+    renderNotes();
   }
 
   async function loadTasks() {
