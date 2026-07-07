@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rena Omber — Alert Harian</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="theme.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -136,6 +137,13 @@
     .btn-confirm { background: var(--accent); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; padding: 8px 16px; }
     .proof-existing { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; font-size: 12px; color: var(--text2); }
     .proof-existing a { color: var(--accent); text-decoration: none; }
+  
+    [data-theme="light"] .modal-box,
+    [data-theme="light"] .modal-bg { background: rgba(0,0,0,0.4); }
+    [data-theme="light"] .modal-box { background: #fff; }
+    [data-theme="light"] .btn-ghost { background: #fff; }
+    [data-theme="light"] .top-bar { background: var(--bg2); }
+    [data-theme="light"] .sidebar { background: var(--bg2); }
   </style>
 </head>
 <body>
@@ -168,6 +176,7 @@
     <div class="top-right">
       <span class="user-badge" id="user-badge">-</span>
       <a href="index.html" class="btn-ghost">Vault</a>
+      <button class="theme-toggle-btn btn-ghost" onclick="toggleTheme()" title="Mode Terang">☀️</button>
       <button class="btn-ghost" onclick="logout()">Ganti</button>
     </div>
   </div>
@@ -184,7 +193,7 @@
 <script>
   // ─── CONFIG ────────────────────────────────────────────────
   const SUPABASE_URL  = 'https://fqvfnohhilkzvijqukfg.supabase.co';
-  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxdmZub2hoaWxrenZpanF1a2ZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDU4NjAsImV4cCI6MjA5ODEyMTg2MH0.er10SEsmDlnx1yRLGJK2fKtLhQR40vFOXVJzH9yakCg';
+  const SUPABASE_ANON = '3f0e57f3e719957119f0ba621629a3ae0ed1ec95d1ad8a91bd980b2896b679e4';
   // ───────────────────────────────────────────────────────────
 
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
