@@ -338,7 +338,7 @@
     document.getElementById('main').style.display = 'block';
     renderSidebar();
   }
-  if (sessionStorage.getItem('ro_auth') === '1') showMain().then(loadWeeklySummary);
+  if (sessionStorage.getItem('ro_auth') === '1') showMain();
 
   // ─── SIDEBAR ────────────────────────────────────────────────
   function renderSidebar() {
