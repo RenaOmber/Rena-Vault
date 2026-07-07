@@ -380,11 +380,13 @@
   let saveTimer = null;
   async function saveFinance(key) {
     const fd = financeData[key];
+    const opsItems = fd.ops_items||[];
+    const computedOtherCost = opsItems.reduce((s,item)=>s+(parseInt(item.amount)||0),0);
     await sb.from('finance_entries').upsert({
       batch_key: key,
       harga_jual: fd.harga_jual||{},
-      other_cost: otherCost,
-      ops_items: fd.ops_items||[],
+      other_cost: computedOtherCost,
+      ops_items: opsItems,
       notes: fd.notes||'',
       updated_at: new Date().toISOString()
     });
@@ -429,10 +431,11 @@
     if (!financeData[key].ops_items) financeData[key].ops_items = [];
     if (!financeData[key].ops_items[idx]) financeData[key].ops_items[idx] = {};
     financeData[key].ops_items[idx][field] = field==='amount' ? parseInt(val)||0 : val;
-    // Update summary live
-    const opsItems = financeData[key].ops_items||[];
-    const total = opsItems.reduce((s,item)=>s+(parseInt(item.amount)||0),0);
     scheduleSave(key);
+    // Re-render to update summary cards
+    const p = allProducts.find(p=>p.batches.some((_,i)=>`${p.id}_${i}`===key));
+    const bIdx = p.batches.findIndex((_,i)=>`${p.id}_${i}`===key);
+    renderBatch(p, p.batches[bIdx], key);
   }
 
   async function exportFinancePDF(key) {
