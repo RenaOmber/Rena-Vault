@@ -337,6 +337,7 @@
     document.getElementById('gate').style.display = 'none';
     document.getElementById('main').style.display = 'block';
     renderSidebar();
+    setTimeout(loadWeeklySummary, 200);
   }
   if (sessionStorage.getItem('ro_auth') === '1') showMain();
 
