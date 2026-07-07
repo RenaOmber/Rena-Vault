@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rena Omber — Nota</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="theme.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0f1e; --bg2: #111827; --bg3: #1a2235;
+      --border: rgba(99,130,255,0.12); --border-hover: rgba(99,130,255,0.28);
+      --text: #e8eaf6; --text2: #8892b0; --text3: #4a5568;
+      --accent: #4f6ef7; --accent-dim: rgba(79,110,247,0.12);
+      --green: #34d399; --red: #f87171; --yellow: #fbbf24;
+    }
+    html, body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; min-height: 100vh; }
+    #gate { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
+    .gate-mark { width: 40px; height: 4px; background: var(--accent); border-radius: 2px; margin: 0 auto 16px; }
+    .gate-form { display: flex; gap: 8px; margin-top: 8px; }
+    .gate-form input { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 14px; padding: 10px 14px; width: 220px; outline: none; }
+    .gate-form button { background: var(--accent); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; padding: 10px 18px; }
+    .gate-error { font-size: 12px; color: var(--red); min-height: 16px; text-align: center; }
+    #main { display: none; }
+    .top-bar { display: flex; align-items: center; justify-content: space-between; padding: 16px 28px; border-bottom: 1px solid var(--border); }
+    .top-left { display: flex; align-items: center; gap: 10px; }
+    .top-mark { width: 22px; height: 3px; background: var(--accent); border-radius: 2px; }
+    .top-name { font-size: 13px; font-weight: 500; }
+    .top-sub { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; }
+    .top-right { display: flex; gap: 8px; }
+    .btn-ghost { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text2); cursor: pointer; font-family: inherit; font-size: 12px; padding: 6px 14px; text-decoration: none; display: inline-flex; align-items: center; }
+    .btn-ghost:hover { border-color: var(--border-hover); color: var(--text); }
+
+    .content { padding: 28px 36px; max-width: 800px; }
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .page-title { font-size: 20px; font-weight: 600; }
+
+    /* FILTER BAR */
+    .filter-bar { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+    .filter-select { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 12px; padding: 6px 10px; outline: none; }
+    .search-input { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 12px; padding: 6px 10px; outline: none; width: 200px; }
+    .search-input:focus, .filter-select:focus { border-color: var(--border-hover); }
+
+    /* NOTA LIST */
+    .nota-list { display: flex; flex-direction: column; gap: 8px; }
+    .nota-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 12px; transition: border-color 0.15s; }
+    .nota-card:hover { border-color: var(--border-hover); }
+    .nota-icon { font-size: 24px; flex-shrink: 0; margin-top: 2px; }
+    .nota-info { flex: 1; min-width: 0; }
+    .nota-name { font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .nota-meta { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+    .nota-cat { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 500; background: var(--accent-dim); color: var(--accent); }
+    .nota-date { font-size: 11px; color: var(--text3); }
+    .nota-desc { font-size: 12px; color: var(--text2); margin-top: 4px; }
+    .nota-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .btn-sm { background: none; border: 1px solid var(--border); border-radius: 5px; color: var(--text3); cursor: pointer; font-size: 11px; padding: 4px 10px; text-decoration: none; display: inline-flex; align-items: center; }
+    .btn-sm:hover { border-color: var(--border-hover); color: var(--text); }
+    .btn-del { border-color: transparent; }
+    .btn-del:hover { border-color: var(--red); color: var(--red); }
+
+    .empty { text-align: center; padding: 48px; color: var(--text3); font-size: 13px; }
+
+    /* MODAL */
+    .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 20px; }
+    .modal-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; width: 100%; max-width: 460px; padding: 24px; }
+    .modal-title { font-size: 15px; font-weight: 600; margin-bottom: 18px; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+    .form-label { font-size: 12px; color: var(--text2); }
+    .form-input { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 13px; padding: 9px 12px; outline: none; width: 100%; }
+    .form-input:focus { border-color: var(--border-hover); }
+    .upload-zone { border: 1px dashed var(--border-hover); border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; color: var(--text3); font-size: 13px; position: relative; }
+    .upload-zone:hover { background: var(--accent-dim); }
+    .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+    .btn-cancel { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text3); cursor: pointer; font-family: inherit; font-size: 13px; padding: 8px 16px; }
+    .btn-primary { background: var(--accent); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; padding: 8px 16px; }
+  </style>
+</head>
+<body>
+
+<div id="gate">
+  <div>
+    <div class="gate-mark"></div>
+    <div style="font-size:18px;font-weight:500;text-align:center;">Rena Omber</div>
+    <div style="font-size:12px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;text-align:center;margin-top:4px;">Nota & Dokumen</div>
+  </div>
+  <div>
+    <div class="gate-form">
+      <input type="password" id="pw-input" placeholder="Password" onkeydown="if(event.key==='Enter')checkPw()" />
+      <button onclick="checkPw()">Masuk</button>
+    </div>
+    <div class="gate-error" id="pw-error"></div>
+  </div>
+</div>
+
+<div id="main">
+  <div class="top-bar">
+    <div class="top-left">
+      <div class="top-mark"></div>
+      <div>
+        <div class="top-name">Rena Omber</div>
+        <div class="top-sub">Nota & Dokumen</div>
+      </div>
+    </div>
+    <div class="top-right">
+      <button class="theme-toggle-btn btn-ghost" onclick="toggleTheme()" title="Mode Terang">☀️</button>
+      <a href="finance.html" class="btn-ghost">Finance</a>
+      <a href="index.html" class="btn-ghost">Vault</a>
+      <button class="btn-ghost" onclick="logout()">Keluar</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="page-header">
+      <div class="page-title">Nota & Dokumen</div>
+      <button class="btn-primary" style="background:var(--accent);border:none;border-radius:6px;color:#fff;cursor:pointer;font-family:inherit;font-size:13px;font-weight:500;padding:9px 16px;" onclick="openModal()">+ Upload Nota</button>
+    </div>
+    <div class="filter-bar">
+      <select class="filter-select" id="filter-cat" onchange="renderList()">
+        <option value="">Semua kategori</option>
+        <option value="Produksi">Produksi</option>
+        <option value="Vendor">Vendor</option>
+        <option value="Packaging">Packaging</option>
+        <option value="Marketing">Marketing</option>
+        <option value="Operasional">Operasional</option>
+        <option value="Lainnya">Lainnya</option>
+      </select>
+      <input class="search-input" id="search-input" placeholder="Cari nama nota..." oninput="renderList()" />
+    </div>
+    <div id="nota-list"></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal" style="display:none;" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="modal-title">Upload Nota</div>
+    <div class="form-group">
+      <div class="form-label">Nama Nota *</div>
+      <input class="form-input" id="f-name" placeholder="Contoh: Nota Vendor Tiga Jaya..." />
+    </div>
+    <div class="form-group">
+      <div class="form-label">Kategori *</div>
+      <select class="form-input" id="f-cat">
+        <option value="Produksi">Produksi</option>
+        <option value="Vendor">Vendor</option>
+        <option value="Packaging">Packaging</option>
+        <option value="Marketing">Marketing</option>
+        <option value="Operasional">Operasional</option>
+        <option value="Lainnya">Lainnya</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <div class="form-label">Tanggal</div>
+      <input type="date" class="form-input" id="f-date" />
+    </div>
+    <div class="form-group">
+      <div class="form-label">Keterangan</div>
+      <input class="form-input" id="f-desc" placeholder="Contoh: Nota DP vendor kaos batch 1..." />
+    </div>
+    <div class="form-group">
+      <div class="form-label">File (PDF atau foto)</div>
+      <div class="upload-zone" id="upload-zone">
+        <input type="file" id="f-file" accept="application/pdf,image/*" onchange="onFileSelect(event)" />
+        <div id="upload-label">📄 Klik untuk pilih file</div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Batal</button>
+      <button class="btn-primary" id="submit-btn" onclick="submitNota()">Upload</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ─── CONFIG ────────────────────────────────────────────────
+  const SUPABASE_URL  = 'https://fqvfnohhilkzvijqukfg.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxdmZub2hoaWxrenZpanF1a2ZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDU4NjAsImV4cCI6MjA5ODEyMTg2MH0.er10SEsmDlnx1yRLGJK2fKtLhQR40vFOXVJzH9yakCg';
+  const PASSWORD_HASH = '3f0e57f3e719957119f0ba621629a3ae0ed1ec95d1ad8a91bd980b2896b679e4';
+  // ───────────────────────────────────────────────────────────
+
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  let notas = [], pendingFile = null;
+
+  async function sha256(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+  async function checkPw() {
+    const val = document.getElementById('pw-input').value.trim();
+    if ((await sha256(val)) === PASSWORD_HASH) {
+      sessionStorage.setItem('ro_auth','1');
+      await showMain();
+    } else {
+      document.getElementById('pw-error').textContent = 'Password salah.';
+      document.getElementById('pw-input').value = '';
+    }
+  }
+  function logout() { sessionStorage.removeItem('ro_auth'); location.reload(); }
+  async function showMain() {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+    document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+    await loadNotas();
+  }
+  if (sessionStorage.getItem('ro_auth') === '1') showMain();
+
+  async function loadNotas() {
+    const { data } = await sb.from('notas').select('*').order('created_at', { ascending: false });
+    notas = data||[];
+    renderList();
+  }
+
+  function renderList() {
+    const cat = document.getElementById('filter-cat').value;
+    const search = document.getElementById('search-input').value.toLowerCase();
+    const filtered = notas.filter(n =>
+      (!cat || n.category === cat) &&
+      (!search || n.name.toLowerCase().includes(search) || (n.description||'').toLowerCase().includes(search))
+    );
+
+    const el = document.getElementById('nota-list');
+    if (!filtered.length) { el.innerHTML = '<div class="empty">Belum ada nota.</div>'; return; }
+
+    el.innerHTML = `<div class="nota-list">${filtered.map(n => `
+      <div class="nota-card">
+        <div class="nota-icon">${n.file_type==='pdf'?'📄':'🖼️'}</div>
+        <div class="nota-info">
+          <div class="nota-name">${n.name}</div>
+          <div class="nota-meta">
+            <span class="nota-cat">${n.category}</span>
+            <span class="nota-date">${n.date||''}</span>
+          </div>
+          ${n.description?`<div class="nota-desc">${n.description}</div>`:''}
+        </div>
+        <div class="nota-actions">
+          <a href="${n.url}" target="_blank" class="btn-sm">Buka</a>
+          <button class="btn-sm btn-del" onclick="deleteNota('${n.id}','${n.storage_path}')">×</button>
+        </div>
+      </div>`).join('')}
+    </div>`;
+  }
+
+  function onFileSelect(e) {
+    pendingFile = e.target.files[0];
+    if (pendingFile) {
+      document.getElementById('upload-label').textContent = `✓ ${pendingFile.name}`;
+    }
+  }
+
+  function openModal() { document.getElementById('modal').style.display='flex'; }
+  function closeModal() { document.getElementById('modal').style.display='none'; pendingFile=null; document.getElementById('upload-label').textContent='📄 Klik untuk pilih file'; document.getElementById('f-file').value=''; }
+
+  async function submitNota() {
+    const name = document.getElementById('f-name').value.trim();
+    const cat = document.getElementById('f-cat').value;
+    if (!name) { alert('Nama nota harus diisi.'); return; }
+    if (!pendingFile) { alert('Pilih file dulu.'); return; }
+
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true; btn.textContent = 'Mengupload...';
+
+    const isPDF = pendingFile.type === 'application/pdf';
+    let uploadFile = pendingFile;
+
+    if (!isPDF) {
+      uploadFile = await new Promise(res => {
+        const reader = new FileReader();
+        reader.onload = ev => {
+          const img = new Image();
+          img.onload = () => {
+            const MAX = 1200; let w=img.width, h=img.height;
+            if(w>MAX||h>MAX){if(w>h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;}}
+            const canvas=document.createElement('canvas'); canvas.width=w; canvas.height=h;
+            canvas.getContext('2d').drawImage(img,0,0,w,h);
+            canvas.toBlob(blob=>res(new File([blob],pendingFile.name,{type:'image/jpeg'})),'image/jpeg',0.82);
+          };
+          img.src=ev.target.result;
+        };
+        reader.readAsDataURL(pendingFile);
+      });
+    }
+
+    const ext = isPDF ? 'pdf' : 'jpg';
+    const path = `notas/${Date.now()}_${name.replace(/\s/g,'_')}.${ext}`;
+    const { error: uploadErr } = await sb.storage.from('vault-docs').upload(path, uploadFile, {
+      contentType: isPDF ? 'application/pdf' : 'image/jpeg', upsert: true
+    });
+    if (uploadErr) { alert('Upload gagal: ' + uploadErr.message); btn.disabled=false; btn.textContent='Upload'; return; }
+
+    const { data: signed } = await sb.storage.from('vault-docs').createSignedUrl(path, 60*60*24*365*5);
+
+    const { error: dbErr } = await sb.from('notas').insert({
+      id: Date.now().toString(),
+      name,
+      category: cat,
+      date: document.getElementById('f-date').value,
+      description: document.getElementById('f-desc').value.trim()||null,
+      file_type: isPDF ? 'pdf' : 'image',
+      storage_path: path,
+      url: signed?.signedUrl
+    });
+
+    if (dbErr) { alert('Simpan gagal: ' + dbErr.message); }
+    else {
+      closeModal();
+      document.getElementById('f-name').value='';
+      document.getElementById('f-desc').value='';
+      await loadNotas();
+    }
+    btn.disabled=false; btn.textContent='Upload';
+  }
+
+  async function deleteNota(id, storagePath) {
+    if (!confirm('Hapus nota ini?')) return;
+    await sb.storage.from('vault-docs').remove([storagePath]);
+    await sb.from('notas').delete().eq('id', id);
+    notas = notas.filter(n=>n.id!==id);
+    renderList();
+  }
+</script>
+</body>
+</html>
