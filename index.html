@@ -237,7 +237,7 @@
     </aside>
     <main class="content">
       <div id="content-area">
-        <div class="placeholder-msg">Pilih kategori untuk melihat dokumen</div>
+        <div id="weekly-summary-panel"><div class="placeholder-msg" style="color:var(--text3);font-size:12px;">Memuat goal mingguan...</div></div>
       </div>
     </main>
   </div>
@@ -338,7 +338,7 @@
     document.getElementById('main').style.display = 'block';
     renderSidebar();
   }
-  if (sessionStorage.getItem('ro_auth') === '1') showMain();
+  if (sessionStorage.getItem('ro_auth') === '1') showMain().then(loadWeeklySummary);
 
   // ─── SIDEBAR ────────────────────────────────────────────────
   function renderSidebar() {
@@ -796,6 +796,77 @@
       reader.readAsDataURL(file);
     };
     input.click();
+  }
+
+  async function loadWeeklySummary() {
+    const el = document.getElementById('weekly-summary-panel');
+    if (!el) return;
+
+    const now = new Date();
+    const day = now.getDay();
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - (day===0?6:day-1));
+    monday.setHours(0,0,0,0);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23,59,59,999);
+
+    const [projRes, taskRes] = await Promise.all([
+      sb.from('timeline_projects').select('*'),
+      sb.from('timeline_tasks').select('*').order('sort_order')
+    ]);
+    const projects = projRes.data||[];
+    const tasks = taskRes.data||[];
+
+    const parseD = str => { if(!str) return null; const [y,m,d]=str.split('-').map(Number); return new Date(y,m-1,d); };
+    const weekTasks = tasks.filter(t => {
+      const s = parseD(t.start_date), e = parseD(t.end_date);
+      return s && e && s <= sunday && e >= monday;
+    });
+
+    const fmtDate = d => d.toLocaleDateString('id-ID',{day:'numeric',month:'short'});
+    const STATUS_LABEL = { todo:'To Do', progress:'In Progress', done:'Done', blocked:'Blocked' };
+
+    if (!weekTasks.length) {
+      el.innerHTML = `<div style="padding:20px;color:var(--text3);font-size:13px;text-align:center;">Tidak ada task minggu ini.<br/><a href="bulk-task.html" style="color:var(--accent);font-size:12px;margin-top:8px;display:inline-block;">+ Tambah task</a></div>`;
+      return;
+    }
+
+    let html = `<div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-size:12px;font-weight:600;color:var(--text2);">GOAL MINGGU INI</div>
+      <div style="font-size:11px;color:var(--text3);">${fmtDate(monday)} — ${fmtDate(sunday)}</div>
+    </div>`;
+
+    projects.forEach(proj => {
+      const pt = weekTasks.filter(t=>t.project_id===proj.id);
+      if (!pt.length) return;
+      const done = pt.filter(t=>(t.actual_status||t.status)==='done').length;
+      const pct = Math.round((done/pt.length)*100);
+      const color = pct>=70?'var(--green)':pct>=40?'var(--yellow)':'var(--accent)';
+
+      html += `<div style="padding:12px 20px;border-bottom:1px solid var(--border);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div style="font-size:12px;font-weight:600;">${proj.name}</div>
+          <div style="font-size:11px;color:${color};font-weight:600;">${done}/${pt.length}</div>
+        </div>
+        <div style="height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-bottom:8px;">
+          <div style="height:100%;width:${pct}%;background:${color};border-radius:2px;"></div>
+        </div>
+        ${pt.map(t=>{
+          const s = t.actual_status||t.status||'todo';
+          const isDone = s==='done';
+          const dotColor = {todo:'var(--accent)',progress:'var(--yellow)',done:'var(--green)',blocked:'var(--red)'}[s];
+          return `<div style="display:flex;align-items:center;gap:8px;padding:3px 0;">
+            <div style="width:6px;height:6px;border-radius:50%;background:${dotColor};flex-shrink:0;"></div>
+            <div style="font-size:12px;color:${isDone?'var(--text3)':'var(--text2)'};flex:1;${isDone?'text-decoration:line-through;':''};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.name}</div>
+            ${t.assigned_to?`<div style="font-size:10px;color:var(--text3);">${t.assigned_to}</div>`:''}
+          </div>`;
+        }).join('')}
+      </div>`;
+    });
+
+    html += `<div style="padding:10px 20px;"><a href="weekly.html" style="font-size:11px;color:var(--accent);text-decoration:none;">Lihat semua →</a></div>`;
+    el.innerHTML = html;
   }
 
   async function enterProofArchive() {
