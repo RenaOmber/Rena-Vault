@@ -230,7 +230,6 @@
       </div>
     </div>
     <button class="theme-toggle-btn btn-ghost" onclick="toggleTheme()" title="Mode Terang">☀️</button>
-    <a href="team.html" class="btn-ghost" style="font-size:11px;">👥 Tim</a>
     <button class="logout-btn" onclick="logout()">Keluar</button>
   </div>
   <a href="alert.html" class="alert-btn" title="Alert Harian">✉️</a>
@@ -244,6 +243,9 @@
     <aside class="sidebar">
       <div class="sidebar-label">Kategori</div>
       <div id="sidebar-cats"></div>
+      <a href="team.html" style="display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:13px;color:var(--text3);text-decoration:none;border-top:1px solid var(--border);margin-top:8px;transition:color 0.15s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text3)'">
+        <span>👥</span> Tim
+      </a>
     </aside>
     <main class="content" style="display:grid;grid-template-columns:1fr 280px;overflow:hidden;">
       <div id="content-area" style="overflow-y:auto;padding-right:8px;">
