@@ -88,7 +88,7 @@
     .upcoming-project { font-size: 11px; color: var(--text3); }
 
     /* AURA POINTS */
-    .aura-badge { position: fixed; top: 12px; right: 160px; background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 6px 12px; display: flex; align-items: center; gap: 6px; cursor: pointer; z-index: 99; transition: transform 0.15s; }
+    .aura-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 5px 12px; cursor: pointer; transition: transform 0.15s; }
     .aura-badge:hover { transform: translateY(-2px); }
     .aura-badge-star { font-size: 18px; }
     .aura-badge-info { display: flex; flex-direction: column; }
@@ -576,7 +576,9 @@
       badge.id = 'aura-badge';
       badge.className = 'aura-badge';
       badge.onclick = openAuraModal;
-      document.getElementById('main').appendChild(badge);
+      const topRight = document.querySelector('.top-right');
+      if (topRight) topRight.insertBefore(badge, topRight.firstChild);
+      else document.getElementById('main').appendChild(badge);
     }
     const pts = auraPoints[currentUser]||0;
     const role = ROLES[currentUser]||'';
