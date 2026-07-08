@@ -196,24 +196,34 @@
       box-shadow: 0 4px 12px rgba(224,58,47,0.4);
     }
     @media (max-width: 640px) {
-      .layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
-      .sidebar { border-right: none; border-bottom: 1px solid var(--border); padding: 8px 0; max-height: 200px; overflow-y: auto; }
-      .content { padding: 14px 16px; grid-template-columns: 1fr !important; }
-      #weekly-summary-panel { border-left: none; border-top: 1px solid var(--border); width: 100% !important; min-width: 100% !important; }
-      .top-bar { padding: 12px 16px; flex-wrap: wrap; gap: 8px; }
-      .top-right { flex-wrap: wrap; gap: 6px; }
-      .btn-ghost, .logout-btn { font-size: 11px; padding: 5px 10px; }
+      /* TOP BAR */
+      .top-bar { padding: 10px 14px; }
+      .top-right { gap: 6px; }
+      .top-right .btn-ghost:not(.theme-toggle-btn) { display: none; }
+      .logout-btn { font-size: 11px; padding: 5px 10px; }
       .theme-toggle-btn { font-size: 13px; padding: 5px 8px; }
+      .alert-btn { width: 34px !important; height: 34px !important; font-size: 16px !important; top: 10px !important; right: 90px !important; }
+
+      /* LAYOUT - sidebar on top, content below, NO weekly panel */
+      .layout { grid-template-columns: 1fr !important; grid-template-rows: auto 1fr; }
+      .sidebar { border-right: none; border-bottom: 1px solid var(--border); padding: 8px 0; }
+      .content { padding: 14px 16px; grid-template-columns: 1fr !important; }
+
+      /* HIDE weekly panel on mobile — show as collapsible below content instead */
+      #weekly-summary-panel { display: none !important; }
+
+      /* LANDING */
       .landing-grid { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
-      .landing-card { padding: 16px 12px !important; }
-      .landing-card-icon { width: 36px !important; height: 36px !important; margin-bottom: 10px !important; }
-      .landing-card-name { font-size: 13px !important; }
-      .landing-card-sub { font-size: 11px !important; }
+      .landing-card { padding: 14px 10px !important; }
+      .landing-card-icon { width: 32px !important; height: 32px !important; margin-bottom: 8px !important; }
+      .landing-card-name { font-size: 12px !important; }
+      .landing-card-sub { font-size: 10px !important; }
+
+      /* DOCS */
       .content-header { flex-direction: column; gap: 8px; }
       .content-title { font-size: 17px; }
       .doc-row { flex-wrap: wrap; gap: 6px; padding: 10px !important; }
       .doc-name { font-size: 13px; }
-      #weekly-summary-panel { font-size: 12px; }
     }
   
     [data-theme="light"] .modal-box,
