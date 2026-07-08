@@ -87,6 +87,34 @@
     .upcoming-name { font-size: 13px; color: var(--text2); flex: 1; }
     .upcoming-project { font-size: 11px; color: var(--text3); }
 
+    /* AURA POINTS */
+    .aura-badge { position: fixed; bottom: 24px; right: 24px; background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 8px 14px; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); cursor: pointer; z-index: 99; transition: transform 0.15s; }
+    .aura-badge:hover { transform: translateY(-2px); }
+    .aura-badge-star { font-size: 18px; }
+    .aura-badge-info { display: flex; flex-direction: column; }
+    .aura-badge-role { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; }
+    .aura-badge-pts { font-size: 16px; font-weight: 700; color: var(--yellow); line-height: 1; }
+
+    .aura-modal-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; width: 100%; max-width: 420px; padding: 24px; max-height: 80vh; overflow-y: auto; }
+    .aura-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+    .aura-sub { font-size: 12px; color: var(--text3); margin-bottom: 16px; }
+    .aura-leaderboard { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+    .aura-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--bg3); border-radius: 8px; }
+    .aura-rank { font-size: 16px; min-width: 28px; }
+    .aura-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--accent-dim); border: 1px solid var(--accent); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--accent); flex-shrink: 0; }
+    .aura-member-info { flex: 1; }
+    .aura-member-name { font-size: 13px; font-weight: 500; }
+    .aura-member-role { font-size: 10px; color: var(--text3); }
+    .aura-pts-display { font-size: 18px; font-weight: 700; color: var(--yellow); }
+    .aura-log { border-top: 1px solid var(--border); padding-top: 12px; }
+    .aura-log-title { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+    .aura-log-item { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 12px; }
+    .aura-log-user { color: var(--accent); font-weight: 600; min-width: 40px; }
+    .aura-log-reason { flex: 1; color: var(--text2); }
+    .aura-log-pts { font-weight: 700; }
+    .pts-pos { color: var(--green); }
+    .pts-neg { color: var(--red); }
+
     /* USER NOTES */
     .notes-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px; }
     .notes-col { display: flex; flex-direction: column; gap: 8px; }
@@ -248,6 +276,7 @@
 
     await loadTasks();
     await loadNotes();
+    await loadAura();
     renderAlerts();
   }
 
@@ -525,7 +554,76 @@
     await cycleTask(pendingProofTaskId);
   }
 
+  const ROLES = { rena:'CEO', gapl:'CMO', nom:'COO', jee:'Creative Director', pix:'Art Director', tok:'CTO' };
+  const ROLE_EMOJI = { rena:'👑', gapl:'📣', nom:'⚙️', jee:'🎨', pix:'🖼️', tok:'💻' };
+  let auraPoints = {}, auraLog = [];
   let progressNotes = [], ideaNotes = [];
+
+  async function loadAura() {
+    const { data } = await sb.from('aura_points').select('*').order('created_at', { ascending: false });
+    auraPoints = {};
+    auraLog = data||[];
+    (data||[]).forEach(r => {
+      auraPoints[r.user_name] = (auraPoints[r.user_name]||0) + r.points;
+    });
+    renderAuraBadge();
+  }
+
+  function renderAuraBadge() {
+    let badge = document.getElementById('aura-badge');
+    if (!badge) {
+      badge = document.createElement('div');
+      badge.id = 'aura-badge';
+      badge.className = 'aura-badge';
+      badge.onclick = openAuraModal;
+      document.getElementById('main').appendChild(badge);
+    }
+    const pts = auraPoints[currentUser]||0;
+    const role = ROLES[currentUser]||'';
+    const emoji = ROLE_EMOJI[currentUser]||'⭐';
+    badge.innerHTML = `<div class="aura-badge-star">${emoji}</div><div class="aura-badge-info"><div class="aura-badge-role">${role}</div><div class="aura-badge-pts">⭐ ${pts}</div></div>`;
+  }
+
+  function openAuraModal() {
+    // Leaderboard
+    const sorted = Object.keys(ROLES).map(u=>({ u, pts: auraPoints[u]||0, role: ROLES[u], emoji: ROLE_EMOJI[u] }))
+      .sort((a,b)=>b.pts-a.pts);
+    const medals = ['🥇','🥈','🥉'];
+    const rows = sorted.map((m,i)=>`
+      <div class="aura-row" style="${m.u===currentUser?'border:1px solid var(--accent);':''}">
+        <div class="aura-rank">${medals[i]||`#${i+1}`}</div>
+        <div class="aura-avatar">${m.emoji}</div>
+        <div class="aura-member-info"><div class="aura-member-name">${m.u}</div><div class="aura-member-role">${m.role}</div></div>
+        <div class="aura-pts-display">⭐ ${m.pts}</div>
+      </div>`).join('');
+
+    const recentLog = auraLog.slice(0,15).map(r=>`
+      <div class="aura-log-item">
+        <div class="aura-log-user">${r.user_name}</div>
+        <div class="aura-log-reason">${r.reason||''}</div>
+        <div class="aura-log-pts ${r.points>0?'pts-pos':'pts-neg'}">${r.points>0?'+':''}${r.points}</div>
+      </div>`).join('');
+
+    // Show in modal
+    const modal = document.getElementById('aura-modal');
+    document.getElementById('aura-modal-body').innerHTML = `
+      <div class="aura-title">✨ Aura Board</div>
+      <div class="aura-sub">Disclaimer: ini buat have fun! 🎉</div>
+      <div class="aura-leaderboard">${rows}</div>
+      <div class="aura-log">
+        <div class="aura-log-title">Log Terbaru</div>
+        ${recentLog||'<div style="color:var(--text3);font-size:12px;">Belum ada aktivitas.</div>'}
+      </div>`;
+    modal.style.display = 'flex';
+  }
+
+  async function grantAura(userId, points, reason, taskId) {
+    const entry = { id: Date.now().toString() + Math.random().toString(36).slice(2,5), user_name: userId, points, reason, task_id: taskId||null };
+    await sb.from('aura_points').insert(entry);
+    auraPoints[userId] = (auraPoints[userId]||0) + points;
+    auraLog.unshift(entry);
+    renderAuraBadge();
+  }
 
   async function loadNotes() {
     const { data } = await sb.from('user_notes').select('*').order('created_at', { ascending: false });
@@ -748,6 +846,16 @@
     }
 
     await sb.from('timeline_tasks').update(updates).eq('id', id);
+
+    // Grant aura when done
+    if (next === 'done' && t.assigned_to) {
+      const endDate = t.end_date ? new Date(t.end_date) : null;
+      const todayD = new Date(today);
+      const isLate = endDate && todayD > endDate;
+      const pts = isLate ? -1 : todayD < endDate ? 2 : 1;
+      const reason = isLate ? `Done terlambat: ${t.name}` : pts===2 ? `Done sebelum deadline: ${t.name}` : `Done on time: ${t.name}`;
+      await grantAura(t.assigned_to, pts, reason, id);
+    }
     renderAlerts();
   }
 
@@ -764,6 +872,16 @@
     <div class="modal-actions" style="margin-top:16px;">
       <button class="btn-cancel" onclick="closeDetailModal()">Tutup</button>
       <button class="btn-confirm" id="detail-cycle-btn" onclick="cycleFromDetail()">Update Status</button>
+    </div>
+  </div>
+</div>
+
+<!-- AURA MODAL -->
+<div class="modal-bg" id="aura-modal" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
+  <div class="aura-modal-box">
+    <div id="aura-modal-body"></div>
+    <div style="text-align:right;margin-top:16px;">
+      <button class="btn-cancel" onclick="document.getElementById('aura-modal').style.display='none'">Tutup</button>
     </div>
   </div>
 </div>
