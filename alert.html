@@ -87,6 +87,14 @@
     .upcoming-name { font-size: 13px; color: var(--text2); flex: 1; }
     .upcoming-project { font-size: 11px; color: var(--text3); }
 
+    /* AURA POPUP */
+    .aura-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.5); background: var(--bg2); border: 2px solid var(--yellow); border-radius: 20px; padding: 20px 32px; text-align: center; z-index: 200; pointer-events: none; opacity: 0; transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1); }
+    .aura-popup.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    .aura-popup.hide { opacity: 0; transform: translate(-50%, -80%) scale(0.8); }
+    .aura-popup-emoji { font-size: 40px; margin-bottom: 6px; }
+    .aura-popup-pts { font-size: 28px; font-weight: 700; }
+    .aura-popup-label { font-size: 12px; color: var(--text3); margin-top: 4px; }
+
     /* AURA POINTS */
     .aura-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 5px 12px; cursor: pointer; transition: transform 0.15s; }
     .aura-badge:hover { transform: translateY(-2px); }
@@ -619,6 +627,23 @@
     modal.style.display = 'flex';
   }
 
+  function showAuraPopup(pts, reason) {
+    const popup = document.getElementById('aura-popup');
+    const emoji = pts > 0 ? (pts >= 2 ? '🔥' : '⭐') : '💔';
+    const color = pts > 0 ? 'var(--yellow)' : 'var(--red)';
+    document.getElementById('aura-popup-emoji').textContent = emoji;
+    document.getElementById('aura-popup-pts').textContent = (pts>0?'+':'') + pts;
+    document.getElementById('aura-popup-pts').style.color = color;
+    document.getElementById('aura-popup-label').textContent = reason;
+    popup.style.borderColor = pts>0?'var(--yellow)':'var(--red)';
+    popup.classList.remove('hide');
+    popup.classList.add('show');
+    setTimeout(() => {
+      popup.classList.add('hide');
+      setTimeout(() => { popup.classList.remove('show','hide'); }, 300);
+    }, 1800);
+  }
+
   async function grantAura(userId, points, reason, taskId) {
     const entry = { id: Date.now().toString() + Math.random().toString(36).slice(2,5), user_name: userId, points, reason, task_id: taskId||null };
     await sb.from('aura_points').insert(entry);
@@ -857,6 +882,7 @@
       const pts = isLate ? -1 : todayD < endDate ? 2 : 1;
       const reason = isLate ? `Done terlambat: ${t.name}` : pts===2 ? `Done sebelum deadline: ${t.name}` : `Done on time: ${t.name}`;
       await grantAura(t.assigned_to, pts, reason, id);
+      if (t.assigned_to === currentUser) showAuraPopup(pts, reason);
     }
     renderAlerts();
   }
@@ -876,6 +902,13 @@
       <button class="btn-confirm" id="detail-cycle-btn" onclick="cycleFromDetail()">Update Status</button>
     </div>
   </div>
+</div>
+
+<!-- AURA POPUP -->
+<div class="aura-popup" id="aura-popup">
+  <div class="aura-popup-emoji" id="aura-popup-emoji">⭐</div>
+  <div class="aura-popup-pts" id="aura-popup-pts">+1</div>
+  <div class="aura-popup-label" id="aura-popup-label">Aura +1</div>
 </div>
 
 <!-- AURA MODAL -->
