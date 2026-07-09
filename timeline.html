@@ -2,6 +2,12 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#4f6ef7" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="RO Vault" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rena Omber — Timeline</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -120,6 +126,48 @@
     [data-theme="light"] .btn-ghost { background: #fff; }
     [data-theme="light"] .top-bar { background: var(--bg2); }
     [data-theme="light"] .sidebar { background: var(--bg2); }
+
+    @media (max-width: 640px) {
+      /* TOP BAR */
+      .top-bar { padding: 10px 14px; }
+      .top-right { gap: 5px; }
+      .btn-ghost { font-size: 11px; padding: 4px 8px; }
+      .btn-primary { font-size: 11px; padding: 6px 10px; }
+
+      /* PAGE */
+      .page { padding: 14px 16px; }
+      .page-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+      .page-header > div:last-child { width: 100%; display: flex; gap: 8px; flex-wrap: wrap; }
+      .legend { display: none; }
+
+      /* PROJECT TABS - horizontal scroll */
+      .project-tabs { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 2px; -webkit-overflow-scrolling: touch; }
+      .project-tab { white-space: nowrap; font-size: 12px; padding: 6px 12px; }
+
+      /* HIDE GANTT ON MOBILE - show list instead */
+      .gantt-wrap { display: none; }
+
+      /* MOBILE LIST VIEW */
+      .mobile-task-list { display: flex; flex-direction: column; gap: 8px; }
+      .mobile-task-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; cursor: pointer; }
+      .mobile-task-card:hover { border-color: var(--border-hover); }
+      .mobile-task-stripe { height: 3px; }
+      .mobile-task-body { padding: 12px 14px; }
+      .mobile-task-name { font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+      .mobile-task-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+      .mobile-task-badge { font-size: 10px; padding: 2px 7px; border-radius: 8px; font-weight: 600; }
+      .mobile-task-date { font-size: 11px; color: var(--text3); }
+      .mobile-task-assigned { font-size: 10px; padding: 2px 7px; border-radius: 8px; background: var(--accent-dim); color: var(--accent); font-weight: 600; }
+      .mobile-task-group { font-size: 10px; color: var(--text3); }
+
+      /* MODAL */
+      .modal-box { padding: 16px; margin: 10px; max-height: 90vh; overflow-y: auto; }
+      .form-row-2 { grid-template-columns: 1fr; }
+    }
+
+    @media (min-width: 641px) {
+      .mobile-task-list { display: none; }
+    }
   </style>
 </head>
 <body>
@@ -358,6 +406,54 @@
   }
 
   // ─── GANTT RENDER ───────────────────────────────────────────
+  function renderMobileList() {
+    const container = document.getElementById('gantt-container');
+    if (!activeProjectId || !projects.length) return;
+    const projTasks = tasks.filter(t=>t.project_id===activeProjectId);
+    if (!projTasks.length) {
+      container.innerHTML += '<div class="mobile-task-list"><div style="text-align:center;padding:40px;color:var(--text3);font-size:13px;">Belum ada task di project ini.</div></div>';
+      return;
+    }
+
+    const STATUS_LABEL = { todo:'To Do', progress:'In Progress', done:'Done', blocked:'Blocked' };
+    const dotColor = { todo:'var(--accent)', progress:'var(--yellow)', done:'var(--green)', blocked:'var(--red)' };
+
+    // Group by group_name
+    const groups = {}, ungrouped = [];
+    projTasks.forEach(t => { if(t.group_name){if(!groups[t.group_name])groups[t.group_name]=[];groups[t.group_name].push(t);}else ungrouped.push(t); });
+
+    let html = '<div class="mobile-task-list">';
+
+    Object.entries(groups).forEach(([groupName, groupTasks]) => {
+      html += `<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;padding:4px 0;margin-top:8px;">${groupName}</div>`;
+      html += groupTasks.map(t => mobileTaskCard(t, STATUS_LABEL, dotColor)).join('');
+    });
+    ungrouped.forEach(t => { html += mobileTaskCard(t, STATUS_LABEL, dotColor); });
+    html += '</div>';
+
+    container.innerHTML += html;
+  }
+
+  function mobileTaskCard(t, STATUS_LABEL, dotColor) {
+    const status = t.actual_status || t.status || 'todo';
+    const color = dotColor[status];
+    return `<div class="mobile-task-card" onclick="cycleStatus('${t.id}')">
+      <div class="mobile-task-stripe" style="background:${color};"></div>
+      <div class="mobile-task-body">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+          <div class="mobile-task-name">${t.name}</div>
+          <button onclick="event.stopPropagation();openModal('${t.id}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:0;flex-shrink:0;">✎</button>
+        </div>
+        <div class="mobile-task-meta">
+          <span class="mobile-task-badge" style="background:${color}22;color:${color};">${STATUS_LABEL[status]}</span>
+          ${t.assigned_to?`<span class="mobile-task-assigned">${t.assigned_to}</span>`:''}
+          <span class="mobile-task-date">${t.start_date} → ${t.end_date}</span>
+          ${t.group_name?`<span class="mobile-task-group">${t.group_name}</span>`:''}
+        </div>
+      </div>
+    </div>`;
+  }
+
   function renderGantt() {
     const container = document.getElementById('gantt-container');
     if (!projects.length) {
@@ -513,7 +609,8 @@
     });
     ungrouped.forEach((t,i) => { taskRows += buildRow(t, String(groupNum+i)); });
 
-    container.innerHTML = `
+    // Build HTML
+    const ganttHTML = `
       <div class="gantt-wrap">
         <div class="gantt">
           <div class="gantt-header">
@@ -523,6 +620,8 @@
           ${taskRows}
         </div>
       </div>`;
+    container.innerHTML = ganttHTML;
+    renderMobileList();
   }
 
   // ─── TASK MODAL ─────────────────────────────────────────────
@@ -611,5 +710,10 @@
     renderGantt();
   }
 </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+    }
+  </script>
 </body>
 </html>
