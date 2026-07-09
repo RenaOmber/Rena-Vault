@@ -2,6 +2,12 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#4f6ef7" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="RO Vault" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rena Omber — Master Vendor</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -177,8 +183,8 @@
       <input class="form-input" id="f-cp" placeholder="Budi / 08123456789" />
     </div>
     <div class="form-group">
-      <div class="form-label">Catatan</div>
-      <input class="form-input" id="f-notes" placeholder="Opsional..." />
+      <div class="form-label">Details</div>
+      <textarea class="form-input" id="f-notes" placeholder="1. Minimum order 24 pcs&#10;2. Pembayaran DP 50%&#10;3. Estimasi produksi 2 minggu..." style="min-height:100px;resize:vertical;line-height:1.6;"></textarea>
     </div>
 
     <!-- KAOS: price matrix -->
@@ -312,7 +318,7 @@
               ${v.lokasi ? `<div class="vendor-notes">📍 ${v.lokasi}</div>` : ''}
               ${v.moq ? `<div class="vendor-notes">MOQ: ${v.moq} pcs</div>` : ''}
               ${v.cp ? `<div class="vendor-notes">📞 ${v.cp}</div>` : ''}
-              ${v.notes ? `<div class="vendor-notes">${v.notes}</div>` : ''}
+              ${v.notes ? `<div class="vendor-notes" style="white-space:pre-line;line-height:1.5;">${v.notes}</div>` : ''}
             </div>
             <div class="vendor-actions">
               <button class="btn-edit" onclick="openModal('${v.id}')">Edit</button>
@@ -482,5 +488,10 @@
     await loadVendors();
   }
 </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+    }
+  </script>
 </body>
 </html>
