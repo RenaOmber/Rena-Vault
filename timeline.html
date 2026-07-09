@@ -697,7 +697,21 @@
     if (editingTaskId) {
       const idx = tasks.findIndex(t=>t.id===editingTaskId);
       if (idx>=0) tasks[idx]=row;
-    } else tasks.push(row);
+    } else {
+      tasks.push(row);
+      // Send push notification for new task with assigned member
+      if (row.assigned_to) {
+        fetch('https://fqvfnohhilkzvijqukfg.supabase.co/functions/v1/send-push', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': 'sb_publishable_guNzoa22ChBWwGo6w_JqgA_9makz2Yl',
+            'Authorization': 'Bearer sb_publishable_guNzoa22ChBWwGo6w_JqgA_9makz2Yl'
+          },
+          body: JSON.stringify({ task_name: row.name, assigned_to: row.assigned_to })
+        }).catch(() => {});
+      }
+    }
     closeTaskModal();
     renderGantt();
   }
