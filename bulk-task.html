@@ -489,7 +489,7 @@
       for (const [member, taskNames] of Object.entries(byMember)) {
         fetch('https://fqvfnohhilkzvijqukfg.supabase.co/functions/v1/send-push', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_ANON },
+          headers: { 'Content-Type': 'application/json', 'apikey': 'sb_publishable_guNzoa22ChBWwGo6w_JqgA_9makz2Yl', 'Authorization': 'Bearer sb_publishable_guNzoa22ChBWwGo6w_JqgA_9makz2Yl' },
           body: JSON.stringify({ task_name: taskNames.length > 1 ? taskNames.length + ' task baru' : taskNames[0], assigned_to: member })
         }).catch(() => {});
       }
