@@ -302,62 +302,52 @@
 
   function fmtPrice(n) { return 'Rp ' + (n||0).toLocaleString('id-ID'); }
 
+  function buildVendorCard(v) {
+    const isKaos = v.type === 'kaos';
+    const matrix = v.data?.matrix || {};
+    const detailsHtml = v.notes ? '<div style="border-top:1px solid var(--border);padding:10px 16px 12px;"><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Details</div><div style="font-size:12px;color:var(--text2);white-space:pre-line;line-height:1.7;">' + v.notes + '</div></div>' : '';
+
+    let priceSection = '';
+    if (isKaos) {
+      const osLabel = v.data?.oversizeCharge ? ' +' + (v.data.oversizeCharge/1000).toFixed(0) + 'k' : '';
+      const lsLabel = v.data?.longsleeveCharge ? ' +' + (v.data.longsleeveCharge/1000).toFixed(0) + 'k' : '';
+      const rows = TEBAL.map(t => {
+        const base = matrix[t]?.regular || 0;
+        const osCharge = v.data?.oversizeCharge || 0;
+        const lsCharge = v.data?.longsleeveCharge || 0;
+        const os = (base && osCharge) ? base + osCharge : 0;
+        const ls = (base && lsCharge) ? base + lsCharge : 0;
+        return '<tr><td>' + t + '</td><td>' + (base ? fmtPrice(base) : '—') + '</td><td>' + (os ? fmtPrice(os) : '—') + '</td><td>' + (ls ? fmtPrice(ls) : '—') + '</td></tr>';
+      }).join('');
+      priceSection = '<div class="price-matrix"><div class="matrix-label">Price Matrix</div><table class="matrix-table"><tr><th>Tebal</th><th>Regular</th><th>Oversized' + osLabel + '</th><th>Longsleeve' + lsLabel + '</th></tr>' + rows + '</table></div>';
+    } else {
+      priceSection = '<div class="price-matrix" style="padding:10px 16px;"><span style="font-size:13px;font-weight:600;color:var(--accent);">' + fmtPrice(v.price_per_unit) + '/unit</span></div>';
+    }
+
+    return '<div class="vendor-card">' +
+      '<div class="vendor-card-header">' +
+        '<span class="vendor-type-badge ' + badgeClass(v.type) + '">' + v.type + '</span>' +
+        '<div class="vendor-name">' + v.name + '</div>' +
+        '<div style="display:flex;gap:10px;flex-wrap:wrap;">' +
+          (v.lokasi ? '<div class="vendor-notes">📍 ' + v.lokasi + '</div>' : '') +
+          (v.moq ? '<div class="vendor-notes">MOQ: ' + v.moq + ' pcs</div>' : '') +
+          (v.cp ? '<div class="vendor-notes">📞 ' + v.cp + '</div>' : '') +
+        '</div>' +
+        '<div class="vendor-actions">' +
+          '<button class="btn-edit" onclick="openModal(\'' + v.id + '\')">Edit</button>' +
+          '<button class="btn-del" onclick="deleteVendor(\'' + v.id + '\')">×</button>' +
+        '</div>' +
+      '</div>' +
+      priceSection +
+      detailsHtml +
+    '</div>';
+  }
+
   function renderList() {
     const filtered = activeType === 'all' ? vendors : vendors.filter(v => v.type === activeType);
     const el = document.getElementById('vendor-list');
     if (!filtered.length) { el.innerHTML = '<div class="empty">Belum ada vendor.</div>'; return; }
-    el.innerHTML = `<div class="vendor-list">${filtered.map(v => {
-      const isKaos = v.type === 'kaos';
-      const matrix = v.data?.matrix || {};
-      return `
-        <div class="vendor-card">
-          <div class="vendor-card-header">
-            <span class="vendor-type-badge ${badgeClass(v.type)}">${v.type}</span>
-            <div class="vendor-name">${v.name}</div>
-            <div style="display:flex;gap:10px;flex-wrap:wrap;">
-              ${v.lokasi ? `<div class="vendor-notes">📍 ${v.lokasi}</div>` : ''}
-              ${v.moq ? `<div class="vendor-notes">MOQ: ${v.moq} pcs</div>` : ''}
-              ${v.cp ? `<div class="vendor-notes">📞 ${v.cp}</div>` : ''}
-  
-            </div>
-            <div class="vendor-actions">
-              <button class="btn-edit" onclick="openModal('${v.id}')">Edit</button>
-              <button class="btn-del" onclick="deleteVendor('${v.id}')">×</button>
-            </div>
-          </div>
-          ${isKaos ? `
-          <div class="price-matrix">
-            <div class="matrix-label">Price Matrix</div>
-            <table class="matrix-table">
-              <tr>
-                <th>Tebal</th>
-                <th>Regular</th>
-                <th>Oversized${v.data?.oversizeCharge ? ' +' + (v.data.oversizeCharge/1000).toFixed(0) + 'k' : ''}</th>
-                <th>Longsleeve${v.data?.longsleeveCharge ? ' +' + (v.data.longsleeveCharge/1000).toFixed(0) + 'k' : ''}</th>
-              </tr>
-              ${TEBAL.map(t => {
-                const base = matrix[t]?.regular || 0;
-                const osCharge = v.data?.oversizeCharge || 0;
-                const lsCharge = v.data?.longsleeveCharge || 0;
-                const os = (base && osCharge) ? base + osCharge : 0;
-                const ls = (base && lsCharge) ? base + lsCharge : 0;
-                return `<tr>
-                  <td>${t}</td>
-                  <td>${base ? fmtPrice(base) : '—'}</td>
-                  <td>${os ? fmtPrice(os) : '—'}</td>
-                  <td>${ls ? fmtPrice(ls) : '—'}</td>
-                </tr>`;
-              }).join('')}
-            </table>
-          </div>
-          ${v.notes ? `<div style="border-top:1px solid var(--border);padding:10px 16px 12px;"><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Details</div><div style="font-size:12px;color:var(--text2);white-space:pre-line;line-height:1.7;">${v.notes}</div></div>` : ''}
-        </div>` : `
-          <div class="price-matrix" style="padding:10px 16px;">
-            <span style="font-size:13px;font-weight:600;color:var(--accent);">${fmtPrice(v.price_per_unit)}/unit</span>
-          </div>
-          ${v.notes ? `<div style="border-top:1px solid var(--border);padding:10px 16px 12px;"><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Details</div><div style="font-size:12px;color:var(--text2);white-space:pre-line;line-height:1.7;">${v.notes}</div></div>` : ''}
-        </div>`;
-    }).join('')}</div>`;
+    el.innerHTML = '<div class="vendor-list">' + filtered.map(v => buildVendorCard(v)).join('') + '</div>';
   }
 
   function toggleMatrixForm() {
