@@ -2,6 +2,12 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#4f6ef7" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="RO Vault" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rena Omber — Biaya Produk</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -78,6 +84,30 @@
     [data-theme="light"] .btn-ghost { background: #fff; }
     [data-theme="light"] .top-bar { background: var(--bg2); }
     [data-theme="light"] .sidebar { background: var(--bg2); }
+
+    @media (max-width: 640px) {
+      .top-bar { padding: 10px 14px; }
+      .top-right { gap: 5px; flex-wrap: wrap; }
+      .btn-ghost { font-size: 11px; padding: 4px 8px; }
+
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { border-right: none; border-bottom: 1px solid var(--border); padding: 8px 0; max-height: 140px; overflow-y: auto; }
+      .batch-item { padding: 7px 14px; }
+      .content { padding: 14px 16px; }
+      .content-header { flex-direction: column; gap: 8px; }
+      .content-title { font-size: 17px; }
+
+      .summary-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .summary-card { padding: 10px 12px; }
+      .summary-value { font-size: 15px; }
+      .summary-label { font-size: 9px; }
+
+      .biaya-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .biaya-table { min-width: 400px; }
+      .biaya-table th, .biaya-table td { padding: 7px 8px; font-size: 12px; }
+
+      button[onclick*="exportBiaya"] { width: 100%; margin-top: 8px; }
+    }
   </style>
 </head>
 <body>
@@ -385,5 +415,10 @@
     doc.save(`Finance_${row.prodName}_${row.batchName}.pdf`.replace(/\s+/g,'_'));
   }
 </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+    }
+  </script>
 </body>
 </html>
