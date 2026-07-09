@@ -332,8 +332,8 @@
               <tr>
                 <th>Tebal</th>
                 <th>Regular</th>
-                <th>Oversized${v.data?.oversizeCharge ? ` +${(v.data.oversizeCharge/1000).toFixed(0)}k` : ''}</th>
-                <th>Longsleeve${v.data?.longsleeveCharge ? ` +${(v.data.longsleeveCharge/1000).toFixed(0)}k` : ''}</th>
+                <th>Oversized${v.data?.oversizeCharge ? ' +' + (v.data.oversizeCharge/1000).toFixed(0) + 'k' : ''}</th>
+                <th>Longsleeve${v.data?.longsleeveCharge ? ' +' + (v.data.longsleeveCharge/1000).toFixed(0) + 'k' : ''}</th>
               </tr>
               ${TEBAL.map(t => {
                 const base = matrix[t]?.regular || 0;
