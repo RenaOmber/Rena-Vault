@@ -792,6 +792,26 @@
     if (type==='progress') progressNotes.unshift(note);
     else ideaNotes.unshift(note);
     renderNotes();
+
+    // Notify all members if progress note
+    if (type === 'progress') {
+      const MEMBERS = ['rena','nom','gapl','pix','jee','tok'];
+      const others = MEMBERS.filter(m => m !== currentUser);
+      for (const member of others) {
+        fetch('https://fqvfnohhilkzvijqukfg.supabase.co/functions/v1/send-push', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': 'sb_publishable_guNzoa22ChBWwGo6w_JqgA_9makz2Yl',
+            'Authorization': 'Bearer sb_publishable_guNzoa22ChBWwGo6w_JqgA_9makz2Yl'
+          },
+          body: JSON.stringify({
+            task_name: currentUser + ' update progress: ' + text.substring(0, 60) + (text.length > 60 ? '...' : ''),
+            assigned_to: member
+          })
+        }).catch(() => {});
+      }
+    }
   }
 
   async function deleteNote(id, type) {
@@ -968,6 +988,25 @@
       await grantAura(t.assigned_to, pts, reason, id);
       if (t.assigned_to === currentUser) showAuraPopup(pts, reason);
     }
+
+    // Notify all members on progress or done
+    if (next === 'progress' || next === 'done') {
+      const ALL_MEMBERS = ['rena','nom','gapl','pix','jee','tok'];
+      const statusLabel = next === 'done' ? '✅ Done' : '🔄 In Progress';
+      const msg = currentUser + ': ' + t.name + ' → ' + statusLabel;
+      ALL_MEMBERS.filter(m => m !== currentUser).forEach(member => {
+        fetch('https://fqvfnohhilkzvijqukfg.supabase.co/functions/v1/send-push', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': 'sb_publishable_guNzoa22ChBWwGo6w_JqgA_9makz2Yl',
+            'Authorization': 'Bearer sb_publishable_guNzoa22ChBWwGo6w_JqgA_9makz2Yl'
+          },
+          body: JSON.stringify({ task_name: msg, assigned_to: member })
+        }).catch(() => {});
+      });
+    }
+
     renderAlerts();
   }
 
