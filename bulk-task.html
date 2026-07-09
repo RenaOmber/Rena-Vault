@@ -2,6 +2,12 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#4f6ef7" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="RO Vault" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rena Omber — Bulk Task</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -86,6 +92,39 @@
     [data-theme="light"] .btn-ghost { background: #fff; }
     [data-theme="light"] .top-bar { background: var(--bg2); }
     [data-theme="light"] .sidebar { background: var(--bg2); }
+
+    @media (max-width: 640px) {
+      .top-bar { padding: 10px 14px; }
+      .top-right { gap: 5px; }
+      .btn-ghost { font-size: 11px; padding: 4px 8px; }
+      .content { padding: 14px 16px; }
+      .page-header { flex-direction: column; gap: 8px; }
+      .project-select-wrap { flex-wrap: wrap; }
+
+      /* Hide desktop table */
+      .bulk-table-wrap { display: none; }
+      .actions-bar { display: none; }
+
+      /* Mobile single task form */
+      .mobile-task-form { display: flex; flex-direction: column; gap: 12px; }
+      .mobile-form-group { display: flex; flex-direction: column; gap: 5px; }
+      .mobile-form-label { font-size: 12px; color: var(--text2); }
+      .mobile-form-input { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 13px; padding: 9px 12px; outline: none; width: 100%; }
+      .mobile-form-input:focus { border-color: var(--border-hover); }
+      .mobile-date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .mobile-submit-btn { background: var(--accent); border: none; border-radius: 8px; color: #fff; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 500; padding: 12px; width: 100%; margin-top: 4px; }
+      .mobile-added-list { display: flex; flex-direction: column; gap: 6px; margin-top: 16px; }
+      .mobile-added-item { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 12px; color: var(--text2); display: flex; justify-content: space-between; align-items: center; }
+      .mobile-added-name { font-weight: 500; color: var(--text); }
+      .mobile-remove-btn { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 16px; }
+      .mobile-import-btn { background: var(--green); border: none; border-radius: 8px; color: #000; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 600; padding: 12px; width: 100%; margin-top: 8px; }
+    }
+
+    @media (min-width: 641px) {
+      .mobile-task-form { display: none; }
+      .mobile-added-list { display: none; }
+      .mobile-import-btn { display: none; }
+    }
   </style>
 </head>
 <body>
@@ -165,6 +204,57 @@
   </div>
 </div>
 
+<!-- MOBILE FORM -->
+<div class="mobile-task-form" id="mobile-task-form" style="display:none;">
+  <div class="mobile-form-group">
+    <div class="mobile-form-label">Nama Task *</div>
+    <input class="mobile-form-input" id="m-name" placeholder="Nama task..." />
+  </div>
+  <div class="mobile-form-group">
+    <div class="mobile-form-label">Assigned To</div>
+    <select class="mobile-form-input" id="m-assigned">
+      <option value="">—</option>
+      <option value="rena">Rena</option>
+      <option value="nom">Nom</option>
+      <option value="gapl">Gapl</option>
+      <option value="pix">Pix</option>
+      <option value="jee">Jee</option>
+      <option value="tok">Tok</option>
+    </select>
+  </div>
+  <div class="mobile-form-group">
+    <div class="mobile-form-label">Grup</div>
+    <input class="mobile-form-input" id="m-group" placeholder="Grup..." />
+  </div>
+  <div class="mobile-date-row">
+    <div class="mobile-form-group">
+      <div class="mobile-form-label">Mulai *</div>
+      <input type="date" class="mobile-form-input" id="m-start" />
+    </div>
+    <div class="mobile-form-group">
+      <div class="mobile-form-label">Selesai *</div>
+      <input type="date" class="mobile-form-input" id="m-end" />
+    </div>
+  </div>
+  <div class="mobile-form-group">
+    <div class="mobile-form-label">Status</div>
+    <select class="mobile-form-input" id="m-status">
+      <option value="todo">To Do</option>
+      <option value="progress">In Progress</option>
+      <option value="done">Done</option>
+      <option value="blocked">Blocked</option>
+    </select>
+  </div>
+  <div class="mobile-form-group">
+    <div class="mobile-form-label">Brief</div>
+    <textarea class="mobile-form-input" id="m-brief" placeholder="Brief task..." style="min-height:72px;resize:none;"></textarea>
+  </div>
+  <button class="mobile-submit-btn" onclick="mobileAddTask()">+ Tambah ke List</button>
+  <div class="mobile-added-list" id="mobile-added-list"></div>
+  <div id="mobile-import-status" style="font-size:12px;text-align:center;min-height:16px;"></div>
+  <button class="mobile-import-btn" id="mobile-import-btn" onclick="mobileImport()" style="display:none;">Import ke Gantt →</button>
+</div>
+
 <script>
   // ─── CONFIG ────────────────────────────────────────────────
   const SUPABASE_URL  = 'https://fqvfnohhilkzvijqukfg.supabase.co';
@@ -197,9 +287,87 @@
     document.getElementById('gate').style.display = 'none';
     document.getElementById('main').style.display = 'block';
     await loadProjects();
-    addRows(3);
+    if (window.innerWidth <= 640) {
+      document.getElementById('mobile-task-form').style.display = 'flex';
+      document.getElementById('m-start').value = new Date().toISOString().split('T')[0];
+    } else {
+      addRows(3);
+    }
   }
   if (sessionStorage.getItem('ro_auth') === '1') showMain();
+
+  let mobileTasks = [];
+
+  function mobileAddTask() {
+    const name = document.getElementById('m-name').value.trim();
+    const start = document.getElementById('m-start').value;
+    const end = document.getElementById('m-end').value;
+    if (!name || !start || !end) { alert('Nama, tanggal mulai, dan selesai wajib diisi.'); return; }
+    const task = {
+      name,
+      assigned: document.getElementById('m-assigned').value,
+      group: document.getElementById('m-group').value.trim(),
+      start, end,
+      status: document.getElementById('m-status').value,
+      brief: document.getElementById('m-brief').value.trim()
+    };
+    mobileTasks.push(task);
+    // Clear form
+    document.getElementById('m-name').value = '';
+    document.getElementById('m-brief').value = '';
+    renderMobileList();
+  }
+
+  function renderMobileList() {
+    const list = document.getElementById('mobile-added-list');
+    const importBtn = document.getElementById('mobile-import-btn');
+    if (!mobileTasks.length) { list.innerHTML = ''; importBtn.style.display='none'; return; }
+    list.innerHTML = mobileTasks.map((t,i) =>
+      '<div class="mobile-added-item">' +
+        '<div><div class="mobile-added-name">' + t.name + '</div><div style="font-size:11px;color:var(--text3);">' + t.start + ' → ' + t.end + (t.assigned?' · '+t.assigned:'') + '</div></div>' +
+        '<button class="mobile-remove-btn" onclick="mobileRemove(' + i + ')">×</button>' +
+      '</div>'
+    ).join('');
+    importBtn.style.display = 'block';
+  }
+
+  function mobileRemove(idx) {
+    mobileTasks.splice(idx,1);
+    renderMobileList();
+  }
+
+  async function mobileImport() {
+    const projectId = document.getElementById('project-select').value;
+    if (!projectId) { alert('Pilih project dulu.'); return; }
+    if (!mobileTasks.length) { alert('Tambah task dulu.'); return; }
+    const btn = document.getElementById('mobile-import-btn');
+    btn.disabled = true; btn.textContent = 'Mengimport...';
+    const rows = mobileTasks.map((t,i) => ({
+      id: Date.now().toString() + i + Math.random().toString(36).slice(2,5),
+      project_id: projectId,
+      name: t.name,
+      assigned_to: t.assigned||null,
+      group_name: t.group||null,
+      start_date: t.start,
+      end_date: t.end,
+      status: 'plan',
+      actual_status: t.status,
+      brief: t.brief||null,
+      sort_order: i
+    }));
+    const { error } = await sb.from('timeline_tasks').insert(rows);
+    btn.disabled = false;
+    const status = document.getElementById('mobile-import-status');
+    if (error) { btn.textContent='Import ke Gantt →'; status.textContent='Gagal: '+error.message; status.style.color='var(--red)'; }
+    else {
+      status.textContent = '✓ ' + rows.length + ' task berhasil diimport!';
+      status.style.color = 'var(--green)';
+      mobileTasks = [];
+      renderMobileList();
+      btn.textContent = 'Import ke Gantt →';
+      setTimeout(() => { if(confirm('Berhasil! Buka Gantt?')) location.href='timeline.html'; }, 500);
+    }
+  }
 
   async function loadProjects() {
     const { data } = await sb.from('timeline_projects').select('*').order('created_at');
@@ -325,5 +493,10 @@
     el.className = 'import-status' + (type ? ' '+type : '');
   }
 </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+    }
+  </script>
 </body>
 </html>
