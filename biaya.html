@@ -105,6 +105,9 @@
       .biaya-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
       .biaya-table { min-width: 400px; }
       .biaya-table th, .biaya-table td { padding: 7px 8px; font-size: 12px; }
+      .finance-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .finance-table { min-width: 460px; font-size: 12px; }
+      .finance-table th, .finance-table td { padding: 6px 8px; font-size: 11px; white-space: nowrap; }
 
       button[onclick*="exportBiaya"] { width: 100%; margin-top: 8px; }
     }
@@ -279,7 +282,7 @@
       </div>
       ${tabs}
       <div class="section-title">Rincian per Batch</div>
-      <table class="finance-table">
+      <div class="finance-table-wrap"><table class="finance-table">
         <thead>
           <tr>
             <th></th>
@@ -324,7 +327,7 @@
             <td></td>
           </tr>
         </tbody>
-      </table>`;
+      </table></div>`;
   }
 
   function filterProd(id) {
