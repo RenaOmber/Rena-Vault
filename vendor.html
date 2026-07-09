@@ -100,6 +100,38 @@
     [data-theme="light"] .btn-ghost { background: #fff; }
     [data-theme="light"] .top-bar { background: var(--bg2); }
     [data-theme="light"] .sidebar { background: var(--bg2); }
+
+    @media (max-width: 640px) {
+      .top-bar { padding: 10px 14px; }
+      .top-right { gap: 5px; flex-wrap: wrap; }
+      .btn-ghost { font-size: 11px; padding: 4px 8px; }
+      .btn-primary { font-size: 11px; padding: 6px 10px; }
+
+      .content { padding: 14px 16px; }
+      .content-header { flex-direction: column; gap: 10px; }
+      .content-title { font-size: 18px; }
+
+      /* TYPE TABS - scroll */
+      .type-tabs { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
+      .type-tab { white-space: nowrap; font-size: 12px; padding: 7px 12px; }
+
+      /* VENDOR CARD */
+      .vendor-card-header { flex-wrap: wrap; gap: 6px; padding: 12px; }
+      .vendor-name { font-size: 14px; width: 100%; }
+      .vendor-notes { font-size: 10px; }
+      .vendor-actions { margin-left: auto; }
+
+      /* PRICE MATRIX - scrollable */
+      .price-matrix { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .matrix-table { min-width: 340px; }
+      .matrix-table th, .matrix-table td { padding: 5px 8px; font-size: 11px; }
+
+      /* MODAL */
+      .modal-box { padding: 16px; margin: 10px; max-height: 90vh; overflow-y: auto; }
+      .modal-title { font-size: 14px; }
+      .form-row-2 { grid-template-columns: 1fr; gap: 0; }
+      .matrix-input-grid { grid-template-columns: 60px 1fr 1fr; gap: 6px; }
+    }
   </style>
 </head>
 <body>
