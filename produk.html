@@ -131,12 +131,13 @@
       /* LAYOUT */
       .produk-layout { grid-template-columns: 1fr !important; grid-template-rows: auto auto 1fr; }
 
-      /* SIDEBAR - compact horizontal scroll */
-      .prod-sidebar { border-right: none; border-bottom: 1px solid var(--border); padding: 4px 0; max-height: 96px; overflow-y: auto; }
-      .prod-sidebar-label { padding: 0 12px; font-size: 9px; }
-      .prod-item { padding: 5px 12px; font-size: 12px; }
-      .prod-item span { font-size: 11px; }
-      .prod-item-del { font-size: 11px; }
+      /* SIDEBAR - horizontal pill scroll */
+      .prod-sidebar { border-right: none; border-bottom: 1px solid var(--border); padding: 8px 12px; display: flex; flex-direction: row; flex-wrap: nowrap; overflow-x: auto; gap: 6px; -webkit-overflow-scrolling: touch; max-height: none; }
+      .prod-sidebar-label { display: none; }
+      .prod-item { padding: 5px 12px; font-size: 12px; border-radius: 20px; border: 1px solid var(--border); background: var(--bg2); white-space: nowrap; border-left: none !important; flex-shrink: 0; display: flex; align-items: center; gap: 6px; }
+      .prod-item.active { background: var(--accent-dim); border-color: var(--accent); color: var(--text); font-weight: 500; }
+      .prod-item-del { font-size: 12px; }
+      .prod-item-add { padding: 5px 12px; font-size: 12px; border-radius: 20px; border: 1px dashed var(--border); background: none; color: var(--text3); cursor: pointer; white-space: nowrap; flex-shrink: 0; font-family: inherit; }
 
       /* BATCH TABS */
       .batch-tabs { padding: 0 12px 8px; overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
