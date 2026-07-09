@@ -122,6 +122,14 @@
     [data-theme="light"] .top-bar { background: var(--bg2); }
     [data-theme="light"] .sidebar { background: var(--bg2); }
 
+    /* SIDEBAR TOGGLE */
+    .sidebar.collapsed { width: 32px; min-width: 32px; padding: 8px 4px; overflow: hidden; }
+    .sidebar.collapsed #prod-list,
+    .sidebar.collapsed .add-prod-btn,
+    .sidebar.collapsed #sidebar-label-produk { display: none; }
+    .sidebar.collapsed #sidebar-toggle { transform: rotate(180deg); }
+    .layout { transition: grid-template-columns 0.2s; }
+
     @media (max-width: 640px) {
       /* TOP BAR */
       .top-bar { padding: 10px 14px; }
@@ -206,11 +214,14 @@
       <button class="btn-ghost" onclick="logout()">Keluar</button>
     </div>
   </div>
-  <div class="layout">
-    <aside class="sidebar">
-      <div class="sidebar-label">Produk</div>
+  <div class="layout" id="produk-layout">
+    <aside class="sidebar" id="prod-sidebar">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 16px 8px;">
+        <div class="sidebar-label" id="sidebar-label-produk">Produk</div>
+        <button onclick="toggleProdSidebar()" id="sidebar-toggle" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:0;line-height:1;" title="Minimize">◀</button>
+      </div>
       <div id="prod-list"></div>
-      <div class="add-prod-btn" onclick="addProduct()">+ Tambah produk</div>
+      <div class="add-prod-btn" id="add-prod-btn" onclick="addProduct()">+ Tambah produk</div>
     </aside>
     <main class="content" id="content">
       <div class="empty-state">
@@ -393,6 +404,20 @@
 
   function getArtikelImagePaths(a) {
     return [a.mockupUrl, a.designUrl, a.sizechartUrl, a.labelLeherUrl, a.labelPinggangUrl].filter(Boolean);
+  }
+
+  let sidebarCollapsed = false;
+  function toggleProdSidebar() {
+    const sidebar = document.getElementById('prod-sidebar');
+    const layout = document.getElementById('produk-layout');
+    sidebarCollapsed = !sidebarCollapsed;
+    if (sidebarCollapsed) {
+      sidebar.classList.add('collapsed');
+      layout.style.gridTemplateColumns = '32px 1fr';
+    } else {
+      sidebar.classList.remove('collapsed');
+      layout.style.gridTemplateColumns = '';
+    }
   }
 
   async function deleteProduct(id, e) {
