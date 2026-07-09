@@ -20,3 +20,19 @@ self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
 });
+// Push notification handler
+self.addEventListener('push', e => {
+  const data = e.data?.json() || {};
+  self.registration.showNotification(data.title || 'Rena Omber', {
+    body: data.body || '',
+    icon: data.icon || '/icon-192.png',
+    badge: '/icon-192.png',
+    data: data.data || {}
+  });
+});
+
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  const url = e.notification.data?.url || '/alert.html';
+  e.waitUntil(clients.openWindow(url));
+});

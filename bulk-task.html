@@ -483,6 +483,16 @@
       setStatus('Gagal: ' + error.message, 'error');
     } else {
       setStatus(`✓ ${tasks.length} task berhasil diimport ke Gantt!`, 'success');
+      // Send push notifications per assigned member
+      const byMember = {};
+      tasks.forEach(t => { if(t.assigned_to) { if(!byMember[t.assigned_to]) byMember[t.assigned_to]=[]; byMember[t.assigned_to].push(t.name); } });
+      for (const [member, taskNames] of Object.entries(byMember)) {
+        fetch('https://fqvfnohhilkzvijqukfg.supabase.co/functions/v1/send-push', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_ANON },
+          body: JSON.stringify({ task_name: taskNames.length > 1 ? taskNames.length + ' task baru' : taskNames[0], assigned_to: member })
+        }).catch(() => {});
+      }
       setTimeout(() => { if (confirm('Import berhasil! Buka Gantt sekarang?')) location.href = 'timeline.html'; }, 500);
     }
   }

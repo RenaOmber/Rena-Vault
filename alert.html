@@ -300,8 +300,8 @@
 
 <script>
   // ─── CONFIG ────────────────────────────────────────────────
-  const SUPABASE_URL  = 'https://fqvfnohhilkzvijqukfg.supabase.co';
-  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxdmZub2hoaWxrenZpanF1a2ZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDU4NjAsImV4cCI6MjA5ODEyMTg2MH0.er10SEsmDlnx1yRLGJK2fKtLhQR40vFOXVJzH9yakCg';
+  const SUPABASE_URL  = 'YOUR_SUPABASE_URL';
+  const SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY';
   // ───────────────────────────────────────────────────────────
 
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
@@ -328,6 +328,34 @@
     document.getElementById('main').style.display = 'none';
   }
 
+  const VAPID_PUBLIC = 'BHBEXCaqxtUm-t_L-qxw0Zr2qzv6kVD2eRa2KS6tNC3sOXwoDh4u3DEd-KyUBD6TuaUBIjOf-DdFitLMspD16lk';
+
+  async function subscribePush() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') return;
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC)
+      });
+      // Save subscription to Supabase
+      await sb.from('push_subscriptions').upsert({
+        id: currentUser + '_' + Date.now(),
+        user_name: currentUser,
+        subscription: sub.toJSON()
+      });
+    } catch(e) { console.log('Push subscription failed:', e); }
+  }
+
+  function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+  }
+
   async function showMain() {
     document.getElementById('login').style.display = 'none';
     document.getElementById('main').style.display = 'block';
@@ -341,6 +369,7 @@
     await loadNotes();
     await loadAura();
     renderAlerts();
+    subscribePush();
   }
 
   async function openDetail(id) {
