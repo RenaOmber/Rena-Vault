@@ -2,6 +2,12 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#4f6ef7" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="RO Vault" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rena Omber — Produk</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -115,6 +121,49 @@
     [data-theme="light"] .btn-ghost { background: #fff; }
     [data-theme="light"] .top-bar { background: var(--bg2); }
     [data-theme="light"] .sidebar { background: var(--bg2); }
+
+    @media (max-width: 640px) {
+      /* TOP BAR */
+      .top-bar { padding: 10px 14px; }
+      .top-right { gap: 4px; flex-wrap: wrap; }
+      .btn-ghost { font-size: 10px; padding: 4px 7px; }
+
+      /* LAYOUT */
+      .produk-layout { grid-template-columns: 1fr !important; grid-template-rows: auto auto 1fr; }
+
+      /* SIDEBAR - horizontal scroll */
+      .prod-sidebar { border-right: none; border-bottom: 1px solid var(--border); padding: 8px 0; max-height: 140px; overflow-y: auto; }
+      .prod-sidebar-label { padding: 0 12px; }
+      .prod-item { padding: 7px 12px; font-size: 13px; }
+
+      /* BATCH TABS */
+      .batch-tabs { padding: 0 12px 8px; overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
+      .batch-tab { white-space: nowrap; font-size: 11px; padding: 4px 10px; }
+      .artikel-tabs { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
+      .artikel-tab { white-space: nowrap; font-size: 11px; }
+
+      /* CONTENT */
+      .prod-content { padding: 14px 16px; }
+      .form-section-title { font-size: 10px; margin-top: 14px; }
+      .form-row { grid-template-columns: 1fr !important; gap: 10px; }
+      .form-group { margin-bottom: 10px; }
+      .form-input, .form-select { font-size: 13px; padding: 8px 10px; }
+
+      /* SIZE TABLE - scrollable */
+      .size-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .size-table { min-width: 340px; }
+
+      /* UPLOAD ZONES */
+      .upload-grid { grid-template-columns: 1fr !important; }
+      .upload-zone { padding: 16px; }
+      .upload-preview { max-height: 120px; }
+
+      /* EXPORT BTN */
+      .export-btn { width: 100%; margin-top: 8px; font-size: 12px; }
+
+      /* COGS */
+      #cogs-display { font-size: 14px; }
+    }
   </style>
 </head>
 <body>
@@ -941,5 +990,10 @@
     return new Date(d).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
   }
 </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+    }
+  </script>
 </body>
 </html>
