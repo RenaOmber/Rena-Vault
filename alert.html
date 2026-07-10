@@ -793,24 +793,21 @@
     else ideaNotes.unshift(note);
     renderNotes();
 
-    // Notify all members if progress note
-    if (type === 'progress') {
-      const MEMBERS = ['rena','nom','gapl','pix','jee','tok'];
-      const others = MEMBERS.filter(m => m !== currentUser);
-      for (const member of others) {
-        fetch('https://fqvfnohhilkzvijqukfg.supabase.co/functions/v1/send-push', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': 'sb_publishable_guNzoa22ChBWwGo6w_JqgA_9makz2Yl',
-            'Authorization': 'Bearer sb_publishable_guNzoa22ChBWwGo6w_JqgA_9makz2Yl'
-          },
-          body: JSON.stringify({
-            task_name: currentUser + ' update progress: ' + text.substring(0, 60) + (text.length > 60 ? '...' : ''),
-            assigned_to: member
-          })
-        }).catch(() => {});
-      }
+    // Notify all members on progress or idea note
+    const MEMBERS_ALL = ['rena','nom','gapl','pix','jee','tok'];
+    const others = MEMBERS_ALL.filter(m => m !== currentUser);
+    const label = type === 'progress' ? '📋 Progress' : '💡 Ide';
+    const msg = label + ' dari ' + currentUser + ': ' + text.substring(0, 60) + (text.length > 60 ? '...' : '');
+    for (const member of others) {
+      fetch('https://fqvfnohhilkzvijqukfg.supabase.co/functions/v1/send-push', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'sb_publishable_guNzoa22ChBWwGo6w_JqgA_9makz2Yl',
+          'Authorization': 'Bearer sb_publishable_guNzoa22ChBWwGo6w_JqgA_9makz2Yl'
+        },
+        body: JSON.stringify({ task_name: msg, assigned_to: member })
+      }).catch(() => {});
     }
   }
 
