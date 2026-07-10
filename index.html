@@ -222,8 +222,11 @@
       /* DOCS */
       .content-header { flex-direction: column; gap: 8px; }
       .content-title { font-size: 17px; }
-      .doc-row { flex-wrap: wrap; gap: 6px; padding: 10px !important; }
-      .doc-name { font-size: 13px; }
+      .doc-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      .doc-row { flex-direction: column; align-items: flex-start; gap: 4px; padding: 10px !important; border-radius: 8px; }
+      .doc-name { font-size: 12px; }
+      .doc-meta { font-size: 10px; }
+      .doc-download-btn { opacity: 1 !important; }
     }
   
     [data-theme="light"] .modal-box,
