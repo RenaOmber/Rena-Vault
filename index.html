@@ -823,6 +823,7 @@
     clearInterval(interval);
     document.getElementById('upload-bar').style.width = '100%';
     setTimeout(async () => {
+      const uploadedFileName = pendingFile?.name || 'dokumen';
       closeUpload(); btn.textContent = 'Upload';
       if (!error) {
         await loadDocGrid('doc-grid-wrap', activeCategory);
@@ -838,7 +839,7 @@
               'Authorization': 'Bearer sb_publishable_guNzoa22ChBWwGo6w_JqgA_9makz2Yl'
             },
             body: JSON.stringify({
-              task_name: '📁 Dokumen baru: ' + pendingFile.name + ' di ' + activeCategory,
+              task_name: '📁 Dokumen baru: ' + uploadedFileName + ' di ' + activeCategory,
               assigned_to: member
             })
           }).catch(() => {});
