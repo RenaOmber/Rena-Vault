@@ -17,9 +17,13 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  // Don't intercept non-GET, Supabase, or external requests
   if (e.request.method !== 'GET') return;
+  if (e.request.url.includes('supabase.co')) return;
+  if (!e.request.url.startsWith(self.location.origin)) return;
   e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
 });
+
 // Push notification handler
 self.addEventListener('push', e => {
   const data = e.data?.json() || {};
