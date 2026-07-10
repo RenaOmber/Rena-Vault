@@ -172,12 +172,8 @@
       <div class="content-title">Daftar Vendor</div>
       <button class="btn-primary" onclick="openModal()">+ Tambah Vendor</button>
     </div>
-    <div class="type-tabs">
+    <div class="type-tabs" id="type-tabs">
       <button class="type-tab active" onclick="filterType('all',this)">Semua</button>
-      <button class="type-tab" onclick="filterType('kaos',this)">Kaos</button>
-      <button class="type-tab" onclick="filterType('hangtag',this)">Hangtag</button>
-      <button class="type-tab" onclick="filterType('packaging',this)">Packaging</button>
-      <button class="type-tab" onclick="filterType('lainnya',this)">Lainnya</button>
     </div>
     <div id="vendor-list"><div class="empty">Memuat...</div></div>
   </div>
@@ -193,12 +189,16 @@
     </div>
     <div class="form-group">
       <div class="form-label">Tipe</div>
-      <select class="form-input" id="f-type" onchange="toggleMatrixForm()">
-        <option value="kaos">Kaos</option>
-        <option value="hangtag">Hangtag</option>
-        <option value="packaging">Packaging</option>
-        <option value="lainnya">Lainnya</option>
-      </select>
+      <input class="form-input" id="f-type" placeholder="kaos, label, hangtag, packaging..." 
+        list="type-suggestions" oninput="toggleMatrixForm()" autocomplete="off" />
+      <datalist id="type-suggestions">
+        <option value="kaos">
+        <option value="hangtag">
+        <option value="label">
+        <option value="packaging">
+        <option value="sablon">
+        <option value="lainnya">
+      </datalist>
     </div>
     <div class="form-row-2" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
       <div class="form-group">
@@ -318,14 +318,25 @@
   async function loadVendors() {
     const { data } = await sb.from('vendors').select('*').order('created_at');
     vendors = data || [];
+    renderTypeTabs();
     renderList();
   }
 
   function filterType(type, el) {
     activeType = type;
     document.querySelectorAll('.type-tab').forEach(t => t.classList.remove('active'));
-    el.classList.add('active');
+    if (el) el.classList.add('active');
     renderList();
+  }
+
+  function renderTypeTabs() {
+    const el = document.getElementById('type-tabs');
+    if (!el) return;
+    const uniqueTypes = [...new Set(vendors.map(v => v.type).filter(Boolean))].sort();
+    const types = ['all', ...uniqueTypes];
+    el.innerHTML = types.map(t =>
+      `<button class="type-tab ${activeType===t?'active':''}" onclick="filterType('${t}',this)">${t==='all'?'Semua':t.charAt(0).toUpperCase()+t.slice(1)}</button>`
+    ).join('');
   }
 
   function badgeClass(type) {
