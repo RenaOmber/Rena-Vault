@@ -49,7 +49,7 @@
     .top-sub { font-size: 11px; color: var(--text3); letter-spacing: 0.06em; text-transform: uppercase; }
     .logout-btn { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text3); cursor: pointer; font-family: inherit; font-size: 12px; padding: 6px 12px; transition: border-color 0.15s, color 0.15s; }
     .logout-btn:hover { border-color: var(--border-hover); color: var(--text2); }
-    .layout { display: grid; grid-template-columns: 220px 1fr; min-height: calc(100vh - 61px); }
+    .layout { display: grid; grid-template-columns: 260px 1fr; min-height: calc(100vh - 61px); }
 
     /* SIDEBAR */
     .sidebar { border-right: 1px solid var(--border); padding: 24px 0; }
@@ -58,7 +58,14 @@
     .cat-item:hover { background: var(--bg2); }
     .cat-item.active { border-left-color: var(--red); background: var(--bg2); }
     .cat-item-left { display: flex; align-items: center; gap: 10px; }
-    .cat-icon { font-size: 15px; }
+    .cat-icon { width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; font-size: 17px; }
+    .cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 12px 12px; }
+    .cat-card { background: var(--bg2); border-radius: 12px; padding: 12px 10px; cursor: pointer; transition: all 0.18s; border: 1px solid var(--border); }
+    .cat-card:hover { background: var(--bg3); transform: scale(1.02); border-color: var(--border-hover); }
+    .cat-card.active { border-color: var(--accent); background: var(--accent-dim); }
+    .cat-name { font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 2px; }
+    .cat-sub { font-size: 10px; color: var(--text3); }
+    .cat-count { font-size: 11px; font-weight: 600; margin-top: 6px; }
     .cat-name-text { font-size: 13px; }
     .cat-badge { font-size: 10px; color: var(--text3); background: var(--bg3); border-radius: 10px; padding: 2px 7px; min-width: 20px; text-align: center; }
     .cat-item.active .cat-badge { background: var(--red-dim); color: var(--red); }
