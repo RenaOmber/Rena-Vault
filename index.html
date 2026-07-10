@@ -633,10 +633,23 @@
           <div class="doc-name">${d.name}</div>
           <div class="doc-meta">${[date, kb].filter(Boolean).join(' · ')}</div>
         </div>
+        <button class="doc-download-btn" title="Download" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:4px 8px;border-radius:4px;font-size:13px;opacity:0;transition:opacity 0.15s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text3)'">↓</button>
         <button class="doc-delete-btn" title="Hapus">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>`;
       row.querySelector('.doc-delete-btn').addEventListener('click', e => { e.stopPropagation(); deleteDoc(catId, d.name); });
+      row.querySelector('.doc-download-btn').addEventListener('click', async e => {
+        e.stopPropagation();
+        const { data } = await sb.storage.from(BUCKET).createSignedUrl(`${catId}/${d.name}`, 60);
+        if (data?.signedUrl) {
+          const a = document.createElement('a');
+          a.href = data.signedUrl;
+          a.download = d.name;
+          a.click();
+        }
+      });
+      row.addEventListener('mouseenter', () => row.querySelector('.doc-download-btn').style.opacity = '1');
+      row.addEventListener('mouseleave', () => row.querySelector('.doc-download-btn').style.opacity = '0');
       row.addEventListener('click', () => openDoc(catId, d.name));
       list.appendChild(row);
     });
