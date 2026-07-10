@@ -824,7 +824,26 @@
     document.getElementById('upload-bar').style.width = '100%';
     setTimeout(async () => {
       closeUpload(); btn.textContent = 'Upload';
-      if (!error) { await loadDocGrid('doc-grid-wrap', activeCategory); await loadCount(activeCategory); }
+      if (!error) {
+        await loadDocGrid('doc-grid-wrap', activeCategory);
+        await loadCount(activeCategory);
+        // Notify all members
+        const MEMBERS = ['rena','nom','gapl','pix','jee','tok'];
+        MEMBERS.forEach(member => {
+          fetch('https://fqvfnohhilkzvijqukfg.supabase.co/functions/v1/send-push', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': 'sb_publishable_guNzoa22ChBWwGo6w_JqgA_9makz2Yl',
+              'Authorization': 'Bearer sb_publishable_guNzoa22ChBWwGo6w_JqgA_9makz2Yl'
+            },
+            body: JSON.stringify({
+              task_name: '📁 Dokumen baru: ' + pendingFile.name + ' di ' + activeCategory,
+              assigned_to: member
+            })
+          }).catch(() => {});
+        });
+      }
       else { alert('Upload gagal: ' + error.message); }
     }, 400);
   }
