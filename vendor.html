@@ -101,6 +101,11 @@
     [data-theme="light"] .top-bar { background: var(--bg2); }
     [data-theme="light"] .sidebar { background: var(--bg2); }
 
+    .check-pill { display:inline-flex; align-items:center; gap:5px; background:var(--bg3); border:1px solid var(--border); border-radius:20px; color:var(--text2); cursor:pointer; font-size:11px; padding:4px 10px; transition:border-color 0.15s, color 0.15s; user-select:none; }
+    .check-pill:hover { border-color:var(--border-hover); color:var(--text); }
+    .check-pill input { accent-color:var(--accent); }
+    .check-pill:has(input:checked) { border-color:var(--accent); color:var(--accent); background:var(--accent-dim); }
+
     @media (max-width: 640px) {
       .top-bar { padding: 10px 14px; }
       .top-right { gap: 5px; flex-wrap: wrap; }
@@ -194,7 +199,8 @@
       <datalist id="type-suggestions">
         <option value="kaos">
         <option value="hangtag">
-        <option value="label">
+        <option value="label woven">
+        <option value="label printing">
         <option value="packaging">
         <option value="sablon">
         <option value="lainnya">
@@ -228,8 +234,6 @@
         <div class="matrix-input-label" style="text-align:center;">Preview harga</div>
       </div>
       <div id="matrix-rows"></div>
-
-      <!-- Optional surcharges -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;">
         <div class="form-group">
           <div class="form-label">Biaya Oversize (Rp) — opsional</div>
@@ -246,7 +250,6 @@
           </div>
         </div>
       </div>
-
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px;">
         <div class="form-group">
           <div class="form-label">Inklusif berapa warna</div>
@@ -262,7 +265,264 @@
       </div>
     </div>
 
-    <!-- NON-KAOS: single price -->
+    <!-- LABEL WOVEN -->
+    <div id="woven-fields" style="display:none;">
+      <div class="section-divider">Label Woven — Detail Produk</div>
+      <div class="form-group">
+        <div class="form-label">Kualitas Tersedia</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;" id="woven-quality-wrap">
+          <label class="check-pill"><input type="checkbox" value="Basic" class="woven-quality"> Basic</label>
+          <label class="check-pill"><input type="checkbox" value="Reguler" class="woven-quality"> Reguler</label>
+          <label class="check-pill"><input type="checkbox" value="Med-High" class="woven-quality"> Med-High</label>
+          <label class="check-pill"><input type="checkbox" value="Double" class="woven-quality"> Double</label>
+          <label class="check-pill"><input type="checkbox" value="Lux/HD" class="woven-quality"> Lux/HD</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Jenis Folding / Cut</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;">
+          <label class="check-pill"><input type="checkbox" value="Straight Cut" class="woven-fold"> Straight Cut</label>
+          <label class="check-pill"><input type="checkbox" value="Center Fold" class="woven-fold"> Center Fold</label>
+          <label class="check-pill"><input type="checkbox" value="Loop Fold" class="woven-fold"> Loop Fold</label>
+          <label class="check-pill"><input type="checkbox" value="End Fold" class="woven-fold"> End Fold</label>
+          <label class="check-pill"><input type="checkbox" value="Manhattan Fold" class="woven-fold"> Manhattan Fold</label>
+          <label class="check-pill"><input type="checkbox" value="Mitre Fold" class="woven-fold"> Mitre Fold</label>
+          <label class="check-pill"><input type="checkbox" value="Die Cut/Laser" class="woven-fold"> Die Cut/Laser</label>
+        </div>
+      </div>
+      <div class="section-divider">Order 1 Roll</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-group">
+          <div class="form-label">Harga min (Rp)</div>
+          <input type="number" class="form-input" id="f-woven-roll-min" placeholder="499000" min="0" />
+        </div>
+        <div class="form-group">
+          <div class="form-label">Harga maks (Rp)</div>
+          <input type="number" class="form-input" id="f-woven-roll-max" placeholder="999000" min="0" />
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-group">
+          <div class="form-label">Ukuran maks (cm)</div>
+          <input class="form-input" id="f-woven-roll-size" placeholder="6x5" />
+        </div>
+        <div class="form-group">
+          <div class="form-label">Maks warna</div>
+          <input type="number" class="form-input" id="f-woven-roll-colors" placeholder="3" min="1" />
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Biaya folding (Rp/titik)</div>
+        <input type="number" class="form-input" id="f-woven-roll-fold-charge" placeholder="75000" min="0" />
+      </div>
+      <div class="section-divider">Order ≥500 Lusin</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-group">
+          <div class="form-label">Lebar maks (cm)</div>
+          <input class="form-input" id="f-woven-bulk-size" placeholder="20" />
+        </div>
+        <div class="form-group">
+          <div class="form-label">Maks warna</div>
+          <input type="number" class="form-input" id="f-woven-bulk-colors" placeholder="8" min="1" />
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Biaya folding (Rp/lusin)</div>
+        <input type="number" class="form-input" id="f-woven-bulk-fold-charge" placeholder="1200" min="0" />
+      </div>
+      <div class="section-divider">Ketentuan Umum</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-group">
+          <div class="form-label">DP (%)</div>
+          <input type="number" class="form-input" id="f-woven-dp" placeholder="60" min="0" max="100" />
+        </div>
+        <div class="form-group">
+          <div class="form-label">Biaya revisi desain (Rp)</div>
+          <input type="number" class="form-input" id="f-woven-revisi" placeholder="150000" min="0" />
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-group">
+          <div class="form-label">Lead time sampel (HK)</div>
+          <input class="form-input" id="f-woven-lt-sample" placeholder="3–5" />
+        </div>
+        <div class="form-group">
+          <div class="form-label">Lead time produksi (HK)</div>
+          <input class="form-input" id="f-woven-lt-prod" placeholder="4–14" />
+        </div>
+      </div>
+    </div>
+
+    <!-- HANGTAG -->
+    <div id="hangtag-fields" style="display:none;">
+      <div class="section-divider">Hangtag — Detail Produk</div>
+      <div class="form-group">
+        <div class="form-label">Bahan Kertas</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;">
+          <label class="check-pill"><input type="checkbox" value="Ivory" class="ht-bahan"> Ivory</label>
+          <label class="check-pill"><input type="checkbox" value="Duplex" class="ht-bahan"> Duplex</label>
+          <label class="check-pill"><input type="checkbox" value="Art Paper" class="ht-bahan"> Art Paper</label>
+          <label class="check-pill"><input type="checkbox" value="Kraft" class="ht-bahan"> Kraft</label>
+          <label class="check-pill"><input type="checkbox" value="AN Black" class="ht-bahan"> AN Black</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Laminasi</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;">
+          <label class="check-pill"><input type="checkbox" value="Doff" class="ht-laminasi"> Doff</label>
+          <label class="check-pill"><input type="checkbox" value="Glossy" class="ht-laminasi"> Glossy</label>
+          <label class="check-pill"><input type="checkbox" value="UV" class="ht-laminasi"> UV</label>
+          <label class="check-pill"><input type="checkbox" value="Hologram" class="ht-laminasi"> Hologram</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Variasi Tambahan</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;">
+          <label class="check-pill"><input type="checkbox" value="Emboss" class="ht-variasi"> Emboss</label>
+          <label class="check-pill"><input type="checkbox" value="Mata Itik" class="ht-variasi"> Mata Itik</label>
+          <label class="check-pill"><input type="checkbox" value="Spot UV" class="ht-variasi"> Spot UV</label>
+          <label class="check-pill"><input type="checkbox" value="Foil" class="ht-variasi"> Foil</label>
+        </div>
+      </div>
+      <div class="section-divider">Paket 1.200 pcs (flat)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-group">
+          <div class="form-label">Harga paket (Rp)</div>
+          <input type="number" class="form-input" id="f-ht-pkg-price" placeholder="499000" min="0" />
+        </div>
+        <div class="form-group">
+          <div class="form-label">Ukuran maks (cm)</div>
+          <input class="form-input" id="f-ht-pkg-size" placeholder="9x5" />
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Spesifikasi paket</div>
+        <input class="form-input" id="f-ht-pkg-spec" placeholder="Ivory 700gsm, Laminasi Doff, hitam/putih/abu" />
+      </div>
+      <div class="form-group">
+        <div class="form-label">Biaya warna tambahan (Rp/warna)</div>
+        <input type="number" class="form-input" id="f-ht-color-charge" placeholder="150000" min="0" />
+      </div>
+      <div class="section-divider">Harga Populer (qty 6.000 pcs) — Rp/pcs</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+        <div class="form-group">
+          <div class="form-label">6×6 cm</div>
+          <input type="number" class="form-input ht-price-pop" data-size="6x6" placeholder="450" min="0" />
+        </div>
+        <div class="form-group">
+          <div class="form-label">7×4 cm</div>
+          <input type="number" class="form-input ht-price-pop" data-size="7x4" placeholder="400" min="0" />
+        </div>
+        <div class="form-group">
+          <div class="form-label">8×5 cm</div>
+          <input type="number" class="form-input ht-price-pop" data-size="8x5" placeholder="500" min="0" />
+        </div>
+        <div class="form-group">
+          <div class="form-label">9×4,5 cm</div>
+          <input type="number" class="form-input ht-price-pop" data-size="9x4.5" placeholder="525" min="0" />
+        </div>
+        <div class="form-group">
+          <div class="form-label">10×5 cm</div>
+          <input type="number" class="form-input ht-price-pop" data-size="10x5" placeholder="550" min="0" />
+        </div>
+        <div class="form-group">
+          <div class="form-label">10×10 cm</div>
+          <input type="number" class="form-input ht-price-pop" data-size="10x10" placeholder="900" min="0" />
+        </div>
+      </div>
+      <div class="section-divider">Ketentuan Umum</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-group">
+          <div class="form-label">DP (%)</div>
+          <input type="number" class="form-input" id="f-ht-dp" placeholder="60" min="0" max="100" />
+        </div>
+        <div class="form-group">
+          <div class="form-label">Lead time produksi (HK)</div>
+          <input class="form-input" id="f-ht-lt-prod" placeholder="12–15" />
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Biaya revisi desain (Rp)</div>
+        <input class="form-input" id="f-ht-revisi" placeholder="350.000 – 600.000" />
+      </div>
+    </div>
+
+    <!-- LABEL PRINTING -->
+    <div id="labelprint-fields" style="display:none;">
+      <div class="section-divider">Label Printing — Detail Produk</div>
+      <div class="form-group">
+        <div class="form-label">Jenis Bahan</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;">
+          <label class="check-pill"><input type="checkbox" value="Taffeta" class="lp-bahan"> Taffeta</label>
+          <label class="check-pill"><input type="checkbox" value="Satin Tipis" class="lp-bahan"> Satin Tipis</label>
+          <label class="check-pill"><input type="checkbox" value="Satin Tipis Hitam" class="lp-bahan"> Satin Tipis Hitam</label>
+          <label class="check-pill"><input type="checkbox" value="Satin Rajut" class="lp-bahan"> Satin Rajut</label>
+          <label class="check-pill"><input type="checkbox" value="Satin Rajut Double Face" class="lp-bahan"> Satin Rajut DF</label>
+          <label class="check-pill"><input type="checkbox" value="Satin Rajut Hitam" class="lp-bahan"> Satin Rajut Hitam</label>
+          <label class="check-pill"><input type="checkbox" value="Kanvas" class="lp-bahan"> Kanvas</label>
+          <label class="check-pill"><input type="checkbox" value="Kanvas Hitam" class="lp-bahan"> Kanvas Hitam</label>
+          <label class="check-pill"><input type="checkbox" value="Satin MPM Single Face" class="lp-bahan"> Satin MPM SF</label>
+          <label class="check-pill"><input type="checkbox" value="Satin MPM Double Face" class="lp-bahan"> Satin MPM DF</label>
+          <label class="check-pill"><input type="checkbox" value="Tear Away Putih" class="lp-bahan"> Tear Away Putih</label>
+          <label class="check-pill"><input type="checkbox" value="Tear Away Hitam" class="lp-bahan"> Tear Away Hitam</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Jenis Cut</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;">
+          <label class="check-pill"><input type="checkbox" value="Hot Cut Regular" class="lp-cut"> Hot Cut Regular</label>
+          <label class="check-pill"><input type="checkbox" value="Hot Cut Ultrasonic" class="lp-cut"> Hot Cut Ultrasonic</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Jenis Folding</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;">
+          <label class="check-pill"><input type="checkbox" value="Center Fold" class="lp-fold"> Center Fold</label>
+          <label class="check-pill"><input type="checkbox" value="Loop Fold" class="lp-fold"> Loop Fold</label>
+          <label class="check-pill"><input type="checkbox" value="Mitre Fold" class="lp-fold"> Mitre Fold</label>
+          <label class="check-pill"><input type="checkbox" value="End Fold" class="lp-fold"> End Fold</label>
+          <label class="check-pill"><input type="checkbox" value="Book Fold" class="lp-fold"> Book Fold</label>
+        </div>
+      </div>
+      <div class="section-divider">Harga 1 Roll — Range (Rp/roll)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-group">
+          <div class="form-label">Harga min</div>
+          <input type="number" class="form-input" id="f-lp-roll-min" placeholder="550000" min="0" />
+        </div>
+        <div class="form-group">
+          <div class="form-label">Harga maks</div>
+          <input type="number" class="form-input" id="f-lp-roll-max" placeholder="1375000" min="0" />
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Biaya folding (Rp/lusin)</div>
+        <input type="number" class="form-input" id="f-lp-fold-charge" placeholder="700" min="0" />
+      </div>
+      <div class="section-divider">Ketentuan Umum</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-group">
+          <div class="form-label">DP (%)</div>
+          <input type="number" class="form-input" id="f-lp-dp" placeholder="60" min="0" max="100" />
+        </div>
+        <div class="form-group">
+          <div class="form-label">Biaya revisi desain (Rp)</div>
+          <input type="number" class="form-input" id="f-lp-revisi" placeholder="150000" min="0" />
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-group">
+          <div class="form-label">Lead time sampel (HK)</div>
+          <input class="form-input" id="f-lp-lt-sample" placeholder="3–5" />
+        </div>
+        <div class="form-group">
+          <div class="form-label">Lead time produksi (HK)</div>
+          <input class="form-input" id="f-lp-lt-prod" placeholder="5–14" />
+        </div>
+      </div>
+    </div>
+
+    <!-- NON-KAOS/WOVEN/HANGTAG/LABELPRINT: single price -->
     <div id="single-price" style="display:none;">
       <div class="form-group">
         <div class="form-label">Harga per unit (Rp)</div>
@@ -340,17 +600,22 @@
   }
 
   function badgeClass(type) {
-    return { kaos:'badge-kaos', hangtag:'badge-hangtag', packaging:'badge-packaging', lainnya:'badge-lainnya' }[type] || 'badge-lainnya';
+    const t = (type||'').toLowerCase();
+    return { kaos:'badge-kaos', hangtag:'badge-hangtag', packaging:'badge-packaging', 'label woven':'badge-lainnya', 'label printing':'badge-lainnya', lainnya:'badge-lainnya' }[t] || 'badge-lainnya';
   }
 
   function fmtPrice(n) { return 'Rp ' + (n||0).toLocaleString('id-ID'); }
 
   function buildVendorCard(v) {
-    const isKaos = v.type === 'kaos';
+    const isKaos = v.type.toLowerCase() === 'kaos';
+    const isWoven = v.type.toLowerCase() === 'label woven';
+    const isHangtag = v.type.toLowerCase() === 'hangtag';
+    const isLabelPrint = v.type.toLowerCase() === 'label printing';
     const matrix = v.data?.matrix || {};
     const detailsHtml = v.notes ? '<div style="border-top:1px solid var(--border);padding:10px 16px 12px;"><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Details</div><div style="font-size:12px;color:var(--text2);white-space:pre-line;line-height:1.7;">' + v.notes + '</div></div>' : '';
 
     let priceSection = '';
+
     if (isKaos) {
       const osLabel = v.data?.oversizeCharge ? ' +' + (v.data.oversizeCharge/1000).toFixed(0) + 'k' : '';
       const lsLabel = v.data?.longsleeveCharge ? ' +' + (v.data.longsleeveCharge/1000).toFixed(0) + 'k' : '';
@@ -363,6 +628,41 @@
         return '<tr><td>' + t + '</td><td>' + (base ? fmtPrice(base) : '—') + '</td><td>' + (os ? fmtPrice(os) : '—') + '</td><td>' + (ls ? fmtPrice(ls) : '—') + '</td></tr>';
       }).join('');
       priceSection = '<div class="price-matrix"><div class="matrix-label">Price Matrix</div><table class="matrix-table"><tr><th>Tebal</th><th>Regular</th><th>Oversized' + osLabel + '</th><th>Longsleeve' + lsLabel + '</th></tr>' + rows + '</table></div>';
+
+    } else if (isWoven) {
+      const d = v.data || {};
+      const tags = (arr, color) => (arr||[]).map(t => `<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:${color};color:var(--text2);">${t}</span>`).join(' ');
+      priceSection = `<div class="price-matrix" style="padding:12px 16px;display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">${tags(d.kualitas,'rgba(79,110,247,0.1)')}</div>
+        <div style="font-size:11px;color:var(--text3);">1 Roll: <span style="color:var(--accent);font-weight:600;">${fmtPrice(d.roll?.hargaMin)} – ${fmtPrice(d.roll?.hargaMax)}</span> · maks ${d.roll?.ukuranMaks||'—'}cm · ${d.roll?.maksWarna||'—'} warna</div>
+        <div style="font-size:11px;color:var(--text3);">≥500 lusin: harga by desain · lebar maks ${d.bulk?.lebarMaks||'—'}cm · ${d.bulk?.maksWarna||'—'} warna</div>
+        <div style="font-size:10px;color:var(--text3);">DP ${d.dp||'—'}% · Lead time produksi ${d.ltProd||'—'} HK</div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:2px;">${tags(d.folding,'rgba(52,211,153,0.08)')}</div>
+      </div>`;
+
+    } else if (isHangtag) {
+      const d = v.data || {};
+      const tags = (arr, color) => (arr||[]).map(t => `<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:${color};color:var(--text2);">${t}</span>`).join(' ');
+      const popRows = Object.entries(d.hargaPopuler||{}).map(([size,price]) =>
+        `<tr><td>${size} cm</td><td style="text-align:right;color:var(--accent);font-weight:500;">${fmtPrice(price)}/pcs</td></tr>`).join('');
+      const popTable = popRows ? `<table class="matrix-table" style="margin-top:6px;"><tr><th>Ukuran</th><th style="text-align:right;">Harga (6k pcs)</th></tr>${popRows}</table>` : '';
+      priceSection = `<div class="price-matrix" style="padding:12px 16px;display:flex;flex-direction:column;gap:6px;">
+        <div style="font-size:11px;color:var(--text3);">Paket 1.200 pcs: <span style="color:var(--accent);font-weight:600;">${fmtPrice(d.paket?.harga)}</span> · ${d.paket?.spesifikasi||''}</div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;">${tags(d.bahan,'rgba(251,191,36,0.1)')}${tags(d.laminasi,'rgba(99,130,255,0.08)')}${tags(d.variasi,'rgba(52,211,153,0.08)')}</div>
+        ${popTable}
+        <div style="font-size:10px;color:var(--text3);">DP ${d.dp||'—'}% · Lead time ${d.ltProd||'—'} HK</div>
+      </div>`;
+
+    } else if (isLabelPrint) {
+      const d = v.data || {};
+      const tags = (arr, color) => (arr||[]).map(t => `<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:${color};color:var(--text2);">${t}</span>`).join(' ');
+      priceSection = `<div class="price-matrix" style="padding:12px 16px;display:flex;flex-direction:column;gap:8px;">
+        <div style="font-size:11px;color:var(--text3);">1 Roll: <span style="color:var(--accent);font-weight:600;">${fmtPrice(d.roll?.hargaMin)} – ${fmtPrice(d.roll?.hargaMax)}</span></div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;">${tags(d.bahan,'rgba(79,110,247,0.08)')}</div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;">${tags(d.cut,'rgba(251,191,36,0.08)')}${tags(d.folding,'rgba(52,211,153,0.08)')}</div>
+        <div style="font-size:10px;color:var(--text3);">DP ${d.dp||'—'}% · Lead time produksi ${d.ltProd||'—'} HK · Folding Rp${(d.roll?.foldingCharge||0).toLocaleString('id-ID')}/lusin</div>
+      </div>`;
+
     } else {
       priceSection = '<div class="price-matrix" style="padding:10px 16px;"><span style="font-size:13px;font-weight:600;color:var(--accent);">' + fmtPrice(v.price_per_unit) + '/unit</span></div>';
     }
@@ -394,9 +694,13 @@
   }
 
   function toggleMatrixForm() {
-    const type = document.getElementById('f-type').value;
+    const type = document.getElementById('f-type').value.trim().toLowerCase();
     document.getElementById('kaos-matrix').style.display = type === 'kaos' ? 'block' : 'none';
-    document.getElementById('single-price').style.display = type !== 'kaos' ? 'block' : 'none';
+    document.getElementById('woven-fields').style.display = type === 'label woven' ? 'block' : 'none';
+    document.getElementById('hangtag-fields').style.display = type === 'hangtag' ? 'block' : 'none';
+    document.getElementById('labelprint-fields').style.display = type === 'label printing' ? 'block' : 'none';
+    const showSingle = !['kaos','label woven','hangtag','label printing'].includes(type);
+    document.getElementById('single-price').style.display = showSingle ? 'block' : 'none';
   }
 
   function buildMatrixRows(existingMatrix) {
@@ -439,6 +743,11 @@
   function openModal(id) {
     editingId = id || null;
     document.getElementById('modal-title').textContent = id ? 'Edit Vendor' : 'Tambah Vendor';
+
+    // reset semua checkboxes
+    document.querySelectorAll('.woven-quality, .woven-fold, .ht-bahan, .ht-laminasi, .ht-variasi, .lp-bahan, .lp-cut, .lp-fold').forEach(el => el.checked = false);
+    document.querySelectorAll('.ht-price-pop').forEach(el => el.value = '');
+
     if (id) {
       const v = vendors.find(v => v.id === id);
       document.getElementById('f-name').value = v.name;
@@ -449,13 +758,62 @@
       document.getElementById('f-notes').value = v.notes || '';
       document.getElementById('f-price').value = v.price_per_unit || '';
       toggleMatrixForm();
-      if (v.type === 'kaos') {
-        buildMatrixRows(v.data?.matrix || {});
-        document.getElementById('f-color-charge').value = v.data?.colorCharge || '';
-        document.getElementById('f-base-colors').value = v.data?.baseColors || '';
-        document.getElementById('f-oversize-charge').value = v.data?.oversizeCharge || '';
-        document.getElementById('f-longsleeve-charge').value = v.data?.longsleeveCharge || '';
+
+      const t = v.type.toLowerCase();
+      const d = v.data || {};
+
+      if (t === 'kaos') {
+        buildMatrixRows(d.matrix || {});
+        document.getElementById('f-color-charge').value = d.colorCharge || '';
+        document.getElementById('f-base-colors').value = d.baseColors || '';
+        document.getElementById('f-oversize-charge').value = d.oversizeCharge || '';
+        document.getElementById('f-longsleeve-charge').value = d.longsleeveCharge || '';
+
+      } else if (t === 'label woven') {
+        (d.kualitas||[]).forEach(v => { const el = document.querySelector(`.woven-quality[value="${v}"]`); if(el) el.checked=true; });
+        (d.folding||[]).forEach(v => { const el = document.querySelector(`.woven-fold[value="${v}"]`); if(el) el.checked=true; });
+        document.getElementById('f-woven-roll-min').value = d.roll?.hargaMin || '';
+        document.getElementById('f-woven-roll-max').value = d.roll?.hargaMax || '';
+        document.getElementById('f-woven-roll-size').value = d.roll?.ukuranMaks || '';
+        document.getElementById('f-woven-roll-colors').value = d.roll?.maksWarna || '';
+        document.getElementById('f-woven-roll-fold-charge').value = d.roll?.foldingCharge || '';
+        document.getElementById('f-woven-bulk-size').value = d.bulk?.lebarMaks || '';
+        document.getElementById('f-woven-bulk-colors').value = d.bulk?.maksWarna || '';
+        document.getElementById('f-woven-bulk-fold-charge').value = d.bulk?.foldingCharge || '';
+        document.getElementById('f-woven-dp').value = d.dp || '';
+        document.getElementById('f-woven-revisi').value = d.revisi || '';
+        document.getElementById('f-woven-lt-sample').value = d.ltSample || '';
+        document.getElementById('f-woven-lt-prod').value = d.ltProd || '';
+
+      } else if (t === 'hangtag') {
+        (d.bahan||[]).forEach(v => { const el = document.querySelector(`.ht-bahan[value="${v}"]`); if(el) el.checked=true; });
+        (d.laminasi||[]).forEach(v => { const el = document.querySelector(`.ht-laminasi[value="${v}"]`); if(el) el.checked=true; });
+        (d.variasi||[]).forEach(v => { const el = document.querySelector(`.ht-variasi[value="${v}"]`); if(el) el.checked=true; });
+        document.getElementById('f-ht-pkg-price').value = d.paket?.harga || '';
+        document.getElementById('f-ht-pkg-size').value = d.paket?.ukuranMaks || '';
+        document.getElementById('f-ht-pkg-spec').value = d.paket?.spesifikasi || '';
+        document.getElementById('f-ht-color-charge').value = d.paket?.colorCharge || '';
+        Object.entries(d.hargaPopuler||{}).forEach(([size, price]) => {
+          const el = document.querySelector(`.ht-price-pop[data-size="${size}"]`);
+          if (el) el.value = price;
+        });
+        document.getElementById('f-ht-dp').value = d.dp || '';
+        document.getElementById('f-ht-lt-prod').value = d.ltProd || '';
+        document.getElementById('f-ht-revisi').value = d.revisi || '';
+
+      } else if (t === 'label printing') {
+        (d.bahan||[]).forEach(v => { const el = document.querySelector(`.lp-bahan[value="${v}"]`); if(el) el.checked=true; });
+        (d.cut||[]).forEach(v => { const el = document.querySelector(`.lp-cut[value="${v}"]`); if(el) el.checked=true; });
+        (d.folding||[]).forEach(v => { const el = document.querySelector(`.lp-fold[value="${v}"]`); if(el) el.checked=true; });
+        document.getElementById('f-lp-roll-min').value = d.roll?.hargaMin || '';
+        document.getElementById('f-lp-roll-max').value = d.roll?.hargaMax || '';
+        document.getElementById('f-lp-fold-charge').value = d.roll?.foldingCharge || '';
+        document.getElementById('f-lp-dp').value = d.dp || '';
+        document.getElementById('f-lp-revisi').value = d.revisi || '';
+        document.getElementById('f-lp-lt-sample').value = d.ltSample || '';
+        document.getElementById('f-lp-lt-prod').value = d.ltProd || '';
       }
+
     } else {
       document.getElementById('f-name').value = '';
       document.getElementById('f-type').value = 'kaos';
@@ -478,7 +836,7 @@
   async function saveVendor() {
     const name = document.getElementById('f-name').value.trim();
     if (!name) { alert('Nama vendor harus diisi.'); return; }
-    const type = document.getElementById('f-type').value;
+    const type = document.getElementById('f-type').value.trim();
 
     const row = {
       id: editingId || Date.now().toString(),
@@ -491,13 +849,15 @@
       data: {}
     };
 
-    if (type === 'kaos') {
+    const t = type.toLowerCase();
+
+    if (t === 'kaos') {
       const oversizeCharge = parseInt(document.getElementById('f-oversize-charge')?.value)||0;
       const longsleeveCharge = parseInt(document.getElementById('f-longsleeve-charge')?.value)||0;
       const matrix = {};
-      TEBAL.forEach(t => {
-        const val = parseInt(document.getElementById(`mx-${t}`)?.value)||0;
-        if (val) matrix[t] = {
+      TEBAL.forEach(tb => {
+        const val = parseInt(document.getElementById(`mx-${tb}`)?.value)||0;
+        if (val) matrix[tb] = {
           regular: val,
           oversized: oversizeCharge ? val + oversizeCharge : 0,
           longsleeve: longsleeveCharge ? val + longsleeveCharge : 0
@@ -508,6 +868,73 @@
       row.data = { matrix, colorCharge, baseColors, oversizeCharge, longsleeveCharge };
       const prices = Object.values(matrix).map(m => m.regular).filter(Boolean);
       row.price_per_unit = prices.length ? Math.min(...prices) : 0;
+
+    } else if (t === 'label woven') {
+      const getChecked = cls => [...document.querySelectorAll(`.${cls}:checked`)].map(el => el.value);
+      row.data = {
+        kualitas: getChecked('woven-quality'),
+        folding: getChecked('woven-fold'),
+        roll: {
+          hargaMin: parseInt(document.getElementById('f-woven-roll-min').value)||0,
+          hargaMax: parseInt(document.getElementById('f-woven-roll-max').value)||0,
+          ukuranMaks: document.getElementById('f-woven-roll-size').value.trim(),
+          maksWarna: parseInt(document.getElementById('f-woven-roll-colors').value)||0,
+          foldingCharge: parseInt(document.getElementById('f-woven-roll-fold-charge').value)||0,
+        },
+        bulk: {
+          lebarMaks: document.getElementById('f-woven-bulk-size').value.trim(),
+          maksWarna: parseInt(document.getElementById('f-woven-bulk-colors').value)||0,
+          foldingCharge: parseInt(document.getElementById('f-woven-bulk-fold-charge').value)||0,
+        },
+        dp: parseInt(document.getElementById('f-woven-dp').value)||0,
+        revisi: parseInt(document.getElementById('f-woven-revisi').value)||0,
+        ltSample: document.getElementById('f-woven-lt-sample').value.trim(),
+        ltProd: document.getElementById('f-woven-lt-prod').value.trim(),
+      };
+      row.price_per_unit = row.data.roll.hargaMin || 0;
+
+    } else if (t === 'hangtag') {
+      const getChecked = cls => [...document.querySelectorAll(`.${cls}:checked`)].map(el => el.value);
+      const hargaPopuler = {};
+      document.querySelectorAll('.ht-price-pop').forEach(el => {
+        const val = parseInt(el.value)||0;
+        if (val) hargaPopuler[el.dataset.size] = val;
+      });
+      row.data = {
+        bahan: getChecked('ht-bahan'),
+        laminasi: getChecked('ht-laminasi'),
+        variasi: getChecked('ht-variasi'),
+        paket: {
+          harga: parseInt(document.getElementById('f-ht-pkg-price').value)||0,
+          ukuranMaks: document.getElementById('f-ht-pkg-size').value.trim(),
+          spesifikasi: document.getElementById('f-ht-pkg-spec').value.trim(),
+          colorCharge: parseInt(document.getElementById('f-ht-color-charge').value)||0,
+        },
+        hargaPopuler,
+        dp: parseInt(document.getElementById('f-ht-dp').value)||0,
+        ltProd: document.getElementById('f-ht-lt-prod').value.trim(),
+        revisi: document.getElementById('f-ht-revisi').value.trim(),
+      };
+      row.price_per_unit = row.data.paket.harga || 0;
+
+    } else if (t === 'label printing') {
+      const getChecked = cls => [...document.querySelectorAll(`.${cls}:checked`)].map(el => el.value);
+      row.data = {
+        bahan: getChecked('lp-bahan'),
+        cut: getChecked('lp-cut'),
+        folding: getChecked('lp-fold'),
+        roll: {
+          hargaMin: parseInt(document.getElementById('f-lp-roll-min').value)||0,
+          hargaMax: parseInt(document.getElementById('f-lp-roll-max').value)||0,
+          foldingCharge: parseInt(document.getElementById('f-lp-fold-charge').value)||0,
+        },
+        dp: parseInt(document.getElementById('f-lp-dp').value)||0,
+        revisi: parseInt(document.getElementById('f-lp-revisi').value)||0,
+        ltSample: document.getElementById('f-lp-lt-sample').value.trim(),
+        ltProd: document.getElementById('f-lp-lt-prod').value.trim(),
+      };
+      row.price_per_unit = row.data.roll.hargaMin || 0;
+
     } else {
       row.price_per_unit = parseInt(document.getElementById('f-price').value)||0;
     }
