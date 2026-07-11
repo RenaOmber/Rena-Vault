@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rena Omber — Blueprint</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="theme.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0f1e; --bg2: #111827; --bg3: #1a2235;
+      --border: rgba(99,130,255,0.12); --border-hover: rgba(99,130,255,0.28);
+      --text: #e8eaf6; --text2: #8892b0; --text3: #4a5568;
+      --accent: #4f6ef7; --accent-dim: rgba(79,110,247,0.12);
+      --green: #34d399; --red: #f87171; --yellow: #fbbf24;
+    }
+    html, body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; min-height: 100vh; }
+    #gate { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
+    .gate-mark { width: 40px; height: 4px; background: var(--accent); border-radius: 2px; margin: 0 auto 16px; }
+    .gate-form { display: flex; gap: 8px; margin-top: 8px; }
+    .gate-form input { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 14px; padding: 10px 14px; width: 220px; outline: none; }
+    .gate-form button { background: var(--accent); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; padding: 10px 18px; }
+    .gate-error { font-size: 12px; color: var(--red); min-height: 16px; text-align: center; }
+    #main { display: none; }
+    .top-bar { display: flex; align-items: center; justify-content: space-between; padding: 14px 28px; border-bottom: 1px solid var(--border); }
+    .top-left { display: flex; align-items: center; gap: 10px; }
+    .top-mark { width: 22px; height: 3px; background: var(--accent); border-radius: 2px; }
+    .top-name { font-size: 13px; font-weight: 500; }
+    .top-sub { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; }
+    .top-right { display: flex; gap: 8px; align-items: center; }
+    .btn-ghost { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text2); cursor: pointer; font-family: inherit; font-size: 12px; padding: 6px 14px; text-decoration: none; display: inline-flex; align-items: center; }
+    .btn-ghost:hover { border-color: var(--border-hover); color: var(--text); }
+    .btn-accent { background: var(--accent); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 500; padding: 6px 14px; }
+
+    .layout { display: grid; grid-template-columns: 220px 1fr; min-height: calc(100vh - 53px); }
+    .sidebar { border-right: 1px solid var(--border); padding: 16px 0; overflow-y: auto; }
+    .sidebar-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; padding: 0 16px; margin-bottom: 8px; }
+    .prod-item { padding: 9px 16px; cursor: pointer; border-left: 2px solid transparent; font-size: 13px; color: var(--text2); display: flex; align-items: center; justify-content: space-between; }
+    .prod-item:hover { background: var(--bg2); color: var(--text); }
+    .prod-item.active { border-left-color: var(--accent); background: var(--bg2); color: var(--text); font-weight: 500; }
+    .prod-item-badge { font-size: 10px; padding: 1px 6px; border-radius: 8px; background: var(--accent-dim); color: var(--accent); }
+    .sidebar-add { display: block; padding: 8px 16px; font-size: 12px; color: var(--text3); cursor: default; }
+
+    .content { padding: 28px 36px; overflow-y: auto; max-width: 900px; }
+    .content-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+    .content-sub { font-size: 12px; color: var(--text3); margin-bottom: 24px; }
+
+    /* SECTIONS */
+    .bp-section { margin-bottom: 28px; }
+    .bp-section-title { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .bp-section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .bp-badge { font-size: 9px; padding: 2px 6px; border-radius: 8px; background: var(--accent-dim); color: var(--accent); text-transform: none; letter-spacing: 0; }
+
+    /* STAT CARDS */
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 10px; margin-bottom: 16px; }
+    .stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+    .stat-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 5px; }
+    .stat-value { font-size: 20px; font-weight: 700; }
+    .stat-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+    /* SIZE TABLE */
+    .size-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+    .size-table th { font-size: 11px; color: var(--text3); font-weight: 500; padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+    .size-table td { padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 13px; }
+    .size-bar { height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; margin-top: 4px; }
+    .size-bar-fill { height: 100%; background: var(--accent); border-radius: 3px; }
+    .qty-input { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 12px; padding: 5px 8px; width: 80px; outline: none; text-align: center; }
+    .qty-input:focus { border-color: var(--border-hover); }
+
+    /* FORM */
+    .form-group { margin-bottom: 14px; }
+    .form-label { font-size: 12px; color: var(--text2); margin-bottom: 5px; display: block; }
+    .form-input { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 13px; padding: 9px 12px; outline: none; width: 100%; }
+    .form-input:focus { border-color: var(--border-hover); }
+    .form-textarea { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 13px; padding: 9px 12px; outline: none; width: 100%; resize: vertical; min-height: 80px; line-height: 1.6; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    /* TIMELINE STEPS */
+    .timeline-steps { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+    .step-row { display: flex; gap: 8px; align-items: center; }
+    .step-input { flex: 1; }
+    .step-date { width: 150px; }
+    .step-del { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 16px; padding: 0 6px; }
+    .step-del:hover { color: var(--red); }
+    .btn-add-step { background: none; border: 1px dashed var(--border-hover); border-radius: 6px; color: var(--text3); cursor: pointer; font-size: 12px; padding: 6px 14px; font-family: inherit; }
+    .btn-add-step:hover { color: var(--accent); border-color: var(--accent); }
+
+    /* CHANNELS */
+    .channel-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+    .channel-tag { padding: 5px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 1px solid var(--border); color: var(--text3); transition: all 0.15s; }
+    .channel-tag.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+    /* SAVE BAR */
+    .save-bar { position: fixed; bottom: 20px; right: 36px; display: flex; gap: 10px; align-items: center; }
+    .btn-save { background: var(--accent); border: none; border-radius: 8px; color: #fff; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; padding: 10px 20px; box-shadow: 0 4px 20px rgba(79,110,247,0.4); }
+    .save-status { font-size: 12px; color: var(--green); }
+
+    .placeholder { display: flex; align-items: center; justify-content: center; height: calc(100vh - 53px); color: var(--text3); font-size: 13px; }
+
+    @media (max-width: 640px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { border-right: none; border-bottom: 1px solid var(--border); max-height: 140px; overflow-y: auto; }
+      .content { padding: 16px; }
+      .form-row { grid-template-columns: 1fr; }
+      .stat-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="gate">
+  <div>
+    <div class="gate-mark"></div>
+    <div style="font-size:18px;font-weight:500;text-align:center;">Rena Omber</div>
+    <div style="font-size:12px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;text-align:center;margin-top:4px;">Blueprint</div>
+  </div>
+  <div>
+    <div class="gate-form">
+      <input type="password" id="pw-input" placeholder="Password" onkeydown="if(event.key==='Enter')checkPw()" />
+      <button onclick="checkPw()">Masuk</button>
+    </div>
+    <div class="gate-error" id="pw-error"></div>
+  </div>
+</div>
+
+<div id="main">
+  <div class="top-bar">
+    <div class="top-left">
+      <div class="top-mark"></div>
+      <div>
+        <div class="top-name">Rena Omber</div>
+        <div class="top-sub">Blueprint</div>
+      </div>
+    </div>
+    <div class="top-right">
+      <button class="theme-toggle-btn btn-ghost" onclick="toggleTheme()">☀️</button>
+      <a href="produk.html" class="btn-ghost">Produk</a>
+      <a href="index.html" class="btn-ghost">Vault</a>
+      <button class="btn-ghost" onclick="logout()">Keluar</button>
+    </div>
+  </div>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-label">Produk</div>
+      <div id="prod-list"></div>
+    </aside>
+    <main id="content">
+      <div class="placeholder">Pilih produk untuk lihat blueprint</div>
+    </main>
+  </div>
+</div>
+
+<script>
+  // ─── CONFIG ────────────────────────────────────────────────
+  const SUPABASE_URL  = 'https://fqvfnohhilkzvijqukfg.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxdmZub2hoaWxrenZpanF1a2ZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDU4NjAsImV4cCI6MjA5ODEyMTg2MH0.er10SEsmDlnx1yRLGJK2fKtLhQR40vFOXVJzH9yakCg';
+  const PASSWORD_HASH = '3f0e57f3e719957119f0ba621629a3ae0ed1ec95d1ad8a91bd980b2896b679e4';
+  // ───────────────────────────────────────────────────────────
+
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  const SIZES = ['S','M','L','XL','XXL'];
+  const CHANNELS = ['Instagram','TikTok','WhatsApp','Reseller','Pop-up','Website'];
+  let allProducts = [], allBlueprints = {}, allSales = [], allQC = [], allFinance = [];
+  let activeProdId = null, bp = null, dirty = false;
+
+  async function sha256(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+  async function checkPw() {
+    const val = document.getElementById('pw-input').value.trim();
+    if ((await sha256(val)) === PASSWORD_HASH) { sessionStorage.setItem('ro_auth','1'); await showMain(); }
+    else { document.getElementById('pw-error').textContent='Password salah.'; document.getElementById('pw-input').value=''; }
+  }
+  function logout() { sessionStorage.removeItem('ro_auth'); location.reload(); }
+  async function showMain() {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+    await loadAll();
+  }
+  if (sessionStorage.getItem('ro_auth') === '1') showMain();
+
+  async function loadAll() {
+    const [prodRes, bpRes, salesRes, qcRes, finRes] = await Promise.all([
+      sb.from('products').select('*').order('created_at'),
+      sb.from('blueprints').select('*'),
+      sb.from('sales_transactions').select('*'),
+      sb.from('qc_records').select('*'),
+      sb.from('finance_entries').select('*')
+    ]);
+    allProducts = (prodRes.data||[]).map(r=>({ id:String(r.id), name:r.name, batches:r.data?.batches||[] }));
+    allBlueprints = {};
+    (bpRes.data||[]).forEach(b => { allBlueprints[b.product_id] = b; });
+    allSales = salesRes.data||[];
+    allQC = qcRes.data||[];
+    allFinance = finRes.data||[];
+    renderSidebar();
+  }
+
+  function renderSidebar() {
+    const el = document.getElementById('prod-list');
+    el.innerHTML = allProducts.map(p => `
+      <div class="prod-item ${p.id===activeProdId?'active':''}" onclick="selectProd('${p.id}')">
+        <span>${p.name}</span>
+        ${allBlueprints[p.id] ? '<span class="prod-item-badge">BP</span>' : ''}
+      </div>`).join('');
+  }
+
+  function selectProd(id) {
+    activeProdId = id;
+    bp = allBlueprints[id] ? { ...allBlueprints[id] } : {
+      id: null, product_id: id,
+      product_name: allProducts.find(p=>p.id===id)?.name || '',
+      launch_date: '', target_sizes: {}, est_cogs: 0, target_revenue: 0,
+      marketing: { prelaunch: '', launchday: '', postlaunch: '' },
+      channels: [], timeline_steps: [], notes: ''
+    };
+    dirty = false;
+    renderSidebar();
+    renderContent();
+  }
+
+  function fmt(n) { return 'Rp ' + (n||0).toLocaleString('id-ID'); }
+
+  function getProductStats(prodId) {
+    const prod = allProducts.find(p=>p.id===prodId);
+    if (!prod) return null;
+    const batches = prod.batches || [];
+
+    // Sales per size across all batches
+    const salesBySize = {};
+    SIZES.forEach(s => salesBySize[s] = 0);
+    allSales.filter(t=>t.product_id===prodId).forEach(t => {
+      if (salesBySize[t.size] !== undefined) salesBySize[t.size] += t.qty||0;
+    });
+
+    // Production per size
+    const prodBySize = {};
+    SIZES.forEach(s => prodBySize[s] = 0);
+    batches.forEach(b => b.artikels?.forEach(a => {
+      SIZES.forEach(s => { prodBySize[s] += parseInt(a.sizes?.[s])||0; });
+    }));
+
+    // QC
+    const qcDefect = allQC.filter(q=>q.product_id===prodId).reduce((s,q)=>s+(q.qty_defect||0), 0);
+    const qcLolos = allQC.filter(q=>q.product_id===prodId).reduce((s,q)=>s+(q.qty_lolos||0), 0);
+
+    // Finance
+    const fin = allFinance.find(f => f.batch_key?.startsWith(prodId));
+    const totalProd = Object.values(prodBySize).reduce((a,b)=>a+b, 0);
+    const totalSold = Object.values(salesBySize).reduce((a,b)=>a+b, 0);
+    const sellThrough = totalProd > 0 ? Math.round((totalSold/totalProd)*100) : 0;
+
+    return { salesBySize, prodBySize, totalProd, totalSold, sellThrough, qcDefect, qcLolos, fin };
+  }
+
+  function renderContent() {
+    const prod = allProducts.find(p=>p.id===activeProdId);
+    const stats = getProductStats(activeProdId);
+    const el = document.getElementById('content');
+
+    const maxSales = Math.max(...Object.values(stats.salesBySize), 1);
+
+    el.innerHTML = `
+    <div class="content" style="padding:28px 36px;overflow-y:auto;max-width:900px;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;">
+        <div>
+          <div class="content-title">${prod.name}</div>
+          <div class="content-sub">Blueprint & Production Planning</div>
+        </div>
+        <button class="btn-accent" onclick="exportPDF()">Export PDF</button>
+      </div>
+
+      <!-- RETROSPEKTIF & PLANNING TERINTEGRASI -->
+      <div class="bp-section">
+        <div class="bp-section-title">Data Historis & Target Batch Berikutnya</div>
+
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-label">Total Diproduksi</div>
+            <div class="stat-value">${stats.totalProd}</div>
+            <div class="stat-sub">unit</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Terjual</div>
+            <div class="stat-value" style="color:var(--green);">${stats.totalSold}</div>
+            <div class="stat-sub">unit</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Sell-Through</div>
+            <div class="stat-value" style="color:${stats.sellThrough>=70?'var(--green)':stats.sellThrough>=40?'var(--yellow)':'var(--red)'};">${stats.sellThrough}%</div>
+            <div class="stat-sub">dari total produksi</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Defect QC</div>
+            <div class="stat-value" style="color:var(--red);">${stats.qcDefect}</div>
+            <div class="stat-sub">unit</div>
+          </div>
+        </div>
+
+        <!-- SIZE TABLE -->
+        <table class="size-table">
+          <thead>
+            <tr>
+              <th>Size</th>
+              <th>Diproduksi</th>
+              <th>Terjual</th>
+              <th>Sell-Through</th>
+              <th>Target Produksi Berikutnya</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${SIZES.map(s => {
+              const prod_qty = stats.prodBySize[s]||0;
+              const sold_qty = stats.salesBySize[s]||0;
+              const st = prod_qty > 0 ? Math.round((sold_qty/prod_qty)*100) : 0;
+              const target = bp.target_sizes[s] || '';
+              return `<tr>
+                <td style="font-weight:600;">${s}</td>
+                <td>${prod_qty}</td>
+                <td>${sold_qty}</td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="color:${st>=70?'var(--green)':st>=40?'var(--yellow)':'var(--red)'};">${st}%</span>
+                    <div class="size-bar" style="width:80px;"><div class="size-bar-fill" style="width:${st}%;background:${st>=70?'var(--green)':st>=40?'var(--yellow)':'var(--red)'};"></div></div>
+                  </div>
+                </td>
+                <td><input type="number" class="qty-input" value="${target}" min="0" placeholder="—"
+                  onchange="updateTargetSize('${s}',this.value)" /></td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- FINANSIAL -->
+      <div class="bp-section">
+        <div class="bp-section-title">Finansial</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Target Launch Date</label>
+            <input type="date" class="form-input" value="${bp.launch_date||''}" onchange="updateBP('launch_date',this.value)" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Estimasi COGS Total (Rp)</label>
+            <input type="number" class="form-input" value="${bp.est_cogs||''}" placeholder="0" onchange="updateBP('est_cogs',parseInt(this.value)||0)" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Target Revenue (Rp)</label>
+            <input type="number" class="form-input" value="${bp.target_revenue||''}" placeholder="0" onchange="updateBP('target_revenue',parseInt(this.value)||0)" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Break-Even Point</label>
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:9px 12px;font-size:13px;color:${bp.est_cogs&&bp.target_revenue?'var(--green)':'var(--text3)'};">
+              ${bp.est_cogs && bp.target_revenue
+                ? 'Rp ' + Math.ceil(bp.est_cogs / (bp.target_revenue / (Object.values(bp.target_sizes).reduce((a,b)=>a+(parseInt(b)||0),0)||1))).toLocaleString('id-ID') + '/unit'
+                : '— (isi COGS & target revenue)'}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TIMELINE PRODUKSI -->
+      <div class="bp-section">
+        <div class="bp-section-title">Timeline Produksi</div>
+        <div class="timeline-steps" id="timeline-steps">
+          ${(bp.timeline_steps||[]).map((step,i) => `
+            <div class="step-row">
+              <input class="form-input step-input" value="${step.name||''}" placeholder="Tahap produksi..." onchange="updateStep(${i},'name',this.value)" />
+              <input type="date" class="form-input step-date" value="${step.date||''}" onchange="updateStep(${i},'date',this.value)" />
+              <button class="step-del" onclick="removeStep(${i})">×</button>
+            </div>`).join('')}
+        </div>
+        <button class="btn-add-step" onclick="addStep()">+ Tambah Tahap</button>
+      </div>
+
+      <!-- MARKETING -->
+      <div class="bp-section">
+        <div class="bp-section-title">Marketing Strategy</div>
+        <div class="form-group">
+          <label class="form-label">Pre-Launch</label>
+          <textarea class="form-textarea" placeholder="Teaser, waitlist, behind the scenes..." onchange="updateMarketing('prelaunch',this.value)">${bp.marketing?.prelaunch||''}</textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Launch Day</label>
+          <textarea class="form-textarea" placeholder="Konten launch, jam posting, promo..." onchange="updateMarketing('launchday',this.value)">${bp.marketing?.launchday||''}</textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Post-Launch</label>
+          <textarea class="form-textarea" placeholder="Follow up, testimonial, restock..." onchange="updateMarketing('postlaunch',this.value)">${bp.marketing?.postlaunch||''}</textarea>
+        </div>
+      </div>
+
+      <!-- CHANNEL -->
+      <div class="bp-section">
+        <div class="bp-section-title">Channel Distribusi</div>
+        <div class="channel-tags">
+          ${CHANNELS.map(c => `<div class="channel-tag ${(bp.channels||[]).includes(c)?'active':''}" onclick="toggleChannel('${c}')">${c}</div>`).join('')}
+        </div>
+      </div>
+
+      <!-- NOTES -->
+      <div class="bp-section">
+        <div class="bp-section-title">Catatan</div>
+        <textarea class="form-textarea" style="min-height:100px;" placeholder="Catatan tambahan, risiko, contingency plan..." onchange="updateBP('notes',this.value)">${bp.notes||''}</textarea>
+      </div>
+
+      <div style="height:60px;"></div>
+    </div>
+
+    <div class="save-bar">
+      <span class="save-status" id="save-status"></span>
+      <button class="btn-save" onclick="saveBP()">Simpan Blueprint</button>
+    </div>`;
+  }
+
+  function updateBP(field, val) { bp[field] = val; dirty = true; }
+  function updateTargetSize(size, val) { bp.target_sizes[size] = parseInt(val)||0; dirty = true; }
+  function updateMarketing(field, val) { if (!bp.marketing) bp.marketing = {}; bp.marketing[field] = val; dirty = true; }
+  function updateStep(i, field, val) { bp.timeline_steps[i][field] = val; dirty = true; }
+
+  function addStep() {
+    if (!bp.timeline_steps) bp.timeline_steps = [];
+    bp.timeline_steps.push({ name: '', date: '' });
+    dirty = true;
+    renderContent();
+  }
+
+  function removeStep(i) {
+    bp.timeline_steps.splice(i, 1);
+    dirty = true;
+    renderContent();
+  }
+
+  function toggleChannel(ch) {
+    if (!bp.channels) bp.channels = [];
+    const idx = bp.channels.indexOf(ch);
+    if (idx >= 0) bp.channels.splice(idx, 1);
+    else bp.channels.push(ch);
+    dirty = true;
+    renderContent();
+  }
+
+  async function saveBP() {
+    const prod = allProducts.find(p=>p.id===activeProdId);
+    const row = {
+      ...bp,
+      id: bp.id || (activeProdId + '_bp'),
+      product_id: activeProdId,
+      product_name: prod?.name || '',
+      updated_at: new Date().toISOString()
+    };
+    const { error } = await sb.from('blueprints').upsert(row);
+    const status = document.getElementById('save-status');
+    if (error) { status.textContent = 'Gagal: ' + error.message; status.style.color = 'var(--red)'; }
+    else {
+      allBlueprints[activeProdId] = row;
+      bp = { ...row };
+      dirty = false;
+      status.textContent = '✓ Tersimpan';
+      status.style.color = 'var(--green)';
+      setTimeout(() => status.textContent = '', 2000);
+      renderSidebar();
+    }
+  }
+
+  async function exportPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const prod = allProducts.find(p=>p.id===activeProdId);
+    const stats = getProductStats(activeProdId);
+    const M = 20, W = 170;
+    let y = 20;
+
+    const title = (txt, size=14) => { doc.setFont('helvetica','bold'); doc.setFontSize(size); doc.setTextColor(20,20,40); doc.text(txt, M, y); y += size * 0.5 + 4; };
+    const sub = (txt) => { doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(120,120,140); doc.text(txt, M, y); y += 6; };
+    const sectionTitle = (txt) => { y += 4; doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(80,80,200); doc.text(txt.toUpperCase(), M, y); doc.line(M, y+1, M+W, y+1); y += 7; doc.setTextColor(40,40,60); };
+    const field = (label, val) => { doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(80,80,100); doc.text(label, M, y); doc.setFont('helvetica','normal'); doc.setTextColor(30,30,50); doc.text(String(val||'—'), M+50, y); y += 6; };
+
+    title(`Blueprint — ${prod.name}`, 16);
+    sub(`Dibuat: ${new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}`);
+    y += 4;
+
+    sectionTitle('Data Historis & Target');
+    field('Total Diproduksi', stats.totalProd + ' unit');
+    field('Total Terjual', stats.totalSold + ' unit');
+    field('Sell-Through', stats.sellThrough + '%');
+    field('Defect QC', stats.qcDefect + ' unit');
+
+    y += 4;
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(80,80,100);
+    ['Size','Diproduksi','Terjual','ST%','Target'].forEach((h,i) => doc.text(h, M + i*32, y));
+    y += 5; doc.setFont('helvetica','normal'); doc.setTextColor(30,30,50);
+    SIZES.forEach(s => {
+      const pq = stats.prodBySize[s]||0;
+      const sq = stats.salesBySize[s]||0;
+      const st = pq>0?Math.round((sq/pq)*100):0;
+      const tgt = bp.target_sizes[s]||'—';
+      [s, String(pq), String(sq), st+'%', String(tgt)].forEach((v,i) => doc.text(v, M+i*32, y));
+      y += 6;
+    });
+
+    sectionTitle('Finansial');
+    field('Target Launch', bp.launch_date||'—');
+    field('Estimasi COGS', bp.est_cogs ? 'Rp ' + bp.est_cogs.toLocaleString('id-ID') : '—');
+    field('Target Revenue', bp.target_revenue ? 'Rp ' + bp.target_revenue.toLocaleString('id-ID') : '—');
+
+    if (bp.timeline_steps?.length) {
+      sectionTitle('Timeline Produksi');
+      bp.timeline_steps.forEach(s => { field(s.date||'—', s.name||'—'); });
+    }
+
+    if (bp.marketing?.prelaunch || bp.marketing?.launchday || bp.marketing?.postlaunch) {
+      sectionTitle('Marketing Strategy');
+      if (bp.marketing.prelaunch) { sub('Pre-Launch'); doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(30,30,50); const lines = doc.splitTextToSize(bp.marketing.prelaunch, W); doc.text(lines, M, y); y += lines.length * 5 + 3; }
+      if (bp.marketing.launchday) { sub('Launch Day'); const lines = doc.splitTextToSize(bp.marketing.launchday, W); doc.text(lines, M, y); y += lines.length * 5 + 3; }
+      if (bp.marketing.postlaunch) { sub('Post-Launch'); const lines = doc.splitTextToSize(bp.marketing.postlaunch, W); doc.text(lines, M, y); y += lines.length * 5 + 3; }
+    }
+
+    if (bp.channels?.length) {
+      sectionTitle('Channel Distribusi');
+      doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(30,30,50);
+      doc.text(bp.channels.join(' · '), M, y); y += 8;
+    }
+
+    if (bp.notes) {
+      sectionTitle('Catatan');
+      const lines = doc.splitTextToSize(bp.notes, W);
+      doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(30,30,50);
+      doc.text(lines, M, y);
+    }
+
+    doc.save(`Blueprint_${prod.name}_${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+</script>
+</body>
+</html>
