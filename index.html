@@ -596,8 +596,12 @@
       tc.innerHTML = `
         <div class="calendar-section">
           <div class="calendar-label">Content Calendar</div>
-          <div class="calendar-frame">
-            <iframe src="https://renacalendar.netlify.app/" title="Rena Calendar" allowfullscreen></iframe>
+          <div style="padding: 28px; background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+            <div>
+              <div style="font-size: 13px; font-weight: 500; margin-bottom: 4px;">Rena Calendar</div>
+              <div style="font-size: 12px; color: var(--text3);">Buka calendar di tab baru untuk melihat jadwal konten.</div>
+            </div>
+            <a href="https://renacalendar.netlify.app/" target="_blank" rel="noopener" style="background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 9px 18px; font-size: 13px; font-weight: 500; text-decoration: none; white-space: nowrap; cursor: pointer;">Buka Calendar →</a>
           </div>
         </div>
         <div class="calendar-label" style="margin-bottom:10px;">Dokumen</div>
