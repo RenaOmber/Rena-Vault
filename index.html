@@ -576,7 +576,7 @@
       </div>
       <div class="tab-bar">
         <button class="tab-btn ${activeTab==='dokumen'?'active':''}" id="tab-dokumen" onclick="switchTab('dokumen')">Dokumen</button>
-        ${activeCategory === 'design' ? `<button class="tab-btn ${activeTab==='drivelinks'?'active':''}" id="tab-drivelinks" onclick="switchTab('drivelinks')">Drive Links</button>` : ''}
+        ${catId === 'design' ? `<button class="tab-btn ${activeTab==='drivelinks'?'active':''}" id="tab-drivelinks" onclick="switchTab('drivelinks')">Drive Links</button>` : ''}
         <button class="tab-btn ${activeTab==='create'?'active':''}" id="tab-create" onclick="switchTab('create')">Create</button>
       </div>
       <div id="tab-content"></div>`;
