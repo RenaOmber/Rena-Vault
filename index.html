@@ -447,6 +447,16 @@
           <div class="landing-card-sub">Upload & baca file</div>
         </div>
 
+        ${catId === 'design' ? `
+        <div class="landing-card" onclick="enterSection('drivelinks')">
+          <div class="landing-card-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"/></svg>
+          </div>
+          <div class="landing-card-name">Drive Links</div>
+          <div class="landing-card-sub">Link Google Drive design</div>
+        </div>
+        ` : ''}
+
         ${catId === 'finance' ? `
         <div class="landing-card" onclick="window.location.href='biaya.html'">
           <div class="landing-card-icon">
@@ -543,6 +553,8 @@
     renderShell(activeCategory);
     if (section === 'dokumen') {
       await renderDokumenTab(activeCategory);
+    } else if (section === 'drivelinks') {
+      await renderDriveLinksTab(activeCategory);
     } else {
       renderCreateTab(activeCategory);
     }
@@ -564,6 +576,7 @@
       </div>
       <div class="tab-bar">
         <button class="tab-btn ${activeTab==='dokumen'?'active':''}" id="tab-dokumen" onclick="switchTab('dokumen')">Dokumen</button>
+        ${activeCategory === 'design' ? `<button class="tab-btn ${activeTab==='drivelinks'?'active':''}" id="tab-drivelinks" onclick="switchTab('drivelinks')">Drive Links</button>` : ''}
         <button class="tab-btn ${activeTab==='create'?'active':''}" id="tab-create" onclick="switchTab('create')">Create</button>
       </div>
       <div id="tab-content"></div>`;
@@ -572,13 +585,95 @@
   async function switchTab(tab) {
     activeTab = tab;
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(`tab-${tab}`).classList.add('active');
+    const tabEl = document.getElementById(`tab-${tab}`);
+    if (tabEl) tabEl.classList.add('active');
     document.getElementById('header-actions').innerHTML = '';
     if (tab === 'dokumen') {
       await renderDokumenTab(activeCategory);
+    } else if (tab === 'drivelinks') {
+      await renderDriveLinksTab(activeCategory);
     } else {
       renderCreateTab(activeCategory);
     }
+  }
+
+  // ─── DRIVE LINKS TAB ────────────────────────────────────────
+  async function renderDriveLinksTab(catId) {
+    const tc = document.getElementById('tab-content');
+    tc.innerHTML = `
+      <div style="max-width:640px;">
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:20px;">
+          <div class="create-field-label" style="margin-bottom:6px;">Nama / Label</div>
+          <input class="create-input" id="dl-label" placeholder="Contoh: Moodboard Q3, Aset Apparel Drop 1..." style="margin-bottom:12px;" />
+          <div class="create-field-label" style="margin-bottom:6px;">URL Google Drive</div>
+          <input class="create-input" id="dl-url" placeholder="https://drive.google.com/..." type="url" style="margin-bottom:12px;" />
+          <div class="create-field-label" style="margin-bottom:6px;">Catatan (opsional)</div>
+          <input class="create-input" id="dl-notes" placeholder="Keterangan singkat..." style="margin-bottom:16px;" />
+          <button class="btn-primary" onclick="submitDriveLink()">Simpan Link</button>
+          <span id="dl-msg" style="font-size:12px;color:var(--text3);margin-left:12px;"></span>
+        </div>
+        <div id="dl-list"><div class="placeholder-msg" style="padding:20px;color:var(--text3);font-size:13px;">Memuat...</div></div>
+      </div>`;
+    await loadDriveLinks();
+  }
+
+  async function loadDriveLinks() {
+    const wrap = document.getElementById('dl-list');
+    if (!wrap) return;
+    const { data, error } = await sb.from('design_links').select('*').order('created_at', { ascending: false });
+    if (error) {
+      wrap.innerHTML = `<div style="color:var(--red);font-size:13px;padding:12px;">Gagal memuat: ${error.message}<br/><span style="font-size:11px;color:var(--text3);">Pastikan tabel <code>design_links</code> sudah dibuat di Supabase.</span></div>`;
+      return;
+    }
+    if (!data || !data.length) {
+      wrap.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:12px;">Belum ada link tersimpan.</div>';
+      return;
+    }
+    wrap.innerHTML = '<div class="doc-list">' + data.map(item => {
+      const date = new Date(item.created_at).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' });
+      return `<div class="doc-row" style="justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;">
+          <div class="doc-file-icon" style="background:rgba(96,165,250,0.12);">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color:#60a5fa;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"/></svg>
+          </div>
+          <div class="doc-info">
+            <div class="doc-name">${escHtml(item.label)}</div>
+            <div class="doc-meta">${date}${item.notes ? ' · ' + escHtml(item.notes) : ''}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+          <a href="${escHtml(item.url)}" target="_blank" rel="noopener" style="background:none;border:1px solid var(--border);border-radius:5px;color:var(--text3);font-size:11px;padding:4px 10px;text-decoration:none;transition:border-color 0.15s,color 0.15s;" onmouseover="this.style.borderColor='var(--border-hover)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text3)'">Buka →</a>
+          <button class="doc-delete-btn" style="opacity:1;" onclick="deleteDriveLink('${item.id}')" title="Hapus">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+      </div>`;
+    }).join('') + '</div>';
+  }
+
+  async function submitDriveLink() {
+    const label = document.getElementById('dl-label').value.trim();
+    const url = document.getElementById('dl-url').value.trim();
+    const notes = document.getElementById('dl-notes').value.trim();
+    const msg = document.getElementById('dl-msg');
+    if (!label || !url) { msg.textContent = 'Label dan URL wajib diisi.'; msg.style.color = 'var(--red)'; return; }
+    if (!url.startsWith('http')) { msg.textContent = 'URL tidak valid.'; msg.style.color = 'var(--red)'; return; }
+    msg.textContent = 'Menyimpan...'; msg.style.color = 'var(--text3)';
+    const { error } = await sb.from('design_links').insert({ label, url, notes });
+    if (error) { msg.textContent = 'Gagal: ' + error.message; msg.style.color = 'var(--red)'; return; }
+    document.getElementById('dl-label').value = '';
+    document.getElementById('dl-url').value = '';
+    document.getElementById('dl-notes').value = '';
+    msg.textContent = 'Tersimpan!'; msg.style.color = '#4caf50';
+    setTimeout(() => { if (msg) msg.textContent = ''; }, 2500);
+    await loadDriveLinks();
+  }
+
+  async function deleteDriveLink(id) {
+    if (!confirm('Hapus link ini?')) return;
+    const { error } = await sb.from('design_links').delete().eq('id', id);
+    if (error) { alert('Gagal hapus: ' + error.message); return; }
+    await loadDriveLinks();
   }
 
   // ─── DOKUMEN TAB ─────────────────────────────────────────────
