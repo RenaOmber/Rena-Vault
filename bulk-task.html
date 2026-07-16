@@ -365,6 +365,16 @@
       mobileTasks = [];
       renderMobileList();
       btn.textContent = 'Import ke Gantt →';
+      // Send push notifications per assigned member
+      const byMember = {};
+      rows.forEach(t => { if(t.assigned_to) { if(!byMember[t.assigned_to]) byMember[t.assigned_to]=[]; byMember[t.assigned_to].push(t.name); } });
+      for (const [member, taskNames] of Object.entries(byMember)) {
+        fetch('https://fqvfnohhilkzvijqukfg.supabase.co/functions/v1/send-push', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': 'sb_publishable_guNzoa22ChBWwGo6w_JqgA_9makz2Yl', 'Authorization': 'Bearer sb_publishable_guNzoa22ChBWwGo6w_JqgA_9makz2Yl' },
+          body: JSON.stringify({ task_name: taskNames.length > 1 ? taskNames.length + ' task baru untukmu' : taskNames[0], assigned_to: member })
+        }).catch(() => {});
+      }
       setTimeout(() => { if(confirm('Berhasil! Buka Gantt?')) location.href='timeline.html'; }, 500);
     }
   }
