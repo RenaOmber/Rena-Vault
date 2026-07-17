@@ -218,10 +218,11 @@
 
 <script>
   // ─── CONFIG ────────────────────────────────────────────────
-  const SUPABASE_URL  = 'https://fqvfnohhilkzvijqukfg.supabase.co';
-  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxdmZub2hoaWxrenZpanF1a2ZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDU4NjAsImV4cCI6MjA5ODEyMTg2MH0.er10SEsmDlnx1yRLGJK2fKtLhQR40vFOXVJzH9yakCg';
-  const PASSWORD_HASH = '3f0e57f3e719957119f0ba621629a3ae0ed1ec95d1ad8a91bd980b2896b679e4';
-  const VAPID_PUBLIC  = 'BHBEXCaqxtUm-t_L-qxw0Zr2qzv6kVD2eRa2KS6tNC3sOXwoDh4u3DEd-KyUBD6TuaUBIjOf-DdFitLMspD16lk';
+  const SUPABASE_URL    = 'https://fqvfnohhilkzvijqukfg.supabase.co';
+  const SUPABASE_ANON   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxdmZub2hoaWxrenZpanF1a2ZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDU4NjAsImV4cCI6MjA5ODEyMTg2MH0.er10SEsmDlnx1yRLGJK2fKtLhQR40vFOXVJzH9yakCg';
+  const PUBLISHABLE_KEY = 'sb_publishable_guNzoa22ChBWwGo6w_JqgA_9makz2Yl'; // Supabase → Settings → API → Publishable key
+  const PASSWORD_HASH   = '3f0e57f3e719957119f0ba621629a3ae0ed1ec95d1ad8a91bd980b2896b679e4';
+  const VAPID_PUBLIC    = 'BHBEXCaqxtUm-t_L-qxw0Zr2qzv6kVD2eRa2KS6tNC3sOXwoDh4u3DEd-KyUBD6TuaUBIjOf-DdFitLMspD16lk';
   const RESEARCH_BUCKET = 'research-docs';
   const MEMBERS = ['rena','nom','gapl','pix','jee','tok'];
   // ───────────────────────────────────────────────────────────
@@ -444,7 +445,7 @@
       if (member === who) continue;
       fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` },
+        headers: { 'Content-Type': 'application/json', 'apikey': PUBLISHABLE_KEY, 'Authorization': `Bearer ${PUBLISHABLE_KEY}` },
         body: JSON.stringify({ task_name: `📚 ${who} upload research baru: "${title}"`, assigned_to: member })
       }).catch(()=>{});
     }
