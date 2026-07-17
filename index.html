@@ -316,9 +316,6 @@
       <a href="team.html" style="display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:13px;color:var(--text3);text-decoration:none;border-top:1px solid var(--border);margin-top:8px;transition:color 0.15s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text3)'">
         <span>👥</span> Tim
       </a>
-      <a href="research.html" style="display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:13px;color:var(--text3);text-decoration:none;border-top:1px solid var(--border);transition:color 0.15s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text3)'">
-        <span>🔬</span> Research
-      </a>
     </aside>
     <main class="content" style="display:grid;grid-template-columns:1fr 280px;overflow:hidden;">
       <div id="content-area" style="overflow-y:auto;padding-right:8px;">
@@ -386,6 +383,7 @@
     { id: 'social',    label: 'Social',       sub: 'Content',      icon: 'ti-brand-instagram', color: '#fbbf24', bg: 'rgba(251,191,36,0.12)' },
     { id: 'finance',   label: 'Finance',      sub: 'Revenue',      icon: 'ti-chart-bar',      color: '#f87171', bg: 'rgba(248,113,113,0.12)' },
     { id: 'ops',       label: 'Operasional',  sub: 'Produksi',     icon: 'ti-settings',       color: '#86efac', bg: 'rgba(134,239,172,0.12)' },
+    { id: 'research',  label: 'Research',     sub: 'Referensi',    icon: 'ti-microscope',     color: '#38bdf8', bg: 'rgba(56,189,248,0.12)' },
   ];
 
   // Template prompt per kategori — bisa dikustomisasi
@@ -452,6 +450,7 @@
     if (badge) badge.textContent = count;
   }
   async function selectCat(id) {
+    if (id === 'research') { window.location.href = 'research.html'; return; }
     activeCategory = id;
     activeTab = null;
     document.querySelectorAll('.cat-card').forEach(el => el.classList.remove('active'));
