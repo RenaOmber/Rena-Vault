@@ -169,6 +169,30 @@
     .upload-modal-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; width: 100%; max-width: 420px; padding: 24px; }
     .upload-modal-title { font-size: 15px; font-weight: 500; margin-bottom: 16px; }
     .drop-zone { border: 1px dashed var(--border-hover); border-radius: 8px; padding: 32px 20px; text-align: center; cursor: pointer; color: var(--text3); font-size: 13px; transition: border-color 0.15s, background 0.15s; margin-bottom: 12px; }
+
+    /* DREAM BOARD */
+    .dream-wrap { padding: 40px 36px; max-width: 900px; }
+    .dream-hero { margin-bottom: 48px; }
+    .dream-hero-label { font-size: 10px; color: var(--text3); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 10px; }
+    .dream-hero-title { font-size: 48px; font-weight: 500; letter-spacing: -0.02em; color: var(--text); line-height: 1; margin-bottom: 4px; }
+    .dream-hero-sub { font-size: 13px; color: var(--text3); }
+    .dream-input-row { display: flex; gap: 10px; margin-bottom: 48px; align-items: flex-start; }
+    .dream-who { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; color: var(--text2); font-family: inherit; font-size: 13px; padding: 10px 12px; width: 110px; outline: none; cursor: pointer; }
+    .dream-who:focus { border-color: var(--border-hover); }
+    .dream-text-input { flex: 1; background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 13px; padding: 10px 14px; outline: none; transition: border-color 0.15s; resize: none; min-height: 44px; }
+    .dream-text-input:focus { border-color: var(--border-hover); }
+    .dream-submit-btn { background: var(--red); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; padding: 10px 20px; transition: opacity 0.15s; white-space: nowrap; }
+    .dream-submit-btn:hover { opacity: 0.85; }
+    .dream-submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .dream-entries { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .dream-entry { background: var(--bg); padding: 24px; position: relative; transition: background 0.15s; }
+    .dream-entry:hover { background: var(--bg2); }
+    .dream-entry:hover .dream-delete { opacity: 1; }
+    .dream-entry-who { font-size: 10px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; }
+    .dream-entry-text { font-size: 22px; font-weight: 500; color: var(--text); line-height: 1.3; letter-spacing: -0.01em; word-break: break-word; }
+    .dream-delete { position: absolute; top: 12px; right: 12px; background: none; border: none; color: var(--text3); cursor: pointer; font-size: 16px; opacity: 0; transition: opacity 0.15s, color 0.15s; padding: 2px 6px; border-radius: 4px; }
+    .dream-delete:hover { color: var(--red); }
+    .dream-empty { text-align: center; padding: 60px 20px; color: var(--text3); font-size: 13px; grid-column: 1/-1; background: var(--bg); }
     .drop-zone:hover, .drop-zone.drag { border-color: var(--red); background: var(--red-dim); }
     .drop-zone svg { width: 28px; height: 28px; margin: 0 auto 10px; display: block; opacity: 0.5; }
     .selected-fname { font-size: 11px; color: var(--text2); margin-bottom: 14px; min-height: 16px; }
@@ -396,6 +420,7 @@
     document.getElementById('gate').style.display = 'none';
     document.getElementById('main').style.display = 'block';
     renderSidebar();
+    renderDreamBoard();
     setTimeout(loadWeeklySummary, 200);
   }
   if (sessionStorage.getItem('ro_auth') === '1') showMain();
@@ -1210,6 +1235,66 @@
         </div>
       </div>`;
     }).join('')}</div>`;
+  }
+
+  // ─── DREAM BOARD ────────────────────────────────────────────
+  const MEMBERS_DREAM = ['rena','nom','gapl','pix','jee','tok'];
+
+  async function renderDreamBoard() {
+    const area = document.getElementById('content-area');
+    area.innerHTML = `
+      <div class="dream-wrap">
+        <div class="dream-hero">
+          <div class="dream-hero-label">Rena Omber Universe</div>
+          <div class="dream-hero-title">DREAM</div>
+          <div class="dream-hero-sub">Apa yang sedang kamu impikan untuk Omber?</div>
+        </div>
+        <div class="dream-input-row">
+          <select class="dream-who" id="dream-who">
+            ${MEMBERS_DREAM.map(m => `<option value="${m}">${m}</option>`).join('')}
+          </select>
+          <textarea class="dream-text-input" id="dream-text" placeholder="Tulis impianmu..." rows="1" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submitDream();}"></textarea>
+          <button class="dream-submit-btn" id="dream-btn" onclick="submitDream()">Kirim</button>
+        </div>
+        <div id="dream-entries"></div>
+      </div>`;
+    await loadDreamEntries();
+  }
+
+  async function loadDreamEntries() {
+    const el = document.getElementById('dream-entries');
+    if (!el) return;
+    const { data, error } = await sb.from('dreams').select('*').order('created_at', { ascending: false });
+    if (error || !data || !data.length) {
+      el.innerHTML = `<div class="dream-entries"><div class="dream-empty">Belum ada impian yang ditulis.</div></div>`;
+      return;
+    }
+    el.innerHTML = `<div class="dream-entries">${data.map(d => `
+      <div class="dream-entry">
+        <div class="dream-entry-who">${d.author}</div>
+        <div class="dream-entry-text">${d.content}</div>
+        <button class="dream-delete" onclick="deleteDream('${d.id}')" title="Hapus">×</button>
+      </div>`).join('')}</div>`;
+  }
+
+  async function submitDream() {
+    const who = document.getElementById('dream-who')?.value;
+    const text = document.getElementById('dream-text')?.value?.trim();
+    const btn = document.getElementById('dream-btn');
+    if (!text) return;
+    btn.disabled = true;
+    const { error } = await sb.from('dreams').insert({ author: who, content: text });
+    if (error) { alert('Gagal menyimpan. Coba lagi.'); btn.disabled = false; return; }
+    document.getElementById('dream-text').value = '';
+    document.getElementById('dream-text').style.height = 'auto';
+    btn.disabled = false;
+    await loadDreamEntries();
+  }
+
+  async function deleteDream(id) {
+    if (!confirm('Hapus impian ini?')) return;
+    await sb.from('dreams').delete().eq('id', id);
+    await loadDreamEntries();
   }
 </script>
   <script>
