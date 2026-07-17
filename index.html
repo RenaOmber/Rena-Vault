@@ -195,6 +195,35 @@
     .dream-delete { position: absolute; top: 12px; right: 12px; background: none; border: none; color: var(--text3); cursor: pointer; font-size: 16px; opacity: 0; transition: opacity 0.15s, color 0.15s; padding: 2px 6px; border-radius: 4px; }
     .dream-delete:hover { color: var(--red); }
     .dream-empty { text-align: center; padding: 60px 20px; color: var(--text3); font-size: 13px; grid-column: 1/-1; background: var(--bg); }
+
+    /* RESEARCH */
+    .research-wrap { padding: 28px 36px; max-width: 900px; }
+    .research-upload-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+    .research-upload-title { font-size: 13px; font-weight: 600; margin-bottom: 16px; color: var(--text); }
+    .research-row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+    .research-input { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 13px; padding: 9px 12px; outline: none; flex: 1; min-width: 140px; transition: border-color 0.15s; }
+    .research-input:focus { border-color: var(--border-hover); }
+    .research-who { width: 110px; flex-shrink: 0; cursor: pointer; }
+    .research-type-toggle { display: flex; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; flex-shrink: 0; }
+    .research-type-btn { background: none; border: none; color: var(--text3); cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 500; padding: 9px 16px; transition: background 0.15s, color 0.15s; }
+    .research-type-btn.active { background: var(--accent); color: #fff; }
+    .research-submit { background: var(--accent); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; padding: 9px 20px; flex-shrink: 0; transition: opacity 0.15s; }
+    .research-submit:hover { opacity: 0.85; }
+    .research-submit:disabled { opacity: 0.4; cursor: not-allowed; }
+    .research-file-label { display: flex; align-items: center; gap: 8px; background: var(--bg3); border: 1px dashed var(--border-hover); border-radius: 6px; color: var(--text3); cursor: pointer; font-size: 12px; padding: 9px 14px; flex: 1; transition: border-color 0.15s; }
+    .research-file-label:hover { border-color: var(--accent); color: var(--text); }
+    .research-grid { display: grid; gap: 10px; }
+    .research-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; display: flex; align-items: flex-start; gap: 14px; transition: border-color 0.15s; }
+    .research-card:hover { border-color: var(--border-hover); }
+    .research-card-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .research-card-body { flex: 1; min-width: 0; }
+    .research-card-topic { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+    .research-card-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .research-card-meta { font-size: 11px; color: var(--text3); }
+    .research-card-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .research-btn { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text3); cursor: pointer; font-size: 11px; padding: 4px 10px; transition: border-color 0.15s, color 0.15s; text-decoration: none; display: inline-flex; align-items: center; }
+    .research-btn:hover { border-color: var(--border-hover); color: var(--text); }
+    .research-btn.del:hover { border-color: var(--red); color: var(--red); }
     .drop-zone:hover, .drop-zone.drag { border-color: var(--red); background: var(--red-dim); }
     .drop-zone svg { width: 28px; height: 28px; margin: 0 auto 10px; display: block; opacity: 0.5; }
     .selected-fname { font-size: 11px; color: var(--text2); margin-bottom: 14px; min-height: 16px; }
@@ -383,6 +412,7 @@
     { id: 'social',    label: 'Social',       sub: 'Content',      icon: 'ti-brand-instagram', color: '#fbbf24', bg: 'rgba(251,191,36,0.12)' },
     { id: 'finance',   label: 'Finance',      sub: 'Revenue',      icon: 'ti-chart-bar',      color: '#f87171', bg: 'rgba(248,113,113,0.12)' },
     { id: 'ops',       label: 'Operasional',  sub: 'Produksi',     icon: 'ti-settings',       color: '#86efac', bg: 'rgba(134,239,172,0.12)' },
+    { id: 'research',  label: 'Research',     sub: 'Referensi',    icon: 'ti-microscope',     color: '#38bdf8', bg: 'rgba(56,189,248,0.12)' },
   ];
 
   // Template prompt per kategori — bisa dikustomisasi
@@ -453,6 +483,7 @@
     activeTab = null;
     document.querySelectorAll('.cat-card').forEach(el => el.classList.remove('active'));
     document.getElementById(`cat-${id}`).classList.add('active');
+    if (id === 'research') { renderResearch(); return; }
     renderLanding(id);
   }
 
@@ -1238,6 +1269,151 @@
         </div>
       </div>`;
     }).join('')}</div>`;
+  }
+
+  // ─── RESEARCH ───────────────────────────────────────────────
+  const RESEARCH_BUCKET = 'research-docs';
+
+  async function renderResearch() {
+    const area = document.getElementById('content-area');
+    area.innerHTML = `
+      <div class="research-wrap">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px;">
+          <button onclick="renderDreamBoard()" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:18px;padding:0;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text3)'">←</button>
+          <div>
+            <div style="font-size:16px;font-weight:600;">Research</div>
+            <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;">Referensi</div>
+          </div>
+        </div>
+        <div class="research-upload-box">
+          <div class="research-upload-title">Tambah Referensi</div>
+          <div class="research-row">
+            <select class="research-input research-who" id="res-who">
+              ${MEMBERS_DREAM.map(m=>`<option value="${m}">${m}</option>`).join('')}
+            </select>
+            <input class="research-input" id="res-topic" placeholder="Topik (cth: Competitor, Packaging...)" style="flex:2;" />
+            <div class="research-type-toggle">
+              <button class="research-type-btn active" id="res-btn-link" onclick="setResType('link')">Link</button>
+              <button class="research-type-btn" id="res-btn-pdf" onclick="setResType('pdf')">PDF</button>
+            </div>
+          </div>
+          <div class="research-row" id="res-input-row">
+            <input class="research-input" id="res-title" placeholder="Judul referensi" style="flex:2;" />
+            <input class="research-input" id="res-url" placeholder="https://..." style="flex:3;" />
+            <button class="research-submit" id="res-submit" onclick="submitResearch()">Upload</button>
+          </div>
+          <div style="display:none;" id="res-pdf-row" class="research-row">
+            <input class="research-input" id="res-title-pdf" placeholder="Judul referensi" style="flex:2;" />
+            <label class="research-file-label">
+              <span>📎</span><span id="res-file-name">Pilih PDF...</span>
+              <input type="file" accept=".pdf" style="display:none;" onchange="document.getElementById('res-file-name').textContent=this.files[0]?.name||'Pilih PDF...'" id="res-file" />
+            </label>
+            <button class="research-submit" id="res-submit-pdf" onclick="submitResearchPdf()">Upload</button>
+          </div>
+        </div>
+        <div id="research-list"></div>
+      </div>`;
+    await loadResearchList();
+  }
+
+  let resType = 'link';
+  function setResType(type) {
+    resType = type;
+    document.getElementById('res-btn-link').classList.toggle('active', type==='link');
+    document.getElementById('res-btn-pdf').classList.toggle('active', type==='pdf');
+    document.getElementById('res-input-row').style.display = type==='link' ? 'flex' : 'none';
+    document.getElementById('res-pdf-row').style.display = type==='pdf' ? 'flex' : 'none';
+  }
+
+  async function submitResearch() {
+    const who = document.getElementById('res-who').value;
+    const topic = document.getElementById('res-topic').value.trim();
+    const title = document.getElementById('res-title').value.trim();
+    const url = document.getElementById('res-url').value.trim();
+    const btn = document.getElementById('res-submit');
+    if (!topic || !title || !url) { alert('Topik, judul, dan URL wajib diisi.'); return; }
+    btn.disabled = true;
+    const { error } = await sb.from('research').insert({ author: who, topic, title, type: 'link', url });
+    if (error) { alert('Gagal menyimpan.'); btn.disabled = false; return; }
+    await notifyResearch(who, title);
+    document.getElementById('res-title').value = '';
+    document.getElementById('res-url').value = '';
+    btn.disabled = false;
+    await loadResearchList();
+  }
+
+  async function submitResearchPdf() {
+    const who = document.getElementById('res-who').value;
+    const topic = document.getElementById('res-topic').value.trim();
+    const title = document.getElementById('res-title-pdf').value.trim();
+    const file = document.getElementById('res-file').files[0];
+    const btn = document.getElementById('res-submit-pdf');
+    if (!topic || !title || !file) { alert('Topik, judul, dan PDF wajib diisi.'); return; }
+    btn.disabled = true;
+    const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+    const path = `${Date.now()}_${safeName}`;
+    const { error: upErr } = await sb.storage.from(RESEARCH_BUCKET).upload(path, file);
+    if (upErr) { alert('Gagal upload PDF.'); btn.disabled = false; return; }
+    const { error } = await sb.from('research').insert({ author: who, topic, title, type: 'pdf', storage_path: path });
+    if (error) { alert('Gagal menyimpan.'); btn.disabled = false; return; }
+    await notifyResearch(who, title);
+    document.getElementById('res-title-pdf').value = '';
+    document.getElementById('res-file-name').textContent = 'Pilih PDF...';
+    document.getElementById('res-file').value = '';
+    btn.disabled = false;
+    await loadResearchList();
+  }
+
+  async function notifyResearch(who, title) {
+    try {
+      for (const member of MEMBERS_DREAM) {
+        if (member === who) continue;
+        await fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` },
+          body: JSON.stringify({ task_name: `📚 ${who} upload research baru: "${title}"`, assigned_to: member })
+        });
+      }
+    } catch(e) {}
+  }
+
+  async function loadResearchList() {
+    const el = document.getElementById('research-list');
+    if (!el) return;
+    const { data, error } = await sb.from('research').select('*').order('created_at', { ascending: false });
+    if (!data || !data.length) {
+      el.innerHTML = '<div style="text-align:center;padding:48px;color:var(--text3);font-size:13px;">Belum ada referensi.</div>';
+      return;
+    }
+    el.innerHTML = `<div class="research-grid">${data.map(r => `
+      <div class="research-card">
+        <div class="research-card-icon" style="background:${r.type==='pdf'?'rgba(248,113,113,0.12)':'rgba(56,189,248,0.12)'};">
+          ${r.type==='pdf'?'📄':'🔗'}
+        </div>
+        <div class="research-card-body">
+          <div class="research-card-topic">${r.topic}</div>
+          <div class="research-card-title" title="${r.title}">${r.title}</div>
+          <div class="research-card-meta">${r.author} · ${new Date(r.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</div>
+        </div>
+        <div class="research-card-actions">
+          ${r.type==='link'
+            ? `<a href="${r.url}" target="_blank" rel="noopener" class="research-btn">Buka →</a>`
+            : `<button class="research-btn" onclick="openResearchPdf('${r.storage_path}')">Buka →</button>`}
+          <button class="research-btn del" onclick="deleteResearch('${r.id}','${r.type}','${r.storage_path||''}')">Hapus</button>
+        </div>
+      </div>`).join('')}</div>`;
+  }
+
+  async function openResearchPdf(path) {
+    const { data } = await sb.storage.from(RESEARCH_BUCKET).createSignedUrl(path, 120);
+    if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+  }
+
+  async function deleteResearch(id, type, path) {
+    if (!confirm('Hapus referensi ini?')) return;
+    if (type === 'pdf' && path) await sb.storage.from(RESEARCH_BUCKET).remove([path]);
+    await sb.from('research').delete().eq('id', id);
+    await loadResearchList();
   }
 
   // ─── DREAM BOARD ────────────────────────────────────────────
