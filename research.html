@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#4f6ef7" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="RO Vault" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rena Omber — Research</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="theme.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0f1e; --bg2: #111827; --bg3: #1a2235;
+      --border: rgba(99,130,255,0.12); --border-hover: rgba(99,130,255,0.28);
+      --text: #e8eaf6; --text2: #8892b0; --text3: #4a5568;
+      --accent: #4f6ef7; --accent-dim: rgba(79,110,247,0.12);
+      --green: #34d399; --yellow: #fbbf24; --red: #f87171;
+      --sky: #38bdf8;
+    }
+    html, body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; min-height: 100vh; }
+
+    /* GATE */
+    #gate { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
+    .gate-mark { width: 40px; height: 4px; background: var(--accent); border-radius: 2px; margin: 0 auto 16px; }
+    .gate-form { display: flex; gap: 8px; margin-top: 8px; }
+    .gate-form input { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 14px; padding: 10px 14px; width: 220px; outline: none; }
+    .gate-form button { background: var(--accent); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; padding: 10px 18px; }
+    .gate-error { font-size: 12px; color: var(--red); min-height: 16px; text-align: center; }
+
+    /* MAIN */
+    #main { display: none; }
+    .top-bar { display: flex; align-items: center; justify-content: space-between; padding: 16px 28px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg); z-index: 10; }
+    .top-left { display: flex; align-items: center; gap: 10px; }
+    .top-mark { width: 22px; height: 3px; background: var(--sky); border-radius: 2px; }
+    .top-name { font-size: 13px; font-weight: 500; }
+    .top-sub { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; }
+    .top-right { display: flex; gap: 8px; align-items: center; }
+    .btn-ghost { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text2); cursor: pointer; font-family: inherit; font-size: 12px; padding: 6px 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+    .btn-ghost:hover { border-color: var(--border-hover); color: var(--text); }
+
+    /* CONTENT */
+    .content { padding: 28px 36px; max-width: 960px; }
+
+    /* UPLOAD BOX */
+    .upload-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 24px; overflow: hidden; transition: border-color 0.2s; }
+    .upload-box:hover { border-color: var(--border-hover); }
+    .upload-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; cursor: pointer; user-select: none; }
+    .upload-header-left { display: flex; align-items: center; gap: 10px; }
+    .upload-header-icon { font-size: 16px; }
+    .upload-header-title { font-size: 13px; font-weight: 600; }
+    .upload-header-sub { font-size: 11px; color: var(--text3); }
+    .upload-toggle-btn { font-size: 16px; color: var(--text3); transition: transform 0.2s; line-height: 1; }
+    .upload-toggle-btn.open { transform: rotate(180deg); }
+    .upload-body { padding: 0 20px 20px; border-top: 1px solid var(--border); }
+    .upload-body.hidden { display: none; }
+    .upload-row { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+    .upload-input { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 13px; padding: 9px 12px; outline: none; flex: 1; min-width: 130px; transition: border-color 0.15s; }
+    .upload-input:focus { border-color: var(--border-hover); }
+    .upload-select { cursor: pointer; }
+    .type-toggle { display: flex; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; flex-shrink: 0; }
+    .type-btn { background: none; border: none; color: var(--text3); cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 500; padding: 9px 16px; transition: background 0.15s, color 0.15s; }
+    .type-btn.active { background: var(--sky); color: #fff; }
+    .submit-btn { background: var(--sky); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; padding: 9px 20px; flex-shrink: 0; transition: opacity 0.15s; white-space: nowrap; }
+    .submit-btn:hover { opacity: 0.85; }
+    .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .file-label { display: flex; align-items: center; gap: 8px; background: var(--bg3); border: 1px dashed var(--border-hover); border-radius: 6px; color: var(--text3); cursor: pointer; font-size: 12px; padding: 9px 14px; flex: 1; transition: border-color 0.15s; min-width: 130px; }
+    .file-label:hover { border-color: var(--sky); color: var(--text); }
+
+    /* FILTER BAR */
+    .filter-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+    .filter-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; }
+    .filter-chip { background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; color: var(--text3); cursor: pointer; font-size: 11px; font-weight: 500; padding: 4px 12px; transition: all 0.15s; }
+    .filter-chip:hover { border-color: var(--border-hover); color: var(--text); }
+    .filter-chip.active { background: var(--sky); border-color: var(--sky); color: #fff; }
+    .filter-search { background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; color: var(--text); font-family: inherit; font-size: 12px; padding: 5px 14px; outline: none; margin-left: auto; width: 180px; transition: border-color 0.15s; }
+    .filter-search:focus { border-color: var(--border-hover); }
+
+    /* RESEARCH GRID */
+    .research-grid { display: grid; gap: 10px; }
+    .research-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; transition: border-color 0.15s; }
+    .research-card:hover { border-color: var(--border-hover); }
+    .research-card-main { display: flex; align-items: flex-start; gap: 14px; padding: 16px 18px; }
+    .research-card-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .research-card-body { flex: 1; min-width: 0; }
+    .research-card-topic { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 3px; }
+    .research-card-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 4px; word-break: break-word; }
+    .research-card-meta { font-size: 11px; color: var(--text3); }
+    .research-card-actions { display: flex; gap: 6px; flex-shrink: 0; align-items: center; }
+    .action-btn { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text3); cursor: pointer; font-size: 11px; padding: 5px 11px; transition: border-color 0.15s, color 0.15s; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; font-family: inherit; white-space: nowrap; }
+    .action-btn:hover { border-color: var(--border-hover); color: var(--text); }
+    .action-btn.del:hover { border-color: var(--red); color: var(--red); }
+    .action-btn.primary { background: var(--sky); border-color: var(--sky); color: #fff; }
+    .action-btn.primary:hover { opacity: 0.85; color: #fff; }
+
+    /* PDF VIEWER */
+    .pdf-viewer { border-top: 1px solid var(--border); background: var(--bg3); }
+    .pdf-viewer iframe { width: 100%; height: 500px; border: none; display: block; }
+    .pdf-viewer-bar { display: flex; align-items: center; justify-content: space-between; padding: 8px 18px; border-bottom: 1px solid var(--border); }
+    .pdf-viewer-label { font-size: 11px; color: var(--text3); }
+
+    /* EMPTY */
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--text3); font-size: 13px; }
+
+    /* TOAST */
+    .toast { position: fixed; bottom: 24px; right: 24px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; font-size: 13px; z-index: 999; opacity: 0; transform: translateY(8px); transition: all 0.2s; pointer-events: none; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 640px) {
+      .content { padding: 16px; }
+      .top-bar { padding: 10px 14px; }
+      .research-card-main { flex-wrap: wrap; }
+      .research-card-actions { width: 100%; justify-content: flex-end; }
+      .filter-search { width: 130px; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="gate">
+  <div>
+    <div class="gate-mark"></div>
+    <div style="font-size:18px;font-weight:500;text-align:center;">Rena Omber</div>
+    <div style="font-size:12px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;text-align:center;margin-top:4px;">Research</div>
+  </div>
+  <div>
+    <div class="gate-form">
+      <input type="password" id="pw-input" placeholder="Password" onkeydown="if(event.key==='Enter')checkPw()" />
+      <button onclick="checkPw()">Masuk</button>
+    </div>
+    <div class="gate-error" id="pw-error"></div>
+  </div>
+</div>
+
+<div id="main">
+  <div class="top-bar">
+    <div class="top-left">
+      <div class="top-mark"></div>
+      <div>
+        <div class="top-name">Rena Omber</div>
+        <div class="top-sub">Research</div>
+      </div>
+    </div>
+    <div class="top-right">
+      <button class="theme-toggle-btn btn-ghost" onclick="toggleTheme()">☀️</button>
+      <a href="index.html" class="btn-ghost">← Vault</a>
+      <button class="btn-ghost" onclick="logout()">Keluar</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- UPLOAD BOX -->
+    <div class="upload-box">
+      <div class="upload-header" onclick="toggleUpload()">
+        <div class="upload-header-left">
+          <span class="upload-header-icon">📎</span>
+          <div>
+            <div class="upload-header-title">Tambah Referensi</div>
+            <div class="upload-header-sub">Link atau PDF</div>
+          </div>
+        </div>
+        <span class="upload-toggle-btn open" id="upload-toggle-icon">▲</span>
+      </div>
+      <div class="upload-body" id="upload-body">
+        <div class="upload-row">
+          <select class="upload-input upload-select" id="res-who" style="max-width:110px;">
+            <option value="rena">rena</option>
+            <option value="nom">nom</option>
+            <option value="gapl">gapl</option>
+            <option value="pix">pix</option>
+            <option value="jee">jee</option>
+            <option value="tok">tok</option>
+          </select>
+          <input class="upload-input" id="res-topic" placeholder="Topik (cth: Competitor, Packaging...)" style="flex:3;" />
+          <div class="type-toggle">
+            <button class="type-btn active" id="res-btn-link" onclick="setResType('link')">🔗 Link</button>
+            <button class="type-btn" id="res-btn-pdf" onclick="setResType('pdf')">📄 PDF</button>
+          </div>
+        </div>
+        <!-- LINK INPUT -->
+        <div class="upload-row" id="res-link-row">
+          <input class="upload-input" id="res-title" placeholder="Judul referensi" style="flex:2;" />
+          <input class="upload-input" id="res-url" placeholder="https://..." style="flex:3;" onkeydown="if(event.key==='Enter')submitResearch()" />
+          <button class="submit-btn" id="res-submit-link" onclick="submitResearch()">Upload</button>
+        </div>
+        <!-- PDF INPUT -->
+        <div class="upload-row" id="res-pdf-row" style="display:none;">
+          <input class="upload-input" id="res-title-pdf" placeholder="Judul referensi" style="flex:2;" />
+          <label class="file-label">
+            <span>📎</span>
+            <span id="res-file-name">Pilih PDF...</span>
+            <input type="file" accept=".pdf" style="display:none;" id="res-file" onchange="document.getElementById('res-file-name').textContent=this.files[0]?.name||'Pilih PDF...'" />
+          </label>
+          <button class="submit-btn" id="res-submit-pdf" onclick="submitResearchPdf()">Upload</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FILTER BAR -->
+    <div class="filter-bar">
+      <span class="filter-label">Topik:</span>
+      <div id="topic-chips" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+      <input class="filter-search" id="search-input" placeholder="Cari..." oninput="renderList()" />
+    </div>
+
+    <!-- LIST -->
+    <div class="research-grid" id="research-list"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ─── CONFIG ────────────────────────────────────────────────
+  const SUPABASE_URL  = 'https://fqvfnohhilkzvijqukfg.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxdmZub2hoaWxrenZpanF1a2ZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDU4NjAsImV4cCI6MjA5ODEyMTg2MH0.er10SEsmDlnx1yRLGJK2fKtLhQR40vFOXVJzH9yakCg';
+  const PASSWORD_HASH = '3f0e57f3e719957119f0ba621629a3ae0ed1ec95d1ad8a91bd980b2896b679e4';
+  const VAPID_PUBLIC  = 'BHBEXCaqxtUm-t_L-qxw0Zr2qzv6kVD2eRa2KS6tNC3sOXwoDh4u3DEd-KyUBD6TuaUBIjOf-DdFitLMspD16lk';
+  const RESEARCH_BUCKET = 'research-docs';
+  const MEMBERS = ['rena','nom','gapl','pix','jee','tok'];
+  // ───────────────────────────────────────────────────────────
+
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  let allResearch = [];
+  let activeTopicFilter = null;
+  let resType = 'link';
+  let uploadOpen = true;
+  let openPdfId = null;
+
+  // ─── AUTH ───────────────────────────────────────────────────
+  async function sha256(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+  async function checkPw() {
+    const val = document.getElementById('pw-input').value.trim();
+    if ((await sha256(val)) === PASSWORD_HASH) {
+      sessionStorage.setItem('ro_auth','1');
+      showMain();
+    } else {
+      document.getElementById('pw-error').textContent = 'Password salah.';
+      document.getElementById('pw-input').value = '';
+    }
+  }
+  function logout() { sessionStorage.removeItem('ro_auth'); location.reload(); }
+  async function showMain() {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+    await loadResearch();
+    subscribePush();
+  }
+  if (sessionStorage.getItem('ro_auth') === '1') showMain();
+
+  // ─── UPLOAD TOGGLE ──────────────────────────────────────────
+  function toggleUpload() {
+    uploadOpen = !uploadOpen;
+    document.getElementById('upload-body').classList.toggle('hidden', !uploadOpen);
+    const icon = document.getElementById('upload-toggle-icon');
+    icon.textContent = uploadOpen ? '▲' : '▼';
+    icon.classList.toggle('open', uploadOpen);
+  }
+
+  // ─── TYPE TOGGLE ────────────────────────────────────────────
+  function setResType(type) {
+    resType = type;
+    document.getElementById('res-btn-link').classList.toggle('active', type==='link');
+    document.getElementById('res-btn-pdf').classList.toggle('active', type==='pdf');
+    document.getElementById('res-link-row').style.display = type==='link' ? 'flex' : 'none';
+    document.getElementById('res-pdf-row').style.display  = type==='pdf'  ? 'flex' : 'none';
+  }
+
+  // ─── SUBMIT LINK ────────────────────────────────────────────
+  async function submitResearch() {
+    const who   = document.getElementById('res-who').value;
+    const topic = document.getElementById('res-topic').value.trim();
+    const title = document.getElementById('res-title').value.trim();
+    const url   = document.getElementById('res-url').value.trim();
+    const btn   = document.getElementById('res-submit-link');
+    if (!topic || !title || !url) { showToast('⚠️ Topik, judul, dan URL wajib diisi.'); return; }
+    btn.disabled = true;
+    const { error } = await sb.from('research').insert({ author: who, topic, title, type: 'link', url });
+    if (error) { showToast('❌ Gagal menyimpan.'); btn.disabled = false; return; }
+    notifyAll(who, title);
+    document.getElementById('res-title').value = '';
+    document.getElementById('res-url').value = '';
+    btn.disabled = false;
+    showToast('✅ Link tersimpan!');
+    toggleUpload();
+    await loadResearch();
+  }
+
+  // ─── SUBMIT PDF ─────────────────────────────────────────────
+  async function submitResearchPdf() {
+    const who   = document.getElementById('res-who').value;
+    const topic = document.getElementById('res-topic').value.trim();
+    const title = document.getElementById('res-title-pdf').value.trim();
+    const file  = document.getElementById('res-file').files[0];
+    const btn   = document.getElementById('res-submit-pdf');
+    if (!topic || !title || !file) { showToast('⚠️ Topik, judul, dan PDF wajib diisi.'); return; }
+    btn.disabled = true;
+    btn.textContent = 'Uploading...';
+    const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+    const path = `${Date.now()}_${safeName}`;
+    const { error: upErr } = await sb.storage.from(RESEARCH_BUCKET).upload(path, file);
+    if (upErr) { showToast('❌ Gagal upload PDF.'); btn.disabled = false; btn.textContent = 'Upload'; return; }
+    const { error } = await sb.from('research').insert({ author: who, topic, title, type: 'pdf', storage_path: path });
+    if (error) { showToast('❌ Gagal menyimpan.'); btn.disabled = false; btn.textContent = 'Upload'; return; }
+    notifyAll(who, title);
+    document.getElementById('res-title-pdf').value = '';
+    document.getElementById('res-file-name').textContent = 'Pilih PDF...';
+    document.getElementById('res-file').value = '';
+    btn.disabled = false;
+    btn.textContent = 'Upload';
+    showToast('✅ PDF tersimpan!');
+    toggleUpload();
+    await loadResearch();
+  }
+
+  // ─── LOAD DATA ──────────────────────────────────────────────
+  async function loadResearch() {
+    const { data } = await sb.from('research').select('*').order('created_at', { ascending: false });
+    allResearch = data || [];
+    buildTopicChips();
+    renderList();
+  }
+
+  function buildTopicChips() {
+    const topics = [...new Set(allResearch.map(r => r.topic))].sort();
+    const el = document.getElementById('topic-chips');
+    el.innerHTML = `<button class="filter-chip ${!activeTopicFilter?'active':''}" onclick="setTopicFilter(null)">Semua</button>`
+      + topics.map(t => `<button class="filter-chip ${activeTopicFilter===t?'active':''}" onclick="setTopicFilter('${t}')">${t}</button>`).join('');
+  }
+
+  function setTopicFilter(topic) {
+    activeTopicFilter = topic;
+    buildTopicChips();
+    renderList();
+  }
+
+  function renderList() {
+    const q = document.getElementById('search-input').value.toLowerCase();
+    let data = allResearch;
+    if (activeTopicFilter) data = data.filter(r => r.topic === activeTopicFilter);
+    if (q) data = data.filter(r => r.title.toLowerCase().includes(q) || r.topic.toLowerCase().includes(q) || r.author.toLowerCase().includes(q));
+
+    const el = document.getElementById('research-list');
+    if (!data.length) {
+      el.innerHTML = '<div class="empty-state">Belum ada referensi.</div>';
+      return;
+    }
+
+    el.innerHTML = data.map(r => {
+      const isPdf = r.type === 'pdf';
+      const isOpen = openPdfId === r.id;
+      const date = new Date(r.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
+      return `
+        <div class="research-card" id="card-${r.id}">
+          <div class="research-card-main">
+            <div class="research-card-icon" style="background:${isPdf?'rgba(248,113,113,0.12)':'rgba(56,189,248,0.12)'};">
+              ${isPdf ? '📄' : '🔗'}
+            </div>
+            <div class="research-card-body">
+              <div class="research-card-topic">${r.topic}</div>
+              <div class="research-card-title">${r.title}</div>
+              <div class="research-card-meta">${r.author} · ${date}</div>
+            </div>
+            <div class="research-card-actions">
+              ${isPdf ? `
+                <button class="action-btn ${isOpen?'primary':''}" onclick="togglePdfViewer('${r.id}','${r.storage_path}')">
+                  ${isOpen ? '▲ Tutup' : '▼ Buka'}
+                </button>
+                <button class="action-btn" onclick="downloadPdf('${r.storage_path}','${r.title}')">⬇ Download</button>
+              ` : `
+                <a href="${r.url}" target="_blank" rel="noopener" class="action-btn primary">Buka →</a>
+              `}
+              <button class="action-btn del" onclick="deleteResearch('${r.id}','${r.type}','${r.storage_path||''}')">Hapus</button>
+            </div>
+          </div>
+          ${isPdf && isOpen ? `
+            <div class="pdf-viewer">
+              <div class="pdf-viewer-bar">
+                <span class="pdf-viewer-label">${r.title}</span>
+                <button class="action-btn" onclick="downloadPdf('${r.storage_path}','${r.title}')">⬇ Download</button>
+              </div>
+              <iframe id="pdf-frame-${r.id}" src="" loading="lazy"></iframe>
+            </div>
+          ` : ''}
+        </div>`;
+    }).join('');
+
+    // Load PDF src untuk yang sedang open
+    if (openPdfId) {
+      const r = allResearch.find(x => x.id === openPdfId);
+      if (r) loadPdfFrame(r.id, r.storage_path);
+    }
+  }
+
+  async function togglePdfViewer(id, path) {
+    if (openPdfId === id) {
+      openPdfId = null;
+    } else {
+      openPdfId = id;
+    }
+    renderList();
+  }
+
+  async function loadPdfFrame(id, path) {
+    const { data } = await sb.storage.from(RESEARCH_BUCKET).createSignedUrl(path, 300);
+    if (data?.signedUrl) {
+      const frame = document.getElementById(`pdf-frame-${id}`);
+      if (frame) frame.src = data.signedUrl;
+    }
+  }
+
+  async function downloadPdf(path, title) {
+    const { data } = await sb.storage.from(RESEARCH_BUCKET).createSignedUrl(path, 60);
+    if (!data?.signedUrl) { showToast('❌ Gagal generate link download.'); return; }
+    const a = document.createElement('a');
+    a.href = data.signedUrl;
+    a.download = title.replace(/[^a-zA-Z0-9 \-_]/g, '') + '.pdf';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  async function deleteResearch(id, type, path) {
+    if (!confirm('Hapus referensi ini?')) return;
+    if (type === 'pdf' && path) await sb.storage.from(RESEARCH_BUCKET).remove([path]);
+    await sb.from('research').delete().eq('id', id);
+    if (openPdfId === id) openPdfId = null;
+    showToast('🗑 Referensi dihapus.');
+    await loadResearch();
+  }
+
+  // ─── NOTIF ──────────────────────────────────────────────────
+  async function notifyAll(who, title) {
+    for (const member of MEMBERS) {
+      if (member === who) continue;
+      fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` },
+        body: JSON.stringify({ task_name: `📚 ${who} upload research baru: "${title}"`, assigned_to: member })
+      }).catch(()=>{});
+    }
+  }
+
+  // ─── PUSH SUBSCRIPTION ──────────────────────────────────────
+  async function subscribePush() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    if (VAPID_PUBLIC === 'YOUR_VAPID_PUBLIC_KEY') return;
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') return;
+      const existing = await reg.pushManager.getSubscription();
+      if (existing) return; // sudah subscribe, skip
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC)
+      });
+      const who = sessionStorage.getItem('ro_user') || 'unknown';
+      await sb.from('push_subscriptions').upsert({
+        user_name: who,
+        subscription: sub.toJSON()
+      }, { onConflict: 'user_name' });
+    } catch(e) { console.log('Push subscription failed:', e); }
+  }
+
+  function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+  }
+
+  // ─── TOAST ──────────────────────────────────────────────────
+  function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2500);
+  }
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+  }
+</script>
+</body>
+</html>
