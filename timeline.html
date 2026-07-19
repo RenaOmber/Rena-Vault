@@ -56,8 +56,8 @@
     .add-project-btn:hover { color: var(--accent); }
 
     /* GANTT */
-    .gantt-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--border); border-radius: 10px; }
-    .gantt { display: grid; min-width: 900px; }
+    .gantt-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--border); border-radius: 10px; height: fit-content; }
+    .gantt { display: flex; flex-direction: column; min-width: 900px; }
     .gantt-header { display: flex; background: var(--bg2); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
     .gantt-task-col { width: 280px; flex-shrink: 0; padding: 10px 14px; font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; border-right: 1px solid var(--border); }
     .gantt-days { display: flex; flex: 1; }
