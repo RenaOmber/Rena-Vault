@@ -584,7 +584,7 @@
             </div>`:''}
           </div>
           <div class="bar-area" style="min-height:${rowHeight};flex-direction:column;justify-content:center;gap:4px;padding:4px 0;">
-            <div style="position:relative;height:20px;width:100%;">
+            <div style="position:relative;height:20px;width:100%;display:flex;">
               ${dayCells.replace(/<div class="day-cell/g, '<div style="height:20px;" class="day-cell')}
               ${daySeps}
               ${startIdx>=0&&endIdx>=0?`<div class="gantt-bar" style="${planBarStyle}left:${barLeft+2}px;width:${barWidth}px;top:0;transform:none;" title="Plan: ${task.start_date} - ${task.end_date}">${barWidth>60?task.name:''}</div>`:''}
