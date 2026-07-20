@@ -1,10 +1,11 @@
-const CACHE = 'ro-vault-v1';
+const CACHE = 'ro-vault-v2';
 const ASSETS = [
   '/index.html',
   '/alert.html',
   '/timeline.html',
   '/weekly.html',
   '/team.html',
+  '/research.html',
   '/theme.js'
 ];
 
@@ -21,18 +22,27 @@ self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   if (e.request.url.includes('supabase.co')) return;
   if (!e.request.url.startsWith(self.location.origin)) return;
-  e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+  e.respondWith(
+    fetch(e.request).catch(async () => {
+      const cached = await caches.match(e.request);
+      // caches.match bisa resolve undefined -> respondWith wajib dapat Response
+      return cached || new Response('Offline', { status: 503, statusText: 'Offline' });
+    })
+  );
 });
 
 // Push notification handler
 self.addEventListener('push', e => {
-  const data = e.data?.json() || {};
-  self.registration.showNotification(data.title || 'Rena Omber', {
-    body: data.body || '',
-    icon: data.icon || '/icon-192.png',
-    badge: '/icon-192.png',
-    data: data.data || {}
-  });
+  let data = {};
+  try { data = e.data ? e.data.json() : {}; } catch (err) { data = { body: e.data ? e.data.text() : '' }; }
+  e.waitUntil(
+    self.registration.showNotification(data.title || 'Rena Omber', {
+      body: data.body || '',
+      icon: data.icon || '/icon-192.png',
+      badge: '/icon-192.png',
+      data: data.data || {}
+    })
+  );
 });
 
 self.addEventListener('notificationclick', e => {
