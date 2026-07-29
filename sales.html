@@ -220,7 +220,7 @@
 
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
   const SIZES = ['S','M','L','XL','XXL'];
-  let allProducts = [], transactions = [];
+  let allProducts = [], transactions = [], financeData = {};
   let activeProdId = null, activeBatchIdx = null, activeBatchKey = null;
 
   async function sha256(str) {
@@ -246,16 +246,26 @@
   if (sessionStorage.getItem('ro_auth') === '1') showMain();
 
   async function loadAll() {
-    const [prodRes, txRes] = await Promise.all([
+    const [prodRes, txRes, finRes] = await Promise.all([
       sb.from('products').select('*').order('created_at'),
-      sb.from('sales_transactions').select('*').order('sold_at', { ascending: false })
+      sb.from('sales_transactions').select('*').order('sold_at', { ascending: false }),
+      sb.from('finance_entries').select('batch_key,unit_pr')
     ]);
     allProducts = (prodRes.data||[]).map(r=>({ id:String(r.id), name:r.name, batches:r.data?.batches||[] }));
     transactions = txRes.data||[];
+    financeData = {};
+    (finRes.data||[]).forEach(r => { financeData[r.batch_key] = r; });
     renderSidebar();
   }
 
   function artikelUnits(a) { return SIZES.reduce((s,sz)=>s+(parseInt(a.sizes[sz])||0),0); }
+
+  function getUnitPR(batchKey, artikelName) {
+    return parseInt(financeData[batchKey]?.unit_pr?.[artikelName])||0;
+  }
+  function getBatchUnitPR(batchKey, artikels) {
+    return artikels.reduce((s,a)=>s+getUnitPR(batchKey,a.name),0);
+  }
 
   function renderSidebar() {
     const el = document.getElementById('sidebar-batches');
@@ -291,7 +301,9 @@
     // Calculate totals
     const totalProduksi = b.artikels.reduce((s,a)=>s+artikelUnits(a),0);
     const totalTerjual = batchTx.reduce((s,t)=>s+t.qty,0);
-    const stokSisa = totalProduksi - totalTerjual;
+    const totalUnitPR = getBatchUnitPR(activeBatchKey, b.artikels);
+    const stokSisa = totalProduksi - totalTerjual - totalUnitPR;
+    const stokJual = totalProduksi - totalUnitPR; // basis sell-through
 
     // Size breakdown
     const sizeSold = {};
@@ -309,7 +321,7 @@
       <div class="content-header">
         <div>
           <div class="content-title">${p.name} — ${b.name}</div>
-          <div class="content-sub">${totalProduksi} diproduksi · ${totalTerjual} terjual · ${stokSisa} sisa</div>
+          <div class="content-sub">${totalProduksi} diproduksi · ${totalTerjual} terjual · ${stokSisa} sisa${totalUnitPR>0?` · <span style="color:#a78bfa;">${totalUnitPR} PR</span>`:''}</div>
         </div>
         <button onclick="exportSalesPDF()" style="background:var(--accent);border:none;border-radius:6px;color:#fff;cursor:pointer;font-family:inherit;font-size:13px;font-weight:500;padding:9px 18px;">Export PDF</button>
       </div>
@@ -390,13 +402,19 @@
           <div class="summary-label">Terjual</div>
           <div class="summary-value" style="color:var(--green);">${totalTerjual}</div>
         </div>
+        ${totalUnitPR>0?`
+        <div class="summary-card" style="border-color:rgba(167,139,250,0.25);">
+          <div class="summary-label">PR</div>
+          <div class="summary-value" style="color:#a78bfa;">${totalUnitPR}</div>
+        </div>`:''}
         <div class="summary-card">
           <div class="summary-label">Stok Sisa</div>
           <div class="summary-value" style="color:${stokSisa>0?'var(--yellow)':'var(--green)'};">${stokSisa}</div>
         </div>
         <div class="summary-card">
-          <div class="summary-label">Sell-through</div>
-          <div class="summary-value" style="color:${totalProduksi?Math.round(totalTerjual/totalProduksi*100):0 >= 70?'var(--green)':'var(--yellow)'};">${totalProduksi?Math.round(totalTerjual/totalProduksi*100):0}%</div>
+          <div class="summary-label">Sell-through${totalUnitPR>0?' *':''}</div>
+          <div class="summary-value" style="color:${stokJual?Math.round(totalTerjual/stokJual*100):0 >= 70?'var(--green)':'var(--yellow)'};">${stokJual?Math.round(totalTerjual/stokJual*100):0}%</div>
+          ${totalUnitPR>0?`<div style="font-size:10px;color:var(--text3);margin-top:2px;">*excl. ${totalUnitPR} unit PR</div>`:''}
         </div>
       </div>
 
@@ -446,6 +464,7 @@
             <th>Artikel</th>
             <th class="right">Diproduksi</th>
             <th class="right">Terjual</th>
+            ${totalUnitPR>0?`<th class="right" style="color:#a78bfa;">PR</th>`:''}
             <th class="right">Sisa</th>
             <th class="right">Sell-through</th>
           </tr>
@@ -454,13 +473,16 @@
           ${b.artikels.map(a => {
             const prod = artikelUnits(a);
             const sold = artikelSold[a.name]||0;
-            const sisa = prod - sold;
-            const st = prod ? Math.round(sold/prod*100) : 0;
+            const unitPR = getUnitPR(activeBatchKey, a.name);
+            const sisa = prod - sold - unitPR;
+            const basis = prod - unitPR;
+            const st = basis ? Math.round(sold/basis*100) : 0;
             const stClass = st>=70?'st-high':st>=40?'st-mid':'st-low';
             return `<tr>
               <td style="font-weight:500;">${a.name}</td>
               <td class="right">${prod}</td>
               <td class="right" style="color:var(--green);">${sold}</td>
+              ${unitPR>0?`<td class="right" style="color:#a78bfa;">${unitPR}</td>`:''}
               <td class="right" style="color:${sisa>0?'var(--yellow)':'var(--green)'};">${sisa}</td>
               <td class="right"><span class="sell-through ${stClass}">${st}%</span></td>
             </tr>`;
@@ -570,8 +592,10 @@
     const batchTx = transactions.filter(t=>t.product_id===activeProdId && t.batch_idx===activeBatchIdx);
     const totalProduksi = b.artikels.reduce((s,a)=>s+artikelUnits(a),0);
     const totalTerjual = batchTx.reduce((s,t)=>s+t.qty,0);
-    const stokSisa = totalProduksi - totalTerjual;
-    const sellThrough = totalProduksi ? Math.round(totalTerjual/totalProduksi*100) : 0;
+    const totalUnitPR = getBatchUnitPR(activeBatchKey, b.artikels);
+    const stokSisa = totalProduksi - totalTerjual - totalUnitPR;
+    const stokJual = totalProduksi - totalUnitPR;
+    const sellThrough = stokJual ? Math.round(totalTerjual/stokJual*100) : 0;
 
     const sizeSold = {}, sizeProd = {};
     SIZES.forEach(sz=>{sizeSold[sz]=0;sizeProd[sz]=0;});
@@ -594,16 +618,18 @@
     doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.setTextColor(0,0,0);
     doc.text(`${p.name} — ${b.name}`, M, y); y+=6;
     doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(100,100,100);
-    doc.text(`${new Date().toLocaleDateString('id-ID')} · ${totalProduksi} diproduksi · ${totalTerjual} terjual · ${stokSisa} sisa · sell-through ${sellThrough}%`, M, y); y+=10;
+    doc.text(`${new Date().toLocaleDateString('id-ID')} · ${totalProduksi} diproduksi · ${totalTerjual} terjual · ${stokSisa} sisa${totalUnitPR>0?' · '+totalUnitPR+' PR':''} · sell-through ${sellThrough}%`, M, y); y+=10;
 
     // Summary boxes
-    const boxes = [
+    const pdfBoxes = [
       {label:'Diproduksi', value:String(totalProduksi), color:[60,60,60]},
       {label:'Terjual', value:String(totalTerjual), color:[52,211,153]},
+      ...(totalUnitPR>0?[{label:'PR', value:String(totalUnitPR), color:[167,139,250]}]:[]),
       {label:'Stok Sisa', value:String(stokSisa), color:stokSisa>0?[251,191,36]:[52,211,153]},
-      {label:'Sell-through', value:sellThrough+'%', color:sellThrough>=70?[52,211,153]:sellThrough>=40?[251,191,36]:[248,113,113]},
+      {label:totalUnitPR>0?'Sell-through*':'Sell-through', value:sellThrough+'%', color:sellThrough>=70?[52,211,153]:sellThrough>=40?[251,191,36]:[248,113,113]},
     ];
-    const bw = (W-M*2-8*3)/4;
+    const boxes = pdfBoxes;
+    const bw = (W-M*2-8*(boxes.length-1))/boxes.length;
     boxes.forEach((box,i)=>{
       const bx = M+i*(bw+8);
       doc.setFillColor(245,247,255); doc.roundedRect(bx,y,bw,16,2,2,'F');
@@ -678,8 +704,10 @@
     b.artikels.forEach((a,idx)=>{
       const sold=batchTx.filter(t=>t.artikel_name===a.name).reduce((s,t)=>s+t.qty,0);
       const prod=artikelUnits(a);
-      const sisa=prod-sold;
-      const st=prod?Math.round(sold/prod*100):0;
+      const unitPR=getUnitPR(activeBatchKey,a.name);
+      const sisa=prod-sold-unitPR;
+      const basis=prod-unitPR;
+      const st=basis?Math.round(sold/basis*100):0;
       cx=M;
       [a.name,String(prod),String(sold),String(sisa),st+'%'].forEach((v,i)=>{
         doc.setFillColor(idx%2===0?245:252,idx%2===0?247:253,idx%2===0?255:255);
