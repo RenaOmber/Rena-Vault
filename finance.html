@@ -178,9 +178,9 @@
 
 <script>
   // ─── CONFIG ────────────────────────────────────────────────
-  const SUPABASE_URL  = 'https://fqvfnohhilkzvijqukfg.supabase.co';
-  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxdmZub2hoaWxrenZpanF1a2ZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDU4NjAsImV4cCI6MjA5ODEyMTg2MH0.er10SEsmDlnx1yRLGJK2fKtLhQR40vFOXVJzH9yakCg';
-  const PASSWORD_HASH = '3f0e57f3e719957119f0ba621629a3ae0ed1ec95d1ad8a91bd980b2896b679e4';
+  const SUPABASE_URL  = 'YOUR_SUPABASE_URL';
+  const SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY';
+  const PASSWORD_HASH = 'YOUR_PASSWORD_HASH';
   // ───────────────────────────────────────────────────────────
 
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
@@ -254,6 +254,13 @@
 
   function getVendorPrice(id) { const v = allVendors.find(v=>v.id===id); return v?(v.price_per_unit||0):0; }
 
+  function sumHadiah(a) {
+    if (Array.isArray(a.hadiahItems) && a.hadiahItems.length) {
+      return a.hadiahItems.reduce((s,h) => s + (parseInt(h.harga)||0) * (parseInt(h.qty)||1), 0);
+    }
+    return parseInt(a.biayaHadiah)||0; // fallback data lama
+  }
+
   function artikelCOGS(a) {
     return (parseInt(a.hargaKaosManual)||0)
       + (parseInt(a.biayaLabelWoven)||0)
@@ -261,7 +268,7 @@
       + (parseInt(a.biayaHangtag)||0)
       + (parseInt(a.biayaZiplock)||0)
       + (parseInt(a.biayaPolymailer)||0)
-      + (parseInt(a.biayaHadiah)||0);
+      + sumHadiah(a);
   }
 
   function renderSidebar() {

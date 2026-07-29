@@ -235,10 +235,10 @@
 
 <script>
   // ─── CONFIG ────────────────────────────────────────────────
-  const SUPABASE_URL  = 'https://fqvfnohhilkzvijqukfg.supabase.co';
-  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxdmZub2hoaWxrenZpanF1a2ZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDU4NjAsImV4cCI6MjA5ODEyMTg2MH0.er10SEsmDlnx1yRLGJK2fKtLhQR40vFOXVJzH9yakCg';
+  const SUPABASE_URL  = 'YOUR_SUPABASE_URL';
+  const SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY';
   const BUCKET        = 'vault-docs';
-  const PASSWORD_HASH = '3f0e57f3e719957119f0ba621629a3ae0ed1ec95d1ad8a91bd980b2896b679e4';
+  const PASSWORD_HASH = 'YOUR_PASSWORD_HASH';
   // ───────────────────────────────────────────────────────────
 
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
@@ -320,7 +320,7 @@
 
   function sumHadiah(a) {
     if (Array.isArray(a.hadiahItems) && a.hadiahItems.length) {
-      return a.hadiahItems.reduce((s,h) => s + (parseInt(h.harga)||0), 0);
+      return a.hadiahItems.reduce((s,h) => s + (parseInt(h.harga)||0) * (parseInt(h.qty)||1), 0);
     }
     return parseInt(a.biayaHadiah)||0; // fallback data lama
   }
@@ -671,7 +671,7 @@
           </div>
         </div>
         <div class="form-section-title" style="margin-top:14px;">Hadiah (opsional)</div>
-        <div style="font-size:11px;color:var(--text3);margin:-6px 0 12px;">Tulis manual tiap item, karena bisa beda tiap batch. Harga diisi per pcs, total produksi dihitung otomatis. Tidak masuk PDF vendor.</div>
+        <div style="font-size:11px;color:var(--text3);margin:-6px 0 12px;">Tulis manual tiap item, karena bisa beda tiap batch. Harga per pcs, jml = berapa pcs per kaos (mis. 3D print 3). Tidak masuk PDF vendor.</div>
         ${(a.hadiahItems||[]).map((h,hi)=>`
           <div class="form-row" style="align-items:flex-end;gap:8px;">
             <div class="form-group" style="flex:2;">
@@ -687,8 +687,14 @@
                   onchange="updateHadiahItem(${hi},'harga',this.value)" />
               </div>
             </div>
+            <div class="form-group" style="flex:0 0 70px;">
+              ${hi===0?'<div class="form-label">Jml/kaos</div>':''}
+              <input type="number" min="1" class="form-input" style="text-align:center;" placeholder="1" value="${h.qty||''}"
+                onchange="updateHadiahItem(${hi},'qty',this.value)" />
+            </div>
             <button type="button" class="btn-ghost" style="padding:9px 12px;color:var(--danger);" onclick="removeHadiahItem(${hi})" title="Hapus item">✕</button>
-          </div>`).join('')}
+          </div>
+          ${(parseInt(h.qty)||1) > 1 ? `<div style="font-size:10px;color:var(--text3);margin:-6px 0 8px 2px;">${(parseInt(h.harga)||0).toLocaleString('id-ID')} × ${parseInt(h.qty)||1} = Rp ${((parseInt(h.harga)||0)*(parseInt(h.qty)||1)).toLocaleString('id-ID')}/kaos</div>` : ''}`).join('')}
         <button type="button" class="btn-ghost" style="margin-bottom:14px;" onclick="addHadiahItem()">+ Tambah Item Hadiah</button>
 
         <div class="form-row">
@@ -698,14 +704,6 @@
               Rp ${sumHadiah(a).toLocaleString('id-ID')}
             </div>
           </div>
-          <div class="form-group">
-            <div class="form-label">Hadiah Total Batch (${total} pcs)</div>
-            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:9px 12px;font-size:13px;font-weight:600;color:var(--text);">
-              Rp ${(sumHadiah(a)*total).toLocaleString('id-ID')}
-            </div>
-          </div>
-        </div>
-        <div class="form-row">
           <div class="form-group">
             <div class="form-label">COGS Total per unit (auto)</div>
             <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:9px 12px;font-size:13px;font-weight:600;color:var(--accent);" id="cogs-display">
@@ -835,7 +833,7 @@
     if (!p) return;
     const a = p.batches[activeBatchIdx].artikels[activeArtikelIdx];
     if (!Array.isArray(a.hadiahItems)) a.hadiahItems = [];
-    a.hadiahItems.push({ name:'', harga:0 });
+    a.hadiahItems.push({ name:'', harga:0, qty:1 });
     scheduleSave(p);
     renderProductPage();
   }
@@ -845,7 +843,7 @@
     if (!p) return;
     const a = p.batches[activeBatchIdx].artikels[activeArtikelIdx];
     if (!Array.isArray(a.hadiahItems) || !a.hadiahItems[idx]) return;
-    a.hadiahItems[idx][field] = field === 'harga' ? (parseInt(val)||0) : val;
+    a.hadiahItems[idx][field] = (field === 'harga' || field === 'qty') ? (parseInt(val)||(field==='qty'?1:0)) : val;
     scheduleSave(p);
     renderProductPage();
   }

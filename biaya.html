@@ -153,9 +153,9 @@
 
 <script>
   // ─── CONFIG ────────────────────────────────────────────────
-  const SUPABASE_URL  = 'https://fqvfnohhilkzvijqukfg.supabase.co';
-  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxdmZub2hoaWxrenZpanF1a2ZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDU4NjAsImV4cCI6MjA5ODEyMTg2MH0.er10SEsmDlnx1yRLGJK2fKtLhQR40vFOXVJzH9yakCg';
-  const PASSWORD_HASH = '3f0e57f3e719957119f0ba621629a3ae0ed1ec95d1ad8a91bd980b2896b679e4';
+  const SUPABASE_URL  = 'YOUR_SUPABASE_URL';
+  const SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY';
+  const PASSWORD_HASH = 'YOUR_PASSWORD_HASH';
   // ───────────────────────────────────────────────────────────
 
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
@@ -207,6 +207,13 @@
     return entry.regular || 0;
   }
 
+  function sumHadiah(a) {
+    if (Array.isArray(a.hadiahItems) && a.hadiahItems.length) {
+      return a.hadiahItems.reduce((s,h) => s + (parseInt(h.harga)||0) * (parseInt(h.qty)||1), 0);
+    }
+    return parseInt(a.biayaHadiah)||0; // fallback data lama
+  }
+
   function artikelCOGS(a) {
     return (parseInt(a.hargaKaosManual)||0)
       + (parseInt(a.biayaLabelWoven)||0)
@@ -214,7 +221,7 @@
       + (parseInt(a.biayaHangtag)||0)
       + (parseInt(a.biayaZiplock)||0)
       + (parseInt(a.biayaPolymailer)||0)
-      + (parseInt(a.biayaHadiah)||0);
+      + sumHadiah(a);
   }
 
   async function renderFinance() {
@@ -311,7 +318,7 @@
               <tr class="artikel-row">
                 <td></td>
                 <td></td>
-                <td>${a.name}</td>
+                <td>${a.name}${(a.hadiahItems&&a.hadiahItems.length)?`<div style="font-size:10px;color:var(--text3);margin-top:2px;">Hadiah: ${a.hadiahItems.map(h=>{const q=parseInt(h.qty)||1;const hg=parseInt(h.harga)||0;return `${h.name||'(tanpa nama)'} ${q>1?`${q}×`:''}Rp${hg.toLocaleString('id-ID')}`;}).join(', ')}</div>`:''}</td>
                 <td class="right" style="color:var(--accent);font-size:11px;">Rp ${artikelCOGS(a).toLocaleString('id-ID')}/unit</td>
                 <td class="right">${artikelUnits(a).toLocaleString('id-ID')}</td>
                 <td class="right">${(artikelUnits(a)*artikelCOGS(a)) ? fmt(artikelUnits(a)*artikelCOGS(a)) : '—'}</td>
@@ -406,6 +413,28 @@
       });
       y += 7;
     });
+
+    // Rincian Hadiah (internal only, tidak masuk PDF vendor)
+    const artikelsWithHadiah = row.artikels.filter(a => Array.isArray(a.hadiahItems) && a.hadiahItems.length);
+    if (artikelsWithHadiah.length) {
+      y += 6;
+      doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(100,100,100);
+      doc.text('RINCIAN HADIAH (INTERNAL)', M, y); y += 5;
+      doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(30,30,30);
+      artikelsWithHadiah.forEach(a => {
+        const units = artikelUnits(a);
+        doc.setFont('helvetica','bold'); doc.text(a.name, M, y); y += 4.5;
+        doc.setFont('helvetica','normal');
+        a.hadiahItems.forEach(h => {
+          const harga = parseInt(h.harga)||0;
+          const qty = parseInt(h.qty)||1;
+          const perKaos = harga*qty;
+          const qtyStr = qty>1 ? ` (${qty} pcs/kaos)` : '';
+          doc.text(`  ${h.name||'(tanpa nama)'}${qtyStr} — Rp ${perKaos.toLocaleString('id-ID')}/kaos x ${units} = Rp ${(perKaos*units).toLocaleString('id-ID')}`, M, y);
+          y += 4.5;
+        });
+      });
+    }
 
     y += 6;
     doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor(30,30,30);
