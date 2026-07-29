@@ -104,11 +104,32 @@
     .toast { position: fixed; bottom: 24px; right: 24px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; font-size: 13px; z-index: 999; opacity: 0; transform: translateY(8px); transition: all 0.2s; pointer-events: none; }
     .toast.show { opacity: 1; transform: translateY(0); }
 
+    /* UTANG SECTION */
+    .utang-section { margin-bottom: 24px; }
+    .utang-header { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .utang-badge { background: var(--yellow-dim); color: var(--yellow); border-radius: 10px; padding: 2px 8px; font-size: 10px; font-weight: 600; }
+    .utang-list { display: flex; flex-direction: column; gap: 8px; }
+    .utang-item { background: var(--bg2); border: 1px solid rgba(251,191,36,0.2); border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .utang-info { flex: 1; min-width: 180px; }
+    .utang-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+    .utang-date { font-size: 11px; color: var(--text3); }
+    .utang-numbers { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+    .utang-num { text-align: right; }
+    .utang-num-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px; }
+    .utang-num-val { font-size: 13px; font-weight: 600; }
+    .utang-sisa { color: var(--yellow); }
+    .utang-lunas-btn { background: var(--accent-dim); border: 1px solid rgba(52,211,153,0.3); border-radius: 6px; color: var(--accent); cursor: pointer; font-family: inherit; font-size: 11px; font-weight: 600; padding: 6px 12px; white-space: nowrap; transition: background 0.15s; }
+    .utang-lunas-btn:hover { background: rgba(52,211,153,0.2); }
+    .utang-total-bar { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+    .utang-total-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; }
+    .utang-total-val { font-size: 15px; font-weight: 700; color: var(--yellow); }
+
     @media (max-width: 720px) {
       .content { padding: 16px; }
       .summary-grid { grid-template-columns: 1fr; }
       .tx-table th:nth-child(4), .tx-table td:nth-child(4) { display: none; }
       .top-bar { padding: 10px 14px; }
+      .utang-numbers { gap: 12px; }
     }
   </style>
 </head>
@@ -177,6 +198,8 @@
         <option value="Lain-lain">Lain-lain</option>
       </select>
     </div>
+
+    <div id="utang-section"></div>
 
     <table class="tx-table">
       <thead>
@@ -256,7 +279,7 @@
       </div>
       <div class="form-group">
         <div class="form-label">Jumlah (Rp)</div>
-        <input type="number" min="0" class="form-input" id="e-amount" oninput="syncEditDpMax()" />
+        <input type="number" min="0" class="form-input" id="e-amount" oninput="syncEditDp()" />
       </div>
     </div>
     <div class="form-group">
@@ -268,7 +291,7 @@
     </div>
     <div class="form-group dp-row" id="e-dp-row">
       <div class="form-label">Sudah dibayar (DP) — Rp</div>
-      <input type="number" min="0" class="form-input" id="e-dp" oninput="syncEditDpMax()" />
+      <input type="number" min="0" class="form-input" id="e-dp" oninput="syncEditDp()" />
       <div style="font-size:11px;color:var(--text3);margin-top:6px;" id="e-dp-sisa"></div>
     </div>
     <div class="modal-actions">
@@ -333,7 +356,6 @@
     const keluar = allTx.filter(t=>t.jenis==='out');
     const totalIn = masuk.reduce((s,t)=>s+(parseInt(t.jumlah)||0),0);
     const totalOut = keluar.reduce((s,t)=>s+(parseInt(t.jumlah)||0),0);
-    // DP: uang yang benar-benar sudah keluar = dp kalau status dp, full kalau lunas
     const realOut = keluar.reduce((s,t)=>s+(t.status==='dp'?(parseInt(t.dp_dibayar)||0):(parseInt(t.jumlah)||0)),0);
     const realIn = masuk.reduce((s,t)=>s+(t.status==='dp'?(parseInt(t.dp_dibayar)||0):(parseInt(t.jumlah)||0)),0);
     const sisaDp = keluar.filter(t=>t.status==='dp').reduce((s,t)=>s+((parseInt(t.jumlah)||0)-(parseInt(t.dp_dibayar)||0)),0);
@@ -344,6 +366,70 @@
     document.getElementById('sum-out-sub').textContent = `${keluar.length} transaksi`;
     document.getElementById('sum-bal').textContent = fmt(realIn - realOut);
     document.getElementById('sum-dp-sub').textContent = sisaDp>0 ? `Sisa DP belum dibayar: ${fmt(sisaDp)}` : 'Saldo kas aktual';
+
+    renderUtang();
+  }
+
+  function renderUtang() {
+    const utangList = allTx.filter(t=>t.status==='dp' && t.jenis==='out');
+    const el = document.getElementById('utang-section');
+    if (!utangList.length) { el.innerHTML = ''; return; }
+
+    const totalSisa = utangList.reduce((s,t)=>s+((parseInt(t.jumlah)||0)-(parseInt(t.dp_dibayar)||0)),0);
+
+    el.innerHTML = `
+      <div class="utang-section">
+        <div class="utang-header">
+          Utang Belum Lunas
+          <span class="utang-badge">${utangList.length} item</span>
+        </div>
+        <div class="utang-list">
+          ${utangList.map(t => {
+            const total = parseInt(t.jumlah)||0;
+            const dibayar = parseInt(t.dp_dibayar)||0;
+            const sisa = total - dibayar;
+            return `
+            <div class="utang-item">
+              <div class="utang-info">
+                <div class="utang-name">${t.keterangan||'—'}</div>
+                <div class="utang-date">${fmtDate(t.tanggal)} · <span style="color:var(--text2);font-size:11px;">${t.kategori||''}</span></div>
+              </div>
+              <div class="utang-numbers">
+                <div class="utang-num">
+                  <div class="utang-num-label">Total</div>
+                  <div class="utang-num-val" style="color:var(--text2);">${fmt(total)}</div>
+                </div>
+                <div class="utang-num">
+                  <div class="utang-num-label">Sudah Dibayar</div>
+                  <div class="utang-num-val" style="color:var(--accent);">${fmt(dibayar)}</div>
+                </div>
+                <div class="utang-num">
+                  <div class="utang-num-label">Sisa</div>
+                  <div class="utang-num-val utang-sisa">${fmt(sisa)}</div>
+                </div>
+              </div>
+              <button class="utang-lunas-btn" onclick="tandaiLunas('${t.id}')">✓ Tandai Lunas</button>
+            </div>`;
+          }).join('')}
+        </div>
+        <div class="utang-total-bar">
+          <div class="utang-total-label">Total Sisa Utang</div>
+          <div class="utang-total-val">${fmt(totalSisa)}</div>
+        </div>
+      </div>`;
+  }
+
+  async function tandaiLunas(id) {
+    const tx = allTx.find(t=>t.id===id);
+    if (!tx) return;
+    if (!confirm(`Tandai "${tx.keterangan}" sebagai Lunas?\nSisa: ${fmt((parseInt(tx.jumlah)||0)-(parseInt(tx.dp_dibayar)||0))}`)) return;
+    const { error } = await sb.from('cashflow_entries').update({ status:'lunas', dp_dibayar: tx.jumlah }).eq('id', id);
+    if (error) { showToast('❌ Gagal update.'); return; }
+    tx.status = 'lunas';
+    tx.dp_dibayar = tx.jumlah;
+    showToast('✅ Lunas!');
+    renderSummary();
+    renderList();
   }
 
   function renderList() {
@@ -440,15 +526,16 @@
 
   function toggleEditDp() {
     const isDp = document.getElementById('e-status').value === 'dp';
-    document.getElementById('e-dp-row').classList.toggle('show', isDp);
-    syncEditDpMax();
+    document.getElementById('e-dp-row').style.display = isDp ? 'flex' : 'none';
+    syncEditDp();
   }
 
-  function syncEditDpMax() {
+  function syncEditDp() {
     const total = parseInt(document.getElementById('e-amount').value)||0;
     const dp = parseInt(document.getElementById('e-dp').value)||0;
     const sisa = total - dp;
-    document.getElementById('e-dp-sisa').textContent = total ? `Sisa belum dibayar: ${fmt(Math.max(0,sisa))}` : '';
+    document.getElementById('e-dp-sisa').textContent = total && document.getElementById('e-status').value==='dp'
+      ? `Sisa belum dibayar: ${fmt(Math.max(0,sisa))}` : '';
   }
 
   async function saveEdit() {
