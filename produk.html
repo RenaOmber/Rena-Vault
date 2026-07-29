@@ -249,6 +249,7 @@
   let activeProductId = null;
   let activeBatchIdx = 0;
   let activeArtikelIdx = 0;
+  let batchCollapsed = true;
   let saveTimer = null;
 
   // ─── AUTH ───────────────────────────────────────────────────
@@ -460,6 +461,7 @@
     p.batches.push(defaultBatch(`Batch ${n}`));
     activeBatchIdx = p.batches.length - 1;
     activeArtikelIdx = 0;
+    batchCollapsed = false;
     scheduleSave(p);
     renderProductPage();
   }
@@ -479,6 +481,12 @@
   function selectBatch(idx) {
     activeBatchIdx = idx;
     activeArtikelIdx = 0;
+    batchCollapsed = false;
+    renderProductPage();
+  }
+
+  function toggleBatchCollapse() {
+    batchCollapsed = !batchCollapsed;
     renderProductPage();
   }
 
@@ -528,14 +536,14 @@
 
       <div class="artikel-bar" style="margin-bottom:0;border-bottom:none;padding-bottom:0;">
         ${p.batches.map((b,i)=>`
-          <button class="artikel-tab ${i===activeBatchIdx?'active':''}" onclick="selectBatch(${i})">
-            ${b.name}
+          <button class="artikel-tab ${i===activeBatchIdx?'active':''}" onclick="${i===activeBatchIdx?'toggleBatchCollapse()':`selectBatch(${i})`}">
+            ${i===activeBatchIdx?`<span style="display:inline-block;width:12px;font-size:10px;">${batchCollapsed?'▶':'▼'}</span> `:''}${b.name}
             <span class="artikel-tab-del" onclick="deleteBatch(${i},event)">×</span>
           </button>`).join('')}
         <button class="add-artikel-btn" onclick="addBatch()" title="Tambah batch" style="font-size:16px;padding:8px 10px;">+</button>
       </div>
 
-
+      <div id="batch-body" style="display:${batchCollapsed?'none':'block'};">
       <div class="artikel-bar" style="margin-bottom:22px;padding-left:8px;background:var(--bg2);border-radius:0 0 6px 6px;">
         ${batch.artikels.map((ar,i)=>`
           <button class="artikel-tab ${i===activeArtikelIdx?'active':''}" onclick="selectArtikel(${i})" style="font-size:12px;padding:6px 12px;">
@@ -717,6 +725,7 @@
 
       <div class="form-actions">
         <button class="btn-primary" onclick="exportPDF()">Export PDF</button>
+      </div>
       </div>`;
   }
 
@@ -965,6 +974,7 @@
     y += 11;
 
     // Vendor
+    if (y > 250) { doc.addPage(); y = 20; }
     doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(130,130,130);
     doc.text('VENDOR', M, y); y += 5;
     doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(30,30,30);
@@ -974,6 +984,7 @@
 
     // Keterangan
     if (a.keterangan) {
+      if (y > 250) { doc.addPage(); y = 20; }
       doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(130,130,130);
       doc.text('KETERANGAN', M, y); y += 5;
       doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(30,30,30);
