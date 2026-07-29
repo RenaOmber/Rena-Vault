@@ -525,11 +525,20 @@
     <!-- NON-KAOS/WOVEN/HANGTAG/LABELPRINT: single price -->
     <div id="single-price" style="display:none;">
       <div class="form-group">
-        <div class="form-label">Harga per unit (Rp)</div>
+        <div class="form-label">Harga total (Rp)</div>
         <div style="position:relative;">
           <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text3);">Rp</span>
-          <input type="number" class="form-input" id="f-price" style="padding-left:32px;" placeholder="0" min="0" />
+          <input type="number" class="form-input" id="f-price" style="padding-left:32px;" placeholder="0" min="0" oninput="updatePerPcsPreview()" />
         </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Isi per harga (pcs)</div>
+        <input type="number" class="form-input" id="f-price-qty" placeholder="500" min="1" value="1" oninput="updatePerPcsPreview()" />
+        <div style="font-size:11px;color:var(--text3);margin-top:6px;">Jumlah pcs yang didapat dari harga total di atas. Isi 1 kalau harga sudah per pcs.</div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Harga per pcs (auto)</div>
+        <input class="form-input" id="f-price-perpcs" readonly style="color:var(--accent);font-weight:600;background:var(--bg3);" value="Rp 0" />
       </div>
     </div>
 
@@ -756,7 +765,9 @@
       document.getElementById('f-cp').value = v.cp || '';
       document.getElementById('f-moq').value = v.moq || '';
       document.getElementById('f-notes').value = v.notes || '';
-      document.getElementById('f-price').value = v.price_per_unit || '';
+      document.getElementById('f-price').value = (v.data?.hargaTotal ?? v.price_per_unit) || '';
+      document.getElementById('f-price-qty').value = v.data?.isiPerHarga || 1;
+      updatePerPcsPreview();
       toggleMatrixForm();
 
       const t = v.type.toLowerCase();
@@ -822,10 +833,19 @@
       document.getElementById('f-moq').value = '';
       document.getElementById('f-notes').value = '';
       document.getElementById('f-price').value = '';
+      document.getElementById('f-price-qty').value = 1;
+      document.getElementById('f-price-perpcs').value = 'Rp 0';
       toggleMatrixForm();
       buildMatrixRows({});
     }
     document.getElementById('modal').style.display = 'flex';
+  }
+
+  function updatePerPcsPreview() {
+    const total = parseInt(document.getElementById('f-price').value)||0;
+    const qty = parseInt(document.getElementById('f-price-qty').value)||1;
+    const perPcs = Math.round(total / qty);
+    document.getElementById('f-price-perpcs').value = 'Rp ' + perPcs.toLocaleString('id-ID');
   }
 
   function closeModal() {
@@ -936,7 +956,12 @@
       row.price_per_unit = row.data.roll.hargaMin || 0;
 
     } else {
-      row.price_per_unit = parseInt(document.getElementById('f-price').value)||0;
+      const hargaTotal = parseInt(document.getElementById('f-price').value)||0;
+      const isiPerHarga = parseInt(document.getElementById('f-price-qty').value)||1;
+      row.price_per_unit = Math.round(hargaTotal / isiPerHarga);
+      row.data = row.data || {};
+      row.data.hargaTotal = hargaTotal;
+      row.data.isiPerHarga = isiPerHarga;
     }
 
     await sb.from('vendors').upsert(row);
