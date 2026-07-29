@@ -208,13 +208,13 @@
   }
 
   function artikelCOGS(a) {
-    const kaosPrice = getVendorKaosPrice(a.vendorKaos, a.tebalKain, a.potongan);
-    const jumlahWarna = parseInt(a.jumlahWarna)||1;
-    const v = allVendors.find(v => v.id === a.vendorKaos);
-    const colorCharge = v?.data?.colorCharge || 0;
-    const baseColors = v?.data?.baseColors || 4;
-    const extraWarna = jumlahWarna > baseColors ? (jumlahWarna - baseColors) * colorCharge : 0;
-    return kaosPrice + extraWarna + getVendorPrice(a.vendorHangtag) + getVendorPrice(a.vendorPackaging);
+    return (parseInt(a.hargaKaosManual)||0)
+      + (parseInt(a.biayaLabelWoven)||0)
+      + (parseInt(a.biayaWashTag)||0)
+      + (parseInt(a.biayaHangtag)||0)
+      + (parseInt(a.biayaZiplock)||0)
+      + (parseInt(a.biayaPolymailer)||0)
+      + (parseInt(a.biayaHadiah)||0);
   }
 
   async function renderFinance() {
