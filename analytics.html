@@ -16,18 +16,18 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #060f0a; --bg2: #0d1f14; --bg3: #122b1a; --bg4: #0a1910;
+      --bg: #060f0a; --bg2: #0d1f14; --bg3: #122b1a;
       --border: rgba(52,211,153,0.1); --border-hover: rgba(52,211,153,0.26);
       --text: #e6f4ec; --text2: #7aab90; --text3: #3d6b52;
       --green: #34d399; --green-dim: rgba(52,211,153,0.1);
       --yellow: #fbbf24; --yellow-dim: rgba(251,191,36,0.1);
       --red: #f87171; --red-dim: rgba(248,113,113,0.1);
       --purple: #a78bfa; --purple-dim: rgba(167,139,250,0.1);
+      --orange: #fb923c; --orange-dim: rgba(251,146,60,0.1);
       --mono: 'JetBrains Mono', monospace;
     }
     html, body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; min-height: 100vh; }
 
-    /* GATE */
     #gate { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
     .gate-mark { width: 40px; height: 4px; background: var(--green); border-radius: 2px; margin: 0 auto 16px; }
     .gate-form { display: flex; gap: 8px; margin-top: 8px; }
@@ -35,7 +35,6 @@
     .gate-form button { background: var(--green); border: none; border-radius: 6px; color: #04150c; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600; padding: 10px 18px; }
     .gate-error { font-size: 12px; color: var(--red); min-height: 16px; text-align: center; }
 
-    /* LAYOUT */
     #main { display: none; }
     .top-bar { display: flex; align-items: center; justify-content: space-between; padding: 16px 28px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(6,15,10,0.94); backdrop-filter: blur(12px); z-index: 10; }
     .top-left { display: flex; align-items: center; gap: 10px; }
@@ -46,77 +45,115 @@
     .btn-ghost { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text2); cursor: pointer; font-family: inherit; font-size: 12px; padding: 6px 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: border-color 0.15s; }
     .btn-ghost:hover { border-color: var(--border-hover); color: var(--text); }
 
-    .content { padding: 32px 36px; max-width: 1100px; margin: 0 auto; }
+    .content { padding: 32px 36px; max-width: 1200px; margin: 0 auto; }
 
-    /* HERO STATS */
-    .hero-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 32px; }
-    .hero-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 22px 24px; position: relative; overflow: hidden; }
-    .hero-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
-    .hero-card.revenue::before { background: linear-gradient(90deg, var(--green), transparent); }
-    .hero-card.units::before { background: linear-gradient(90deg, var(--yellow), transparent); }
-    .hero-card.avg::before { background: linear-gradient(90deg, var(--purple), transparent); }
-    .hero-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; }
-    .hero-value { font-family: var(--mono); font-size: 26px; font-weight: 600; letter-spacing: -0.02em; }
-    .hero-value.revenue { color: var(--green); }
-    .hero-value.units { color: var(--yellow); }
-    .hero-value.avg { color: var(--purple); }
-    .hero-sub { font-size: 11px; color: var(--text3); margin-top: 6px; }
-    .hero-delta { font-size: 11px; font-weight: 600; margin-top: 4px; }
-    .delta-up { color: var(--green); }
-    .delta-down { color: var(--red); }
+    /* HERO */
+    .hero-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 28px; }
+    .hero-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; position: relative; overflow: hidden; }
+    .hero-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+    .hero-card.c-green::before { background: linear-gradient(90deg,var(--green),transparent); }
+    .hero-card.c-yellow::before { background: linear-gradient(90deg,var(--yellow),transparent); }
+    .hero-card.c-purple::before { background: linear-gradient(90deg,var(--purple),transparent); }
+    .hero-card.c-orange::before { background: linear-gradient(90deg,var(--orange),transparent); }
+    .hero-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+    .hero-value { font-family: var(--mono); font-size: 22px; font-weight: 600; }
+    .hero-value.c-green { color: var(--green); }
+    .hero-value.c-yellow { color: var(--yellow); }
+    .hero-value.c-purple { color: var(--purple); }
+    .hero-value.c-orange { color: var(--orange); }
+    .hero-sub { font-size: 11px; color: var(--text3); margin-top: 5px; }
 
-    /* CONTROLS */
-    .controls-row { display: flex; gap: 8px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
-    .ctrl-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; }
-    .ctrl-btn { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; color: var(--text2); cursor: pointer; font-family: inherit; font-size: 12px; padding: 6px 14px; transition: all 0.15s; }
-    .ctrl-btn:hover, .ctrl-btn.active { background: var(--green-dim); border-color: rgba(52,211,153,0.3); color: var(--green); }
-    .ctrl-select { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; color: var(--text2); cursor: pointer; font-family: inherit; font-size: 12px; padding: 6px 12px; outline: none; margin-left: auto; }
+    /* SECTION */
+    .section-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+    .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 22px; margin-bottom: 24px; }
 
-    /* CHART */
-    .chart-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 24px; margin-bottom: 28px; }
-    .chart-title { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
-    .chart-legend { display: flex; gap: 16px; }
+    /* TIMELINE CHART */
+    .chart-legend { display: flex; gap: 16px; flex-wrap: wrap; }
     .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text2); }
-    .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
-    .chart-wrap { overflow-x: auto; }
-    .chart-svg { display: block; }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .legend-line { width: 16px; height: 2px; border-radius: 1px; flex-shrink: 0; }
+    .chart-wrap { overflow-x: auto; margin-top: 16px; }
 
-    /* BAR CHART */
-    .bar-group:hover .bar-revenue { opacity: 0.85; }
-    .bar-group:hover .bar-units { opacity: 0.85; }
-    .chart-tooltip { position: fixed; background: var(--bg3); border: 1px solid var(--border-hover); border-radius: 8px; padding: 10px 14px; font-size: 12px; pointer-events: none; z-index: 50; opacity: 0; transition: opacity 0.12s; min-width: 160px; }
-    .chart-tooltip.show { opacity: 1; }
-    .tt-month { font-weight: 600; color: var(--text); margin-bottom: 6px; font-size: 12px; }
-    .tt-row { display: flex; justify-content: space-between; gap: 16px; margin-top: 3px; }
+    /* TOOLTIP */
+    .tooltip { position: fixed; background: var(--bg3); border: 1px solid var(--border-hover); border-radius: 8px; padding: 10px 14px; font-size: 12px; pointer-events: none; z-index: 100; opacity: 0; transition: opacity 0.1s; min-width: 180px; max-width: 240px; }
+    .tooltip.show { opacity: 1; }
+    .tt-title { font-weight: 600; color: var(--text); margin-bottom: 6px; }
+    .tt-row { display: flex; justify-content: space-between; gap: 12px; margin-top: 3px; font-size: 11px; }
     .tt-label { color: var(--text3); }
     .tt-val { font-family: var(--mono); font-weight: 600; }
+    .tt-divider { border-top: 1px solid var(--border); margin: 6px 0; }
+
+    /* EVENT MARKERS */
+    .event-marker { cursor: pointer; }
+    .event-marker:hover circle { opacity: 1 !important; }
+
+    /* EVENT TYPE COLORS */
+    .ev-PR { color: var(--purple); }
+    .ev-ads { color: var(--orange); }
+    .ev-endorse { color: #38bdf8; }
+    .ev-organic { color: var(--green); }
+
+    /* ADD EVENT FORM */
+    .add-event-btn { background: var(--purple-dim); border: 1px solid rgba(167,139,250,0.25); border-radius: 6px; color: var(--purple); cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 500; padding: 6px 14px; transition: background 0.15s; }
+    .add-event-btn:hover { background: rgba(167,139,250,0.2); }
+    .event-form { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 16px; display: none; }
+    .event-form.show { display: block; }
+    .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 10px; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; }
+    .form-input { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 12px; padding: 7px 10px; outline: none; transition: border-color 0.15s; }
+    .form-input:focus { border-color: var(--border-hover); }
+    .form-actions { display: flex; gap: 8px; margin-top: 8px; }
+    .btn-save { background: var(--purple); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 600; padding: 8px 16px; }
+    .btn-cancel-sm { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text2); cursor: pointer; font-family: inherit; font-size: 12px; padding: 8px 14px; }
+
+    /* EVENT LIST */
+    .event-list { display: flex; flex-direction: column; gap: 8px; }
+    .event-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: var(--bg3); border-radius: 8px; border-left: 3px solid; font-size: 12px; }
+    .event-item.PR { border-color: var(--purple); }
+    .event-item.ads { border-color: var(--orange); }
+    .event-item.endorse { border-color: #38bdf8; }
+    .event-item.organic { border-color: var(--green); }
+    .event-date { color: var(--text3); white-space: nowrap; min-width: 72px; font-size: 11px; }
+    .event-info { flex: 1; }
+    .event-type-badge { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 7px; border-radius: 4px; margin-right: 6px; }
+    .ev-badge-PR { background: var(--purple-dim); color: var(--purple); }
+    .ev-badge-ads { background: var(--orange-dim); color: var(--orange); }
+    .ev-badge-endorse { background: rgba(56,189,248,0.1); color: #38bdf8; }
+    .ev-badge-organic { background: var(--green-dim); color: var(--green); }
+    .event-del { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 14px; padding: 0 4px; transition: color 0.15s; }
+    .event-del:hover { color: var(--red); }
 
     /* TABLE */
-    .table-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
-    .table-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-    .table-title { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; }
+    .table-wrap { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; }
-    thead th { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; text-align: left; padding: 10px 20px; border-bottom: 1px solid var(--border); font-weight: 600; white-space: nowrap; }
+    thead th { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; text-align: left; padding: 8px 14px; border-bottom: 1px solid var(--border); }
     thead th.right { text-align: right; }
-    tbody td { padding: 12px 20px; border-bottom: 1px solid var(--border); font-size: 13px; }
+    tbody td { padding: 11px 14px; border-bottom: 1px solid var(--border); font-size: 12px; }
     tbody td.right { text-align: right; }
     tbody tr:last-child td { border-bottom: none; }
     tbody tr:hover td { background: var(--bg3); }
-    tfoot td { padding: 12px 20px; font-size: 12px; font-weight: 600; border-top: 1px solid var(--border); }
+    tfoot td { padding: 10px 14px; font-weight: 600; font-size: 12px; border-top: 1px solid var(--border); }
     tfoot td.right { text-align: right; }
     .mono { font-family: var(--mono); }
-    .tag-artikel { font-size: 10px; background: var(--bg3); color: var(--text2); border-radius: 4px; padding: 2px 7px; display: inline-block; }
-    .bar-mini { height: 3px; border-radius: 2px; background: var(--green); margin-top: 4px; transition: width 0.4s; }
 
-    /* LOADING / EMPTY */
+    /* IMPACT INDICATOR */
+    .impact-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text3); margin-top: 3px; }
+    .impact-bar-wrap { flex: 1; height: 3px; background: var(--bg3); border-radius: 2px; max-width: 60px; }
+    .impact-bar { height: 100%; border-radius: 2px; background: var(--green); }
+
     .loading { text-align: center; padding: 60px; color: var(--text3); font-size: 13px; }
     .empty { text-align: center; padding: 40px; color: var(--text3); font-size: 13px; }
 
+    /* TOAST */
+    .toast { position: fixed; bottom: 24px; right: 24px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; font-size: 12px; z-index: 999; opacity: 0; transform: translateY(6px); transition: all 0.2s; pointer-events: none; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
     @media (max-width: 720px) {
       .content { padding: 16px; }
-      .hero-row { grid-template-columns: 1fr; gap: 10px; }
+      .hero-row { grid-template-columns: 1fr 1fr; gap: 8px; }
       .top-bar { padding: 10px 14px; }
-      thead th:nth-child(3), tbody td:nth-child(3) { display: none; }
+      .form-row { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
@@ -155,58 +192,113 @@
   </div>
 
   <div class="content">
-    <div id="hero-row" class="hero-row">
-      <div class="hero-card revenue">
+    <!-- HERO -->
+    <div class="hero-row">
+      <div class="hero-card c-green">
         <div class="hero-label">Total Revenue</div>
-        <div class="hero-value revenue" id="hero-revenue">—</div>
-        <div class="hero-sub" id="hero-revenue-sub">memuat...</div>
+        <div class="hero-value c-green" id="h-revenue">—</div>
+        <div class="hero-sub" id="h-revenue-sub">—</div>
       </div>
-      <div class="hero-card units">
-        <div class="hero-label">Total Unit Terjual</div>
-        <div class="hero-value units" id="hero-units">—</div>
-        <div class="hero-sub" id="hero-units-sub">memuat...</div>
+      <div class="hero-card c-yellow">
+        <div class="hero-label">Total Terjual</div>
+        <div class="hero-value c-yellow" id="h-units">—</div>
+        <div class="hero-sub" id="h-units-sub">—</div>
       </div>
-      <div class="hero-card avg">
-        <div class="hero-label">Avg Revenue / Bulan</div>
-        <div class="hero-value avg" id="hero-avg">—</div>
-        <div class="hero-sub" id="hero-avg-sub">memuat...</div>
+      <div class="hero-card c-purple">
+        <div class="hero-label">Marketing Events</div>
+        <div class="hero-value c-purple" id="h-events">—</div>
+        <div class="hero-sub" id="h-events-sub">—</div>
+      </div>
+      <div class="hero-card c-orange">
+        <div class="hero-label">Avg Revenue/Bulan</div>
+        <div class="hero-value c-orange" id="h-avg">—</div>
+        <div class="hero-sub" id="h-avg-sub">—</div>
       </div>
     </div>
 
-    <div class="controls-row">
-      <span class="ctrl-label">Filter:</span>
-      <button class="ctrl-btn active" onclick="setFilter('all', this)">Semua Produk</button>
-      <div id="product-filters"></div>
-      <select class="ctrl-select" id="year-select" onchange="render()">
-        <option value="all">Semua Tahun</option>
-      </select>
-    </div>
-
-    <div class="chart-card">
-      <div class="chart-title">
-        <span>Monthly Sales & Revenue</span>
+    <!-- TIMELINE CHART -->
+    <div class="card">
+      <div class="section-label">
+        <span>Timeline Sales + Marketing Events</span>
         <div class="chart-legend">
           <div class="legend-item"><div class="legend-dot" style="background:var(--green);"></div> Revenue</div>
-          <div class="legend-item"><div class="legend-dot" style="background:var(--yellow);"></div> Unit Terjual</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--yellow);"></div> Unit</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--purple);"></div> PR</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--orange);"></div> Ads</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#38bdf8;"></div> Endorse</div>
         </div>
       </div>
-      <div class="chart-wrap" id="chart-wrap">
-        <div class="loading">Memuat data...</div>
-      </div>
+      <div class="chart-wrap" id="chart-wrap"><div class="loading">Memuat...</div></div>
     </div>
 
-    <div class="table-card">
-      <div class="table-header">
-        <div class="table-title">Rincian Per Bulan</div>
+    <!-- MARKETING EVENTS -->
+    <div class="card">
+      <div class="section-label">
+        <span>Marketing Events</span>
+        <button class="add-event-btn" onclick="toggleEventForm()">+ Tambah Event</button>
       </div>
-      <div id="table-wrap">
-        <div class="loading">Memuat data...</div>
+
+      <div class="event-form" id="event-form">
+        <div class="form-row">
+          <div class="form-group">
+            <div class="form-label">Tanggal</div>
+            <input type="date" class="form-input" id="ev-date" />
+          </div>
+          <div class="form-group">
+            <div class="form-label">Tipe</div>
+            <select class="form-input" id="ev-tipe">
+              <option value="PR">PR (produk gratis)</option>
+              <option value="endorse">Endorse (berbayar)</option>
+              <option value="ads">Paid Ads</option>
+              <option value="organic">Organic / Lainnya</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <div class="form-label">Platform</div>
+            <select class="form-input" id="ev-platform">
+              <option value="Instagram">Instagram</option>
+              <option value="TikTok">TikTok</option>
+              <option value="Twitter">Twitter/X</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <div class="form-label">Tipe Kreator</div>
+            <select class="form-input" id="ev-kreator">
+              <option value="micro">Micro (&lt;10K)</option>
+              <option value="mid">Mid (10K–100K)</option>
+              <option value="macro">Macro (&gt;100K)</option>
+              <option value="friend">Teman / Organik</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <div class="form-label">Jumlah Kreator</div>
+            <input type="number" min="1" class="form-input" id="ev-jumlah" value="1" />
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:10px;">
+          <div class="form-label">Catatan</div>
+          <input type="text" class="form-input" id="ev-catatan" placeholder="cth: 15 kaos PR batch 1, semua micro IG" />
+        </div>
+        <div class="form-actions">
+          <button class="btn-save" onclick="saveEvent()">Simpan</button>
+          <button class="btn-cancel-sm" onclick="toggleEventForm()">Batal</button>
+        </div>
       </div>
+
+      <div id="event-list"><div class="loading">Memuat...</div></div>
+    </div>
+
+    <!-- MONTHLY TABLE -->
+    <div class="card">
+      <div class="section-label">Rincian Per Bulan</div>
+      <div class="table-wrap" id="table-wrap"><div class="loading">Memuat...</div></div>
     </div>
   </div>
 </div>
 
-<div class="chart-tooltip" id="tooltip"></div>
+<div class="tooltip" id="tooltip"></div>
+<div class="toast" id="toast"></div>
 
 <script>
   const SUPABASE_URL  = 'https://fqvfnohhilkzvijqukfg.supabase.co';
@@ -215,9 +307,11 @@
 
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
   const SIZES = ['S','M','L','XL','XXL'];
+  const BULAN = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
 
-  let allProducts = [], allTx = [], financeData = {};
-  let activeFilter = 'all';
+  let allProducts = [], allTx = [], financeData = {}, allEvents = [];
+
+  const EV_COLORS = { PR: '#a78bfa', ads: '#fb923c', endorse: '#38bdf8', organic: '#34d399' };
 
   async function sha256(str) {
     const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
@@ -225,13 +319,8 @@
   }
   async function checkPw() {
     const val = document.getElementById('pw-input').value.trim();
-    if ((await sha256(val)) === PASSWORD_HASH) {
-      sessionStorage.setItem('ro_auth','1');
-      showMain();
-    } else {
-      document.getElementById('pw-error').textContent = 'Password salah.';
-      document.getElementById('pw-input').value = '';
-    }
+    if ((await sha256(val)) === PASSWORD_HASH) { sessionStorage.setItem('ro_auth','1'); showMain(); }
+    else { document.getElementById('pw-error').textContent = 'Password salah.'; document.getElementById('pw-input').value = ''; }
   }
   function logout() { sessionStorage.removeItem('ro_auth'); location.reload(); }
   async function showMain() {
@@ -244,247 +333,323 @@
   function artikelUnits(a) { return SIZES.reduce((s,sz)=>s+(parseInt(a.sizes[sz])||0),0); }
 
   async function loadAll() {
-    const [prodRes, txRes, finRes] = await Promise.all([
+    const [prodRes, txRes, finRes, evRes] = await Promise.all([
       sb.from('products').select('*').order('created_at'),
       sb.from('sales_transactions').select('*').order('sold_at'),
-      sb.from('finance_entries').select('batch_key,harga_jual')
+      sb.from('finance_entries').select('batch_key,harga_jual'),
+      sb.from('marketing_events').select('*').order('tanggal')
     ]);
     allProducts = (prodRes.data||[]).map(r=>({ id:String(r.id), name:r.name, batches:r.data?.batches||[] }));
     allTx = txRes.data||[];
     financeData = {};
     (finRes.data||[]).forEach(r => { financeData[r.batch_key] = r; });
+    allEvents = evRes.data||[];
 
-    buildProductFilters();
-    buildYearFilter();
-    render();
-  }
-
-  function buildProductFilters() {
-    const el = document.getElementById('product-filters');
-    el.innerHTML = allProducts.map(p =>
-      `<button class="ctrl-btn" onclick="setFilter('${p.id}', this)">${p.name}</button>`
-    ).join('');
-  }
-
-  function buildYearFilter() {
-    const years = [...new Set(allTx.map(t => t.sold_at?.slice(0,4)).filter(Boolean))].sort();
-    const sel = document.getElementById('year-select');
-    years.forEach(y => {
-      const opt = document.createElement('option');
-      opt.value = y; opt.textContent = y;
-      sel.appendChild(opt);
-    });
-  }
-
-  function setFilter(val, btn) {
-    activeFilter = val;
-    document.querySelectorAll('.ctrl-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+    document.getElementById('ev-date').value = new Date().toISOString().split('T')[0];
     render();
   }
 
   function getHargaJual(prodId, batchIdx, artikelName) {
-    const key = `${prodId}_${batchIdx}`;
-    return parseInt(financeData[key]?.harga_jual?.[artikelName]) || 0;
+    return parseInt(financeData[`${prodId}_${batchIdx}`]?.harga_jual?.[artikelName]) || 0;
   }
 
-  function buildMonthlyData() {
-    const yearFilter = document.getElementById('year-select').value;
-    let txFiltered = allTx;
-    if (activeFilter !== 'all') txFiltered = txFiltered.filter(t => t.product_id === activeFilter);
-    if (yearFilter !== 'all') txFiltered = txFiltered.filter(t => t.sold_at?.startsWith(yearFilter));
-
+  // ─── BUILD DAILY DATA ────────────────────────────────────────
+  function buildDailyData() {
+    if (!allTx.length) return [];
     const map = {};
-    txFiltered.forEach(t => {
-      const month = t.sold_at?.slice(0,7); // YYYY-MM
-      if (!month) return;
-      if (!map[month]) map[month] = { units: 0, revenue: 0, byArtikel: {} };
+    allTx.forEach(t => {
+      const day = t.sold_at;
+      if (!day) return;
+      if (!map[day]) map[day] = { units: 0, revenue: 0 };
       const harga = getHargaJual(t.product_id, t.batch_idx, t.artikel_name);
-      const rev = harga * t.qty;
-      map[month].units += t.qty;
-      map[month].revenue += rev;
-      if (!map[month].byArtikel[t.artikel_name]) map[month].byArtikel[t.artikel_name] = { units: 0, revenue: 0 };
-      map[month].byArtikel[t.artikel_name].units += t.qty;
-      map[month].byArtikel[t.artikel_name].revenue += rev;
+      map[day].units += t.qty;
+      map[day].revenue += harga * t.qty;
     });
-
-    // fill gaps between first and last month
+    // fill gaps
     const keys = Object.keys(map).sort();
     if (!keys.length) return [];
-    let cur = keys[0];
-    const last = keys[keys.length-1];
-    while (cur <= last) {
-      if (!map[cur]) map[cur] = { units: 0, revenue: 0, byArtikel: {} };
-      const [y,m] = cur.split('-').map(Number);
-      const next = m === 12 ? `${y+1}-01` : `${y}-${String(m+1).padStart(2,'0')}`;
-      cur = next;
+    const first = new Date(keys[0]);
+    const last = new Date(keys[keys.length-1]);
+    const result = [];
+    for (let d = new Date(first); d <= last; d.setDate(d.getDate()+1)) {
+      const k = d.toISOString().split('T')[0];
+      result.push({ date: k, units: map[k]?.units||0, revenue: map[k]?.revenue||0 });
     }
+    return result;
+  }
+
+  // ─── BUILD MONTHLY DATA ──────────────────────────────────────
+  function buildMonthlyData() {
+    const map = {};
+    allTx.forEach(t => {
+      const month = t.sold_at?.slice(0,7);
+      if (!month) return;
+      if (!map[month]) map[month] = { units:0, revenue:0, events:[] };
+      const harga = getHargaJual(t.product_id, t.batch_idx, t.artikel_name);
+      map[month].units += t.qty;
+      map[month].revenue += harga * t.qty;
+    });
+    allEvents.forEach(ev => {
+      const month = ev.tanggal?.slice(0,7);
+      if (month && map[month]) map[month].events.push(ev);
+    });
     return Object.keys(map).sort().map(k => ({ month: k, ...map[k] }));
   }
 
-  const BULAN = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
-  function fmtMonth(ym) {
-    const [y,m] = ym.split('-');
-    return `${BULAN[parseInt(m)-1]} ${y}`;
+  // ─── RENDER ──────────────────────────────────────────────────
+  function render() {
+    const daily = buildDailyData();
+    const monthly = buildMonthlyData();
+    renderHero(monthly);
+    renderChart(daily);
+    renderEventList();
+    renderTable(monthly);
   }
-  function fmt(n) { return 'Rp ' + (parseInt(n)||0).toLocaleString('id-ID'); }
+
+  function fmt(n) { return 'Rp '+(parseInt(n)||0).toLocaleString('id-ID'); }
   function fmtShort(n) {
     n = parseInt(n)||0;
-    if (n >= 1000000) return 'Rp ' + (n/1000000).toFixed(1).replace('.0','') + 'jt';
-    if (n >= 1000) return 'Rp ' + (n/1000).toFixed(0) + 'rb';
-    return 'Rp ' + n;
+    if (n>=1000000) return 'Rp '+(n/1000000).toFixed(1).replace('.0','')+'jt';
+    if (n>=1000) return 'Rp '+(n/1000).toFixed(0)+'rb';
+    return 'Rp '+n;
+  }
+  function fmtDate(d) {
+    if (!d) return '';
+    const [y,m,day] = d.split('-');
+    return `${parseInt(day)} ${BULAN[parseInt(m)-1]} ${y}`;
   }
 
-  function render() {
-    const data = buildMonthlyData();
-    renderHero(data);
-    renderChart(data);
-    renderTable(data);
-  }
-
-  function renderHero(data) {
-    const totalRev = data.reduce((s,d)=>s+d.revenue,0);
-    const totalUnits = data.reduce((s,d)=>s+d.units,0);
-    const activeMonths = data.filter(d=>d.units>0).length;
+  function renderHero(monthly) {
+    const totalRev = monthly.reduce((s,d)=>s+d.revenue,0);
+    const totalUnits = monthly.reduce((s,d)=>s+d.units,0);
+    const activeMonths = monthly.filter(d=>d.units>0).length;
     const avgRev = activeMonths ? Math.round(totalRev/activeMonths) : 0;
+    const evCount = allEvents.length;
+    const evByType = {};
+    allEvents.forEach(e => { evByType[e.tipe]=(evByType[e.tipe]||0)+1; });
+    const evSummary = Object.entries(evByType).map(([t,n])=>`${n} ${t}`).join(', ') || '—';
 
-    // delta vs previous month
-    const last = data[data.length-1];
-    const prev = data[data.length-2];
-    let deltaHtml = '';
-    if (last && prev && prev.revenue > 0) {
-      const pct = Math.round((last.revenue - prev.revenue)/prev.revenue*100);
-      deltaHtml = `<div class="hero-delta ${pct>=0?'delta-up':'delta-down'}">${pct>=0?'↑':'↓'} ${Math.abs(pct)}% vs bulan lalu</div>`;
-    }
-
-    document.getElementById('hero-revenue').textContent = fmt(totalRev);
-    document.getElementById('hero-revenue-sub').innerHTML = `${activeMonths} bulan aktif${deltaHtml}`;
-    document.getElementById('hero-units').textContent = totalUnits + ' unit';
-    document.getElementById('hero-units-sub').textContent = activeMonths ? `avg ${Math.round(totalUnits/activeMonths)} unit/bulan` : '—';
-    document.getElementById('hero-avg').textContent = fmtShort(avgRev);
-    document.getElementById('hero-avg-sub').textContent = activeMonths ? `dari ${activeMonths} bulan aktif` : '—';
+    document.getElementById('h-revenue').textContent = fmt(totalRev);
+    document.getElementById('h-revenue-sub').textContent = `${activeMonths} bulan aktif`;
+    document.getElementById('h-units').textContent = totalUnits+' unit';
+    document.getElementById('h-units-sub').textContent = activeMonths ? `avg ${Math.round(totalUnits/activeMonths)}/bulan` : '—';
+    document.getElementById('h-events').textContent = evCount+' event';
+    document.getElementById('h-events-sub').textContent = evSummary;
+    document.getElementById('h-avg').textContent = fmtShort(avgRev);
+    document.getElementById('h-avg-sub').textContent = activeMonths ? `dari ${activeMonths} bulan` : '—';
   }
 
-  function renderChart(data) {
+  function renderChart(daily) {
     const wrap = document.getElementById('chart-wrap');
-    if (!data.length) { wrap.innerHTML = '<div class="empty">Belum ada data penjualan.</div>'; return; }
+    if (!daily.length) { wrap.innerHTML = '<div class="empty">Belum ada data penjualan.</div>'; return; }
 
-    const W_per_group = 52;
-    const PAD_L = 60, PAD_R = 20, PAD_T = 16, PAD_B = 40;
-    const CHART_H = 220;
-    const totalW = Math.max(600, PAD_L + data.length * W_per_group + PAD_R);
+    const PL=60, PR=20, PT=16, PB=50, H=240;
+    const DAY_W = Math.max(18, Math.min(36, Math.floor((900-PL-PR)/daily.length)));
+    const W = Math.max(700, PL + daily.length*DAY_W + PR);
 
-    const maxRev = Math.max(...data.map(d=>d.revenue), 1);
-    const maxUnits = Math.max(...data.map(d=>d.units), 1);
+    const maxRev = Math.max(...daily.map(d=>d.revenue),1);
+    const maxUnits = Math.max(...daily.map(d=>d.units),1);
+    const chartH = H - PT - PB;
 
-    const revH = (v) => CHART_H - PAD_B - (v/maxRev)*(CHART_H-PAD_T-PAD_B);
-    const unitH = (v) => CHART_H - PAD_B - (v/maxUnits)*(CHART_H-PAD_T-PAD_B);
-    const barH = (v, max) => (v/max)*(CHART_H-PAD_T-PAD_B);
-
-    // Y axis labels (revenue)
-    let yLabels = '';
-    for (let i=0; i<=4; i++) {
-      const val = Math.round(maxRev * i/4);
-      const y = CHART_H - PAD_B - (i/4)*(CHART_H-PAD_T-PAD_B);
-      yLabels += `<text x="${PAD_L-8}" y="${y+4}" text-anchor="end" font-size="9" fill="var(--text3)">${fmtShort(val)}</text>`;
-      yLabels += `<line x1="${PAD_L}" y1="${y}" x2="${totalW-PAD_R}" y2="${y}" stroke="var(--border)" stroke-dasharray="2,4"/>`;
+    // Y axis
+    let yAxis = '';
+    for (let i=0;i<=4;i++) {
+      const v = Math.round(maxRev*i/4);
+      const y = H-PB-(i/4)*chartH;
+      yAxis += `<text x="${PL-6}" y="${y+4}" text-anchor="end" font-size="9" fill="var(--text3)">${fmtShort(v)}</text>`;
+      yAxis += `<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="var(--border)" stroke-dasharray="3,5"/>`;
     }
 
-    // Bars + x labels
-    let bars = '';
-    data.forEach((d, i) => {
-      const x = PAD_L + i * W_per_group + W_per_group/2;
-      const bw = 14;
-      const gap = 3;
-
-      const rh = barH(d.revenue, maxRev);
-      const uh = barH(d.units, maxUnits);
-
-      bars += `<g class="bar-group" data-idx="${i}"
-        onmouseenter="showTooltip(event,${i})"
-        onmouseleave="hideTooltip()">
-        <rect class="bar-revenue" x="${x-bw-gap/2}" y="${CHART_H-PAD_B-rh}" width="${bw}" height="${Math.max(rh,1)}" fill="var(--green)" rx="2" opacity="0.85"/>
-        <rect class="bar-units" x="${x+gap/2}" y="${CHART_H-PAD_B-uh}" width="${bw}" height="${Math.max(uh,1)}" fill="var(--yellow)" rx="2" opacity="0.7"/>
-        <text x="${x}" y="${CHART_H-PAD_B+14}" text-anchor="middle" font-size="9" fill="var(--text3)">${BULAN[parseInt(d.month.split('-')[1])-1]}</text>
-        <text x="${x}" y="${CHART_H-PAD_B+24}" text-anchor="middle" font-size="8" fill="var(--text3)" opacity="0.6">${d.month.slice(2,4)}</text>
-        <rect x="${PAD_L + i*W_per_group}" y="${PAD_T}" width="${W_per_group}" height="${CHART_H-PAD_T-PAD_B}" fill="transparent"/>
-      </g>`;
+    // Build event date map
+    const evByDate = {};
+    allEvents.forEach(ev => {
+      if (!evByDate[ev.tanggal]) evByDate[ev.tanggal] = [];
+      evByDate[ev.tanggal].push(ev);
     });
 
-    wrap.innerHTML = `<svg class="chart-svg" width="${totalW}" height="${CHART_H}" viewBox="0 0 ${totalW} ${CHART_H}">
-      ${yLabels}
-      <line x1="${PAD_L}" y1="${PAD_T}" x2="${PAD_L}" y2="${CHART_H-PAD_B}" stroke="var(--border)"/>
-      <line x1="${PAD_L}" y1="${CHART_H-PAD_B}" x2="${totalW-PAD_R}" y2="${CHART_H-PAD_B}" stroke="var(--border)"/>
-      ${bars}
+    // Bars + event markers
+    let bars = '', markers = '', xLabels = '';
+    let prevMonth = '';
+    daily.forEach((d,i) => {
+      const x = PL + i*DAY_W + DAY_W/2;
+      const rh = (d.revenue/maxRev)*chartH;
+      const uh = (d.units/maxUnits)*chartH;
+
+      // bar revenue
+      bars += `<rect x="${x-DAY_W/2+1}" y="${H-PB-rh}" width="${DAY_W*0.45}" height="${Math.max(rh,0.5)}"
+        fill="var(--green)" rx="1" opacity="${d.revenue>0?'0.75':'0.15'}"
+        onmouseenter="showTT(event,'${d.date}',${d.revenue},${d.units})"
+        onmouseleave="hideTT()" style="cursor:default"/>`;
+      // bar units
+      bars += `<rect x="${x+1}" y="${H-PB-uh}" width="${DAY_W*0.4}" height="${Math.max(uh,0.5)}"
+        fill="var(--yellow)" rx="1" opacity="${d.units>0?'0.65':'0.15'}"
+        onmouseenter="showTT(event,'${d.date}',${d.revenue},${d.units})"
+        onmouseleave="hideTT()" style="cursor:default"/>`;
+
+      // Month label
+      const month = d.date.slice(0,7);
+      if (month !== prevMonth) {
+        prevMonth = month;
+        const [y,m] = month.split('-');
+        xLabels += `<text x="${x}" y="${H-PB+14}" text-anchor="middle" font-size="9" fill="var(--text2)" font-weight="500">${BULAN[parseInt(m)-1]}</text>`;
+        xLabels += `<text x="${x}" y="${H-PB+24}" text-anchor="middle" font-size="8" fill="var(--text3)">${y}</text>`;
+        xLabels += `<line x1="${x-DAY_W/2}" y1="${PT}" x2="${x-DAY_W/2}" y2="${H-PB}" stroke="var(--border)" stroke-dasharray="2,6"/>`;
+      }
+
+      // Event markers
+      if (evByDate[d.date]) {
+        evByDate[d.date].forEach((ev,ei) => {
+          const cy = PT + ei*14;
+          const col = EV_COLORS[ev.tipe]||'#fff';
+          const evJson = JSON.stringify(ev).replace(/'/g,"&#39;");
+          markers += `<g class="event-marker" onmouseenter="showEvTT(event,${i})" onmouseleave="hideTT()" data-ev='${evJson}'>
+            <line x1="${x}" y1="${cy+6}" x2="${x}" y2="${H-PB}" stroke="${col}" stroke-width="1" stroke-dasharray="3,3" opacity="0.5"/>
+            <circle cx="${x}" cy="${cy}" r="5" fill="${col}" opacity="0.85"/>
+            <text x="${x}" y="${cy+4}" text-anchor="middle" font-size="7" fill="white" font-weight="bold">${ev.tipe[0].toUpperCase()}</text>
+          </g>`;
+        });
+      }
+    });
+
+    wrap.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block;min-width:${W}px;">
+      ${yAxis}
+      <line x1="${PL}" y1="${PT}" x2="${PL}" y2="${H-PB}" stroke="var(--border)"/>
+      <line x1="${PL}" y1="${H-PB}" x2="${W-PR}" y2="${H-PB}" stroke="var(--border)"/>
+      ${bars}${markers}${xLabels}
     </svg>`;
-
-    // store data for tooltip
-    wrap._chartData = data;
+    wrap._daily = daily;
   }
 
-  function showTooltip(e, idx) {
-    const data = document.getElementById('chart-wrap')._chartData;
-    if (!data) return;
-    const d = data[idx];
+  function showTT(e, date, rev, units) {
     const tt = document.getElementById('tooltip');
-    const artikelLines = Object.entries(d.byArtikel).map(([name, v]) =>
-      `<div class="tt-row"><span class="tt-label">${name}</span><span class="tt-val" style="color:var(--text2);">${v.units}u</span></div>`
-    ).join('');
-    tt.innerHTML = `
-      <div class="tt-month">${fmtMonth(d.month)}</div>
-      <div class="tt-row"><span class="tt-label">Revenue</span><span class="tt-val" style="color:var(--green);">${fmt(d.revenue)}</span></div>
-      <div class="tt-row"><span class="tt-label">Unit Terjual</span><span class="tt-val" style="color:var(--yellow);">${d.units}</span></div>
-      ${artikelLines ? `<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);">${artikelLines}</div>` : ''}
-    `;
-    tt.classList.add('show');
-    tt.style.left = (e.clientX + 16) + 'px';
-    tt.style.top = (e.clientY - 10) + 'px';
+    // find events on this date
+    const evs = allEvents.filter(ev=>ev.tanggal===date);
+    const evHtml = evs.length ? `<div class="tt-divider"></div>${evs.map(ev=>`
+      <div class="tt-row"><span class="tt-label" style="color:${EV_COLORS[ev.tipe]||'#fff'}">${ev.tipe} · ${ev.platform||''}</span></div>
+      ${ev.catatan?`<div style="font-size:10px;color:var(--text3);margin-top:2px;">${ev.catatan}</div>`:''}
+    `).join('')}` : '';
+    tt.innerHTML = `<div class="tt-title">${fmtDate(date)}</div>
+      <div class="tt-row"><span class="tt-label">Revenue</span><span class="tt-val" style="color:var(--green)">${fmt(rev)}</span></div>
+      <div class="tt-row"><span class="tt-label">Unit</span><span class="tt-val" style="color:var(--yellow)">${units}</span></div>
+      ${evHtml}`;
+    positionTT(e);
   }
-  function hideTooltip() { document.getElementById('tooltip').classList.remove('show'); }
 
-  function renderTable(data) {
+  function showEvTT(e, idx) {
+    const wrap = document.getElementById('chart-wrap');
+    const daily = wrap._daily;
+    const el = e.currentTarget;
+    const evData = JSON.parse(el.getAttribute('data-ev'));
+    const d = daily[idx];
+    const tt = document.getElementById('tooltip');
+    tt.innerHTML = `<div class="tt-title" style="color:${EV_COLORS[evData.tipe]||'#fff'}">${evData.tipe.toUpperCase()} · ${fmtDate(evData.tanggal)}</div>
+      <div class="tt-row"><span class="tt-label">Platform</span><span class="tt-val">${evData.platform||'—'}</span></div>
+      <div class="tt-row"><span class="tt-label">Kreator</span><span class="tt-val">${evData.tipe_kreator||'—'} × ${evData.jumlah_kreator||1}</span></div>
+      ${evData.catatan?`<div style="font-size:11px;color:var(--text2);margin-top:6px;">${evData.catatan}</div>`:''}
+      ${d?`<div class="tt-divider"></div><div class="tt-row"><span class="tt-label">Sales hari ini</span><span class="tt-val" style="color:var(--green)">${fmt(d.revenue)}</span></div>`:''}`;
+    positionTT(e);
+  }
+
+  function positionTT(e) {
+    const tt = document.getElementById('tooltip');
+    tt.classList.add('show');
+    const x = e.clientX+16, y = e.clientY-10;
+    tt.style.left = (x+200>window.innerWidth ? e.clientX-220 : x)+'px';
+    tt.style.top = y+'px';
+  }
+  function hideTT() { document.getElementById('tooltip').classList.remove('show'); }
+
+  // ─── EVENT FORM ──────────────────────────────────────────────
+  function toggleEventForm() {
+    document.getElementById('event-form').classList.toggle('show');
+  }
+
+  async function saveEvent() {
+    const tanggal = document.getElementById('ev-date').value;
+    const tipe = document.getElementById('ev-tipe').value;
+    const platform = document.getElementById('ev-platform').value;
+    const tipe_kreator = document.getElementById('ev-kreator').value;
+    const jumlah_kreator = parseInt(document.getElementById('ev-jumlah').value)||1;
+    const catatan = document.getElementById('ev-catatan').value.trim();
+    if (!tanggal) { showToast('⚠️ Tanggal wajib diisi.'); return; }
+    const { data, error } = await sb.from('marketing_events').insert({ tanggal, tipe, platform, tipe_kreator, jumlah_kreator, catatan }).select().single();
+    if (error) { showToast('❌ Gagal simpan.'); return; }
+    allEvents.push(data);
+    allEvents.sort((a,b)=>a.tanggal.localeCompare(b.tanggal));
+    document.getElementById('event-form').classList.remove('show');
+    document.getElementById('ev-catatan').value = '';
+    showToast('✅ Event tersimpan.');
+    render();
+  }
+
+  async function deleteEvent(id) {
+    if (!confirm('Hapus event ini?')) return;
+    await sb.from('marketing_events').delete().eq('id', id);
+    allEvents = allEvents.filter(e=>e.id!==id);
+    showToast('🗑 Event dihapus.');
+    render();
+  }
+
+  function renderEventList() {
+    const el = document.getElementById('event-list');
+    if (!allEvents.length) { el.innerHTML = '<div class="empty">Belum ada marketing event. Tambah event pertama.</div>'; return; }
+    el.innerHTML = `<div class="event-list">${[...allEvents].reverse().map(ev=>`
+      <div class="event-item ${ev.tipe}">
+        <div class="event-date">${fmtDate(ev.tanggal)}</div>
+        <div class="event-info">
+          <span class="event-type-badge ev-badge-${ev.tipe}">${ev.tipe}</span>
+          <span style="color:var(--text2);">${ev.platform||''}</span>
+          ${ev.tipe_kreator?`<span style="color:var(--text3);font-size:11px;"> · ${ev.tipe_kreator} × ${ev.jumlah_kreator}</span>`:''}
+          ${ev.catatan?`<div style="font-size:11px;color:var(--text3);margin-top:3px;">${ev.catatan}</div>`:''}
+        </div>
+        <button class="event-del" onclick="deleteEvent(${ev.id})">×</button>
+      </div>`).join('')}
+    </div>`;
+  }
+
+  // ─── MONTHLY TABLE ───────────────────────────────────────────
+  function renderTable(monthly) {
     const wrap = document.getElementById('table-wrap');
-    if (!data.length) { wrap.innerHTML = '<div class="empty">Belum ada data.</div>'; return; }
+    if (!monthly.length) { wrap.innerHTML = '<div class="empty">Belum ada data.</div>'; return; }
+    const maxRev = Math.max(...monthly.map(d=>d.revenue),1);
+    const totalRev = monthly.reduce((s,d)=>s+d.revenue,0);
+    const totalUnits = monthly.reduce((s,d)=>s+d.units,0);
 
-    const maxRev = Math.max(...data.map(d=>d.revenue), 1);
-    const totalRev = data.reduce((s,d)=>s+d.revenue,0);
-    const totalUnits = data.reduce((s,d)=>s+d.units,0);
-
-    const rows = [...data].reverse().map(d => {
-      const barPct = Math.round(d.revenue/maxRev*100);
-      const artikelTags = Object.keys(d.byArtikel).map(n=>`<span class="tag-artikel">${n}: ${d.byArtikel[n].units}</span>`).join(' ');
+    const rows = [...monthly].reverse().map(d => {
+      const evInMonth = allEvents.filter(ev=>ev.tanggal?.slice(0,7)===d.month);
+      const evBadges = [...new Set(evInMonth.map(e=>e.tipe))].map(t=>
+        `<span class="event-type-badge ev-badge-${t}" style="font-size:9px;padding:1px 5px;">${t}</span>`).join(' ');
+      const barW = Math.round(d.revenue/maxRev*80);
       return `<tr>
-        <td style="font-weight:500;">${fmtMonth(d.month)}</td>
+        <td style="font-weight:500;">${BULAN[parseInt(d.month.split('-')[1])-1]} ${d.month.split('-')[0]}</td>
         <td class="right mono" style="color:var(--green);">${fmt(d.revenue)}
-          <div class="bar-mini" style="width:${barPct}%;max-width:80px;margin-left:auto;"></div>
+          <div style="height:2px;background:var(--green);border-radius:1px;width:${barW}px;margin-left:auto;margin-top:3px;opacity:0.5;"></div>
         </td>
         <td class="right mono" style="color:var(--yellow);">${d.units}</td>
-        <td class="right" style="color:var(--text2);">${d.revenue && d.units ? fmt(Math.round(d.revenue/d.units)) : '—'}</td>
-        <td>${artikelTags || '<span style="color:var(--text3);">—</span>'}</td>
+        <td class="right mono" style="color:var(--text2);">${d.units?fmt(Math.round(d.revenue/d.units)):'—'}</td>
+        <td>${evBadges||'<span style="color:var(--text3);font-size:11px;">—</span>'}</td>
       </tr>`;
     }).join('');
 
     wrap.innerHTML = `<table>
-      <thead>
-        <tr>
-          <th>Bulan</th>
-          <th class="right">Revenue</th>
-          <th class="right">Unit</th>
-          <th class="right">Avg/Unit</th>
-          <th>Per Artikel</th>
-        </tr>
-      </thead>
+      <thead><tr>
+        <th>Bulan</th><th class="right">Revenue</th><th class="right">Unit</th><th class="right">Avg/Unit</th><th>Marketing</th>
+      </tr></thead>
       <tbody>${rows}</tbody>
-      <tfoot>
-        <tr>
-          <td style="color:var(--text3);">Total</td>
-          <td class="right mono" style="color:var(--green);">${fmt(totalRev)}</td>
-          <td class="right mono" style="color:var(--yellow);">${totalUnits}</td>
-          <td class="right mono" style="color:var(--text2);">${totalUnits ? fmt(Math.round(totalRev/totalUnits)) : '—'}</td>
-          <td></td>
-        </tr>
-      </tfoot>
+      <tfoot><tr>
+        <td style="color:var(--text3);">Total</td>
+        <td class="right mono" style="color:var(--green);">${fmt(totalRev)}</td>
+        <td class="right mono" style="color:var(--yellow);">${totalUnits}</td>
+        <td class="right mono" style="color:var(--text2);">${totalUnits?fmt(Math.round(totalRev/totalUnits)):'—'}</td>
+        <td></td>
+      </tr></tfoot>
     </table>`;
+  }
+
+  function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg; el.classList.add('show');
+    setTimeout(()=>el.classList.remove('show'), 2500);
   }
 </script>
 <script>
