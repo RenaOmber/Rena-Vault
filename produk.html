@@ -319,8 +319,13 @@
   }
 
   function recalcCOGS(a) {
-    const kaosPrice = parseInt(a.hargaKaosManual)||0;
-    return kaosPrice + getVendorPrice(a.vendorHangtag) + getVendorPrice(a.vendorPackaging);
+    return (parseInt(a.hargaKaosManual)||0)
+      + (parseInt(a.biayaLabelWoven)||0)
+      + (parseInt(a.biayaWashTag)||0)
+      + (parseInt(a.biayaHangtag)||0)
+      + (parseInt(a.biayaZiplock)||0)
+      + (parseInt(a.biayaPolymailer)||0)
+      + (parseInt(a.biayaHadiah)||0);
   }
   if (sessionStorage.getItem('ro_auth') === '1') showMain();
 
@@ -345,6 +350,7 @@
       designUrl: '', designName: '', designPath: '',
       sizechartUrl: '', sizechartName: '', sizechartPath: '',
       sablon: '', sablonLink: '', warnaKaos: '', tebalKain: '', potongan: 'regular', jumlahWarna: 1, hargaKaosManual: 0,
+      biayaLabelWoven: 0, biayaWashTag: 0, biayaHangtag: 0, biayaZiplock: 0, biayaPolymailer: 0, biayaHadiah: 0,
       vendorKaos: '', vendorHangtag: '', vendorPackaging: '',
       labelLeherUrl: '', labelLeherName: '', labelPinggangUrl: '', labelPinggangName: '',
       sizes: { S:0, M:0, L:0, XL:0, XXL:0 },
@@ -597,33 +603,75 @@
             <select class="form-input" onchange="updateVendor('vendorKaos',this.value)">
               ${vendorOptions('kaos', a.vendorKaos)}
             </select>
+            <div style="font-size:11px;color:var(--text3);margin-top:6px;">Nama vendor ini masuk ke PDF untuk vendor.</div>
           </div>
+        </div>
+
+        <div class="form-section-title" style="margin-top:14px;">Komponen Biaya per pcs (internal)</div>
+        <div style="font-size:11px;color:var(--text3);margin:-6px 0 12px;">Isi harga per pcs tiap komponen. Semua dijumlah jadi COGS. Tidak masuk PDF vendor.</div>
+        <div class="form-row">
           <div class="form-group">
-            <div class="form-label">Harga per pcs kaos (dari invoice)</div>
+            <div class="form-label">Kaos (dari invoice)</div>
             <div style="position:relative;">
               <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text3);">Rp</span>
-              <input type="number" min="0" class="form-input" style="padding-left:32px;" value="${a.hargaKaosManual||''}" placeholder="Isi setelah invoice masuk"
+              <input type="number" min="0" class="form-input" style="padding-left:32px;" value="${a.hargaKaosManual||''}" placeholder="0"
                 onchange="updateVendor('hargaKaosManual',parseInt(this.value)||0)" />
             </div>
-            <div style="font-size:11px;color:var(--text3);margin-top:6px;">Harga final dari vendor (sudah termasuk potongan, bahan, warna sablon). Hanya untuk perhitungan internal — tidak masuk PDF.</div>
-          </div>
-        </div>
-        <div class="form-section-title" style="margin-top:4px;">Vendor Lainnya</div>
-        <div class="form-row">
-          <div class="form-group">
-            <div class="form-label">Vendor Hangtag</div>
-            <select class="form-input" onchange="updateVendor('vendorHangtag',this.value)">
-              ${vendorOptions('hangtag', a.vendorHangtag)}
-            </select>
           </div>
           <div class="form-group">
-            <div class="form-label">Vendor Packaging</div>
-            <select class="form-input" onchange="updateVendor('vendorPackaging',this.value)">
-              ${vendorOptions('packaging', a.vendorPackaging)}
-            </select>
+            <div class="form-label">Label Woven</div>
+            <div style="position:relative;">
+              <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text3);">Rp</span>
+              <input type="number" min="0" class="form-input" style="padding-left:32px;" value="${a.biayaLabelWoven||''}" placeholder="0"
+                onchange="updateVendor('biayaLabelWoven',parseInt(this.value)||0)" />
+            </div>
           </div>
         </div>
         <div class="form-row">
+          <div class="form-group">
+            <div class="form-label">Wash Tag</div>
+            <div style="position:relative;">
+              <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text3);">Rp</span>
+              <input type="number" min="0" class="form-input" style="padding-left:32px;" value="${a.biayaWashTag||''}" placeholder="0"
+                onchange="updateVendor('biayaWashTag',parseInt(this.value)||0)" />
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="form-label">Hangtag</div>
+            <div style="position:relative;">
+              <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text3);">Rp</span>
+              <input type="number" min="0" class="form-input" style="padding-left:32px;" value="${a.biayaHangtag||''}" placeholder="0"
+                onchange="updateVendor('biayaHangtag',parseInt(this.value)||0)" />
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <div class="form-label">Plastik Ziplock</div>
+            <div style="position:relative;">
+              <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text3);">Rp</span>
+              <input type="number" min="0" class="form-input" style="padding-left:32px;" value="${a.biayaZiplock||''}" placeholder="0"
+                onchange="updateVendor('biayaZiplock',parseInt(this.value)||0)" />
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="form-label">Plastik Polymailer</div>
+            <div style="position:relative;">
+              <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text3);">Rp</span>
+              <input type="number" min="0" class="form-input" style="padding-left:32px;" value="${a.biayaPolymailer||''}" placeholder="0"
+                onchange="updateVendor('biayaPolymailer',parseInt(this.value)||0)" />
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <div class="form-label">Hadiah (ular tangga + stiker)</div>
+            <div style="position:relative;">
+              <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text3);">Rp</span>
+              <input type="number" min="0" class="form-input" style="padding-left:32px;" value="${a.biayaHadiah||''}" placeholder="0"
+                onchange="updateVendor('biayaHadiah',parseInt(this.value)||0)" />
+            </div>
+          </div>
           <div class="form-group">
             <div class="form-label">COGS Total per unit (auto)</div>
             <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:9px 12px;font-size:13px;font-weight:600;color:var(--accent);" id="cogs-display">
@@ -841,12 +889,14 @@
     doc.setTextColor(0,0,0);
     doc.setFontSize(14); doc.setFont('helvetica','bold');
     doc.text(`${p.name} — ${batch.name} — ${a.name}`, M, y); y += 7;
-    if (a.sablon || a.sablonLink || a.warnaKaos || a.tebalKain) {
+    if (a.sablon || a.sablonLink || a.warnaKaos || a.tebalKain || a.vendorKaos) {
       doc.setFontSize(9); doc.setFont('helvetica','normal');
       const specs = [];
       if (a.sablon) specs.push(`Sablon: ${a.sablon}`);
       if (a.warnaKaos) specs.push(`Warna: ${a.warnaKaos}`);
       if (a.tebalKain) specs.push(`Kain: ${a.tebalKain}`);
+      const vk = vendors.find(v=>v.id===a.vendorKaos);
+      if (vk) specs.push(`Vendor Kaos: ${vk.name}`);
       if (specs.length) { doc.setTextColor(60,60,60); doc.text(specs.join('  ·  '), M, y); y += 5; }
       if (a.sablonLink) {
         doc.setTextColor(79,110,247);
