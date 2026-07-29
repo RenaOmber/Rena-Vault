@@ -384,12 +384,22 @@
           <label class="check-pill"><input type="checkbox" value="Foil" class="ht-variasi"> Foil</label>
         </div>
       </div>
-      <div class="section-divider">Paket 1.200 pcs (flat)</div>
+      <div class="section-divider">Paket hangtag</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div class="form-group">
           <div class="form-label">Harga paket (Rp)</div>
-          <input type="number" class="form-input" id="f-ht-pkg-price" placeholder="499000" min="0" />
+          <input type="number" class="form-input" id="f-ht-pkg-price" placeholder="395000" min="0" oninput="updateHtPerPcs()" />
         </div>
+        <div class="form-group">
+          <div class="form-label">Isi paket (pcs)</div>
+          <input type="number" class="form-input" id="f-ht-pkg-qty" placeholder="500" min="1" value="1" oninput="updateHtPerPcs()" />
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Harga per pcs (auto)</div>
+        <input class="form-input" id="f-ht-pkg-perpcs" readonly style="color:var(--accent);font-weight:600;background:var(--bg3);" value="Rp 0" />
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div class="form-group">
           <div class="form-label">Ukuran maks (cm)</div>
           <input class="form-input" id="f-ht-pkg-size" placeholder="9x5" />
@@ -656,7 +666,7 @@
         `<tr><td>${size} cm</td><td style="text-align:right;color:var(--accent);font-weight:500;">${fmtPrice(price)}/pcs</td></tr>`).join('');
       const popTable = popRows ? `<table class="matrix-table" style="margin-top:6px;"><tr><th>Ukuran</th><th style="text-align:right;">Harga (6k pcs)</th></tr>${popRows}</table>` : '';
       priceSection = `<div class="price-matrix" style="padding:12px 16px;display:flex;flex-direction:column;gap:6px;">
-        <div style="font-size:11px;color:var(--text3);">Paket 1.200 pcs: <span style="color:var(--accent);font-weight:600;">${fmtPrice(d.paket?.harga)}</span> · ${d.paket?.spesifikasi||''}</div>
+        <div style="font-size:11px;color:var(--text3);">Paket ${d.paket?.isiPaket||'—'} pcs: <span style="color:var(--accent);font-weight:600;">${fmtPrice(d.paket?.harga)}</span> · ${d.paket?.spesifikasi||''}</div>
         <div style="display:flex;gap:5px;flex-wrap:wrap;">${tags(d.bahan,'rgba(251,191,36,0.1)')}${tags(d.laminasi,'rgba(99,130,255,0.08)')}${tags(d.variasi,'rgba(52,211,153,0.08)')}</div>
         ${popTable}
         <div style="font-size:10px;color:var(--text3);">DP ${d.dp||'—'}% · Lead time ${d.ltProd||'—'} HK</div>
@@ -801,6 +811,7 @@
         (d.laminasi||[]).forEach(v => { const el = document.querySelector(`.ht-laminasi[value="${v}"]`); if(el) el.checked=true; });
         (d.variasi||[]).forEach(v => { const el = document.querySelector(`.ht-variasi[value="${v}"]`); if(el) el.checked=true; });
         document.getElementById('f-ht-pkg-price').value = d.paket?.harga || '';
+        document.getElementById('f-ht-pkg-qty').value = d.paket?.isiPaket || 1;
         document.getElementById('f-ht-pkg-size').value = d.paket?.ukuranMaks || '';
         document.getElementById('f-ht-pkg-spec').value = d.paket?.spesifikasi || '';
         document.getElementById('f-ht-color-charge').value = d.paket?.colorCharge || '';
@@ -811,6 +822,7 @@
         document.getElementById('f-ht-dp').value = d.dp || '';
         document.getElementById('f-ht-lt-prod').value = d.ltProd || '';
         document.getElementById('f-ht-revisi').value = d.revisi || '';
+        updateHtPerPcs();
 
       } else if (t === 'label printing') {
         (d.bahan||[]).forEach(v => { const el = document.querySelector(`.lp-bahan[value="${v}"]`); if(el) el.checked=true; });
@@ -846,6 +858,13 @@
     const qty = parseInt(document.getElementById('f-price-qty').value)||1;
     const perPcs = Math.round(total / qty);
     document.getElementById('f-price-perpcs').value = 'Rp ' + perPcs.toLocaleString('id-ID');
+  }
+
+  function updateHtPerPcs() {
+    const total = parseInt(document.getElementById('f-ht-pkg-price').value)||0;
+    const qty = parseInt(document.getElementById('f-ht-pkg-qty').value)||1;
+    const perPcs = Math.round(total / qty);
+    document.getElementById('f-ht-pkg-perpcs').value = 'Rp ' + perPcs.toLocaleString('id-ID');
   }
 
   function closeModal() {
@@ -926,6 +945,7 @@
         variasi: getChecked('ht-variasi'),
         paket: {
           harga: parseInt(document.getElementById('f-ht-pkg-price').value)||0,
+          isiPaket: parseInt(document.getElementById('f-ht-pkg-qty').value)||1,
           ukuranMaks: document.getElementById('f-ht-pkg-size').value.trim(),
           spesifikasi: document.getElementById('f-ht-pkg-spec').value.trim(),
           colorCharge: parseInt(document.getElementById('f-ht-color-charge').value)||0,
@@ -935,7 +955,7 @@
         ltProd: document.getElementById('f-ht-lt-prod').value.trim(),
         revisi: document.getElementById('f-ht-revisi').value.trim(),
       };
-      row.price_per_unit = row.data.paket.harga || 0;
+      row.price_per_unit = Math.round((row.data.paket.harga||0) / (row.data.paket.isiPaket||1));
 
     } else if (t === 'label printing') {
       const getChecked = cls => [...document.querySelectorAll(`.${cls}:checked`)].map(el => el.value);
