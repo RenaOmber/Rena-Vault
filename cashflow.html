@@ -226,6 +226,14 @@
       <input type="number" min="0" class="form-input" id="m-dp" placeholder="0" />
       <div style="font-size:11px;color:var(--text3);margin-top:6px;" id="dp-sisa"></div>
     </div>
+    <div class="form-group">
+      <div class="form-label">Periode (opsional — untuk langganan/berjangka)</div>
+      <div class="form-row-2">
+        <input type="date" class="form-input" id="m-periode-mulai" title="Mulai" />
+        <input type="date" class="form-input" id="m-periode-akhir" title="Berakhir" />
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px;">Isi kalau ini langganan atau berjangka (domain, subs). Kosongkan untuk belanja biasa. Saldo tetap turun penuh — periode cuma catatan.</div>
+    </div>
     <div class="modal-actions">
       <button class="btn-save" onclick="saveTx()">Simpan</button>
       <button class="btn-cancel" onclick="closeModal()">Batal</button>
@@ -247,6 +255,7 @@
   const CATS_IN  = ['Penjualan','Lain-lain'];
   let allTx = [];
   let modalType = 'out';
+  let editingId = null;
 
   async function sha256(str) {
     const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
@@ -315,18 +324,22 @@
     body.innerHTML = data.map(t=>`
       <tr>
         <td class="tx-date">${fmtDate(t.tanggal)}</td>
-        <td>${t.keterangan||'—'}</td>
+        <td>${t.keterangan||'—'}${(t.periode_mulai||t.periode_akhir)?`<div style="font-size:10px;color:var(--text3);margin-top:2px;">Aktif${t.periode_mulai?` ${fmtDate(t.periode_mulai)}`:''}${t.periode_akhir?` s/d ${fmtDate(t.periode_akhir)}`:''}</div>`:''}</td>
         <td><span class="tx-cat">${t.kategori||'—'}</span></td>
         <td>${t.status==='dp'
           ? `<span class="tx-status status-dp">DP ${fmt(t.dp_dibayar)}</span>`
           : `<span class="tx-status status-lunas">Lunas</span>`}</td>
         <td class="tx-amount ${t.jenis}">${t.jenis==='in'?'+':'−'} ${fmt(t.jumlah)}</td>
-        <td><button class="tx-del" onclick="deleteTx('${t.id}')" title="Hapus">×</button></td>
+        <td style="white-space:nowrap;text-align:right;">
+          <button class="tx-del" onclick="editTx('${t.id}')" title="Edit" style="color:var(--text2);">✎</button>
+          <button class="tx-del" onclick="deleteTx('${t.id}')" title="Hapus">×</button>
+        </td>
       </tr>`).join('');
   }
 
   function openModal(type) {
     modalType = type;
+    editingId = null;
     document.getElementById('modal-title').textContent = type==='in' ? 'Tambah Pemasukan' : 'Tambah Pengeluaran';
     const cats = type==='in' ? CATS_IN : CATS_OUT;
     document.getElementById('m-cat').innerHTML = cats.map(c=>`<option value="${c}">${c}</option>`).join('');
@@ -335,10 +348,32 @@
     document.getElementById('m-amount').value = '';
     document.getElementById('m-status').value = 'lunas';
     document.getElementById('m-dp').value = '';
+    document.getElementById('m-periode-mulai').value = '';
+    document.getElementById('m-periode-akhir').value = '';
     toggleDp();
     document.getElementById('modal').classList.add('show');
   }
-  function closeModal() { document.getElementById('modal').classList.remove('show'); }
+
+  function editTx(id) {
+    const t = allTx.find(x=>String(x.id)===String(id));
+    if (!t) return;
+    editingId = id;
+    modalType = t.jenis;
+    document.getElementById('modal-title').textContent = 'Edit Transaksi';
+    const cats = t.jenis==='in' ? CATS_IN : CATS_OUT;
+    document.getElementById('m-cat').innerHTML = cats.map(c=>`<option value="${c}" ${c===t.kategori?'selected':''}>${c}</option>`).join('');
+    document.getElementById('m-date').value = t.tanggal||'';
+    document.getElementById('m-desc').value = t.keterangan||'';
+    document.getElementById('m-amount').value = t.jumlah||'';
+    document.getElementById('m-status').value = t.status||'lunas';
+    document.getElementById('m-dp').value = t.dp_dibayar||'';
+    document.getElementById('m-periode-mulai').value = t.periode_mulai||'';
+    document.getElementById('m-periode-akhir').value = t.periode_akhir||'';
+    toggleDp();
+    document.getElementById('modal').classList.add('show');
+  }
+
+  function closeModal() { document.getElementById('modal').classList.remove('show'); editingId = null; }
 
   function toggleDp() {
     const isDp = document.getElementById('m-status').value === 'dp';
@@ -359,11 +394,17 @@
     const jumlah = parseInt(document.getElementById('m-amount').value)||0;
     const status = document.getElementById('m-status').value;
     const dp_dibayar = status==='dp' ? (parseInt(document.getElementById('m-dp').value)||0) : jumlah;
+    const periode_mulai = document.getElementById('m-periode-mulai').value || null;
+    const periode_akhir = document.getElementById('m-periode-akhir').value || null;
     if (!tanggal || !jumlah) { showToast('⚠️ Tanggal dan jumlah wajib diisi.'); return; }
     if (status==='dp' && dp_dibayar >= jumlah) { showToast('⚠️ DP harus lebih kecil dari total. Kalau lunas, pilih Lunas.'); return; }
-    const { error } = await sb.from('cashflow_entries').insert({
-      tanggal, keterangan, kategori, jumlah, jenis: modalType, status, dp_dibayar
-    });
+    const payload = { tanggal, keterangan, kategori, jumlah, jenis: modalType, status, dp_dibayar, periode_mulai, periode_akhir };
+    let error;
+    if (editingId) {
+      ({ error } = await sb.from('cashflow_entries').update(payload).eq('id', editingId));
+    } else {
+      ({ error } = await sb.from('cashflow_entries').insert(payload));
+    }
     if (error) { showToast('❌ Gagal menyimpan.'); return; }
     closeModal();
     showToast('✅ Transaksi tersimpan.');
