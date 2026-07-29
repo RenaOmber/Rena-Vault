@@ -318,6 +318,13 @@
     return v?.data?.colorCharge || 0;
   }
 
+  function sumHadiah(a) {
+    if (Array.isArray(a.hadiahItems) && a.hadiahItems.length) {
+      return a.hadiahItems.reduce((s,h) => s + (parseInt(h.harga)||0), 0);
+    }
+    return parseInt(a.biayaHadiah)||0; // fallback data lama
+  }
+
   function recalcCOGS(a) {
     return (parseInt(a.hargaKaosManual)||0)
       + (parseInt(a.biayaLabelWoven)||0)
@@ -325,7 +332,7 @@
       + (parseInt(a.biayaHangtag)||0)
       + (parseInt(a.biayaZiplock)||0)
       + (parseInt(a.biayaPolymailer)||0)
-      + (parseInt(a.biayaHadiah)||0);
+      + sumHadiah(a);
   }
   if (sessionStorage.getItem('ro_auth') === '1') showMain();
 
@@ -350,7 +357,7 @@
       designUrl: '', designName: '', designPath: '',
       sizechartUrl: '', sizechartName: '', sizechartPath: '',
       sablon: '', sablonLink: '', warnaKaos: '', tebalKain: '', potongan: 'regular', jumlahWarna: 1, hargaKaosManual: 0,
-      biayaLabelWoven: 0, biayaWashTag: 0, biayaHangtag: 0, biayaZiplock: 0, biayaPolymailer: 0, biayaHadiah: 0,
+      biayaLabelWoven: 0, biayaWashTag: 0, biayaHangtag: 0, biayaZiplock: 0, biayaPolymailer: 0, hadiahItems: [],
       vendorKaos: '', vendorHangtag: '', vendorPackaging: '',
       labelLeherUrl: '', labelLeherName: '', labelPinggangUrl: '', labelPinggangName: '',
       sizes: { S:0, M:0, L:0, XL:0, XXL:0 },
@@ -663,15 +670,42 @@
             </div>
           </div>
         </div>
+        <div class="form-section-title" style="margin-top:14px;">Hadiah (opsional)</div>
+        <div style="font-size:11px;color:var(--text3);margin:-6px 0 12px;">Tulis manual tiap item, karena bisa beda tiap batch. Harga diisi per pcs, total produksi dihitung otomatis. Tidak masuk PDF vendor.</div>
+        ${(a.hadiahItems||[]).map((h,hi)=>`
+          <div class="form-row" style="align-items:flex-end;gap:8px;">
+            <div class="form-group" style="flex:2;">
+              ${hi===0?'<div class="form-label">Nama Item</div>':''}
+              <input type="text" class="form-input" placeholder="mis. Print Ular Tangga" value="${h.name||''}"
+                onchange="updateHadiahItem(${hi},'name',this.value)" />
+            </div>
+            <div class="form-group" style="flex:1;">
+              ${hi===0?'<div class="form-label">Harga / pcs</div>':''}
+              <div style="position:relative;">
+                <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text3);">Rp</span>
+                <input type="number" min="0" class="form-input" style="padding-left:32px;" placeholder="0" value="${h.harga||''}"
+                  onchange="updateHadiahItem(${hi},'harga',this.value)" />
+              </div>
+            </div>
+            <button type="button" class="btn-ghost" style="padding:9px 12px;color:var(--danger);" onclick="removeHadiahItem(${hi})" title="Hapus item">✕</button>
+          </div>`).join('')}
+        <button type="button" class="btn-ghost" style="margin-bottom:14px;" onclick="addHadiahItem()">+ Tambah Item Hadiah</button>
+
         <div class="form-row">
           <div class="form-group">
-            <div class="form-label">Hadiah (ular tangga + stiker)</div>
-            <div style="position:relative;">
-              <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text3);">Rp</span>
-              <input type="number" min="0" class="form-input" style="padding-left:32px;" value="${a.biayaHadiah||''}" placeholder="0"
-                onchange="updateVendor('biayaHadiah',parseInt(this.value)||0)" />
+            <div class="form-label">Hadiah / unit (auto)</div>
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:9px 12px;font-size:13px;font-weight:600;color:var(--text);">
+              Rp ${sumHadiah(a).toLocaleString('id-ID')}
             </div>
           </div>
+          <div class="form-group">
+            <div class="form-label">Hadiah Total Batch (${total} pcs)</div>
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:9px 12px;font-size:13px;font-weight:600;color:var(--text);">
+              Rp ${(sumHadiah(a)*total).toLocaleString('id-ID')}
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
           <div class="form-group">
             <div class="form-label">COGS Total per unit (auto)</div>
             <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:9px 12px;font-size:13px;font-weight:600;color:var(--accent);" id="cogs-display">
@@ -792,6 +826,36 @@
     const a = p.batches[activeBatchIdx].artikels[activeArtikelIdx];
     a[field] = field === 'jumlahWarna' ? (parseInt(val)||1) : val;
     // Always re-render to reflect updated COGS and color charge preview
+    scheduleSave(p);
+    renderProductPage();
+  }
+
+  function addHadiahItem() {
+    const p = products.find(p=>String(p.id)===String(activeProductId));
+    if (!p) return;
+    const a = p.batches[activeBatchIdx].artikels[activeArtikelIdx];
+    if (!Array.isArray(a.hadiahItems)) a.hadiahItems = [];
+    a.hadiahItems.push({ name:'', harga:0 });
+    scheduleSave(p);
+    renderProductPage();
+  }
+
+  function updateHadiahItem(idx, field, val) {
+    const p = products.find(p=>String(p.id)===String(activeProductId));
+    if (!p) return;
+    const a = p.batches[activeBatchIdx].artikels[activeArtikelIdx];
+    if (!Array.isArray(a.hadiahItems) || !a.hadiahItems[idx]) return;
+    a.hadiahItems[idx][field] = field === 'harga' ? (parseInt(val)||0) : val;
+    scheduleSave(p);
+    renderProductPage();
+  }
+
+  function removeHadiahItem(idx) {
+    const p = products.find(p=>String(p.id)===String(activeProductId));
+    if (!p) return;
+    const a = p.batches[activeBatchIdx].artikels[activeArtikelIdx];
+    if (!Array.isArray(a.hadiahItems)) return;
+    a.hadiahItems.splice(idx,1);
     scheduleSave(p);
     renderProductPage();
   }
