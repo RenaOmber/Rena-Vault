@@ -102,11 +102,32 @@
     .toast { position: fixed; bottom: 24px; right: 24px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; font-size: 13px; z-index: 999; opacity: 0; transform: translateY(8px); transition: all 0.2s; pointer-events: none; }
     .toast.show { opacity: 1; transform: translateY(0); }
 
+    /* UTANG SECTION */
+    .utang-section { margin-bottom: 24px; }
+    .utang-header { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .utang-badge { background: var(--yellow-dim); color: var(--yellow); border-radius: 10px; padding: 2px 8px; font-size: 10px; font-weight: 600; }
+    .utang-list { display: flex; flex-direction: column; gap: 8px; }
+    .utang-item { background: var(--bg2); border: 1px solid rgba(251,191,36,0.2); border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .utang-info { flex: 1; min-width: 180px; }
+    .utang-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+    .utang-date { font-size: 11px; color: var(--text3); }
+    .utang-numbers { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+    .utang-num { text-align: right; }
+    .utang-num-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px; }
+    .utang-num-val { font-size: 13px; font-weight: 600; }
+    .utang-sisa { color: var(--yellow); }
+    .utang-lunas-btn { background: var(--accent-dim); border: 1px solid rgba(52,211,153,0.3); border-radius: 6px; color: var(--accent); cursor: pointer; font-family: inherit; font-size: 11px; font-weight: 600; padding: 6px 12px; white-space: nowrap; transition: background 0.15s; }
+    .utang-lunas-btn:hover { background: rgba(52,211,153,0.2); }
+    .utang-total-bar { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+    .utang-total-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; }
+    .utang-total-val { font-size: 15px; font-weight: 700; color: var(--yellow); }
+
     @media (max-width: 720px) {
       .content { padding: 16px; }
       .summary-grid { grid-template-columns: 1fr; }
       .tx-table th:nth-child(4), .tx-table td:nth-child(4) { display: none; }
       .top-bar { padding: 10px 14px; }
+      .utang-numbers { gap: 12px; }
     }
   </style>
 </head>
@@ -176,6 +197,8 @@
       </select>
     </div>
 
+    <div id="utang-section"></div>
+
     <table class="tx-table">
       <thead>
         <tr>
@@ -226,14 +249,6 @@
       <input type="number" min="0" class="form-input" id="m-dp" placeholder="0" />
       <div style="font-size:11px;color:var(--text3);margin-top:6px;" id="dp-sisa"></div>
     </div>
-    <div class="form-group">
-      <div class="form-label">Periode (opsional — untuk langganan/berjangka)</div>
-      <div class="form-row-2">
-        <input type="date" class="form-input" id="m-periode-mulai" title="Mulai" />
-        <input type="date" class="form-input" id="m-periode-akhir" title="Berakhir" />
-      </div>
-      <div style="font-size:11px;color:var(--text3);margin-top:6px;">Isi kalau ini langganan atau berjangka (domain, subs). Kosongkan untuk belanja biasa. Saldo tetap turun penuh — periode cuma catatan.</div>
-    </div>
     <div class="modal-actions">
       <button class="btn-save" onclick="saveTx()">Simpan</button>
       <button class="btn-cancel" onclick="closeModal()">Batal</button>
@@ -255,7 +270,6 @@
   const CATS_IN  = ['Penjualan','Lain-lain'];
   let allTx = [];
   let modalType = 'out';
-  let editingId = null;
 
   async function sha256(str) {
     const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
@@ -299,7 +313,6 @@
     const keluar = allTx.filter(t=>t.jenis==='out');
     const totalIn = masuk.reduce((s,t)=>s+(parseInt(t.jumlah)||0),0);
     const totalOut = keluar.reduce((s,t)=>s+(parseInt(t.jumlah)||0),0);
-    // DP: uang yang benar-benar sudah keluar = dp kalau status dp, full kalau lunas
     const realOut = keluar.reduce((s,t)=>s+(t.status==='dp'?(parseInt(t.dp_dibayar)||0):(parseInt(t.jumlah)||0)),0);
     const realIn = masuk.reduce((s,t)=>s+(t.status==='dp'?(parseInt(t.dp_dibayar)||0):(parseInt(t.jumlah)||0)),0);
     const sisaDp = keluar.filter(t=>t.status==='dp').reduce((s,t)=>s+((parseInt(t.jumlah)||0)-(parseInt(t.dp_dibayar)||0)),0);
@@ -310,6 +323,70 @@
     document.getElementById('sum-out-sub').textContent = `${keluar.length} transaksi`;
     document.getElementById('sum-bal').textContent = fmt(realIn - realOut);
     document.getElementById('sum-dp-sub').textContent = sisaDp>0 ? `Sisa DP belum dibayar: ${fmt(sisaDp)}` : 'Saldo kas aktual';
+
+    renderUtang();
+  }
+
+  function renderUtang() {
+    const utangList = allTx.filter(t=>t.status==='dp' && t.jenis==='out');
+    const el = document.getElementById('utang-section');
+    if (!utangList.length) { el.innerHTML = ''; return; }
+
+    const totalSisa = utangList.reduce((s,t)=>s+((parseInt(t.jumlah)||0)-(parseInt(t.dp_dibayar)||0)),0);
+
+    el.innerHTML = `
+      <div class="utang-section">
+        <div class="utang-header">
+          Utang Belum Lunas
+          <span class="utang-badge">${utangList.length} item</span>
+        </div>
+        <div class="utang-list">
+          ${utangList.map(t => {
+            const total = parseInt(t.jumlah)||0;
+            const dibayar = parseInt(t.dp_dibayar)||0;
+            const sisa = total - dibayar;
+            return `
+            <div class="utang-item">
+              <div class="utang-info">
+                <div class="utang-name">${t.keterangan||'—'}</div>
+                <div class="utang-date">${fmtDate(t.tanggal)} · <span style="color:var(--text2);font-size:11px;">${t.kategori||''}</span></div>
+              </div>
+              <div class="utang-numbers">
+                <div class="utang-num">
+                  <div class="utang-num-label">Total</div>
+                  <div class="utang-num-val" style="color:var(--text2);">${fmt(total)}</div>
+                </div>
+                <div class="utang-num">
+                  <div class="utang-num-label">Sudah Dibayar</div>
+                  <div class="utang-num-val" style="color:var(--accent);">${fmt(dibayar)}</div>
+                </div>
+                <div class="utang-num">
+                  <div class="utang-num-label">Sisa</div>
+                  <div class="utang-num-val utang-sisa">${fmt(sisa)}</div>
+                </div>
+              </div>
+              <button class="utang-lunas-btn" onclick="tandaiLunas('${t.id}')">✓ Tandai Lunas</button>
+            </div>`;
+          }).join('')}
+        </div>
+        <div class="utang-total-bar">
+          <div class="utang-total-label">Total Sisa Utang</div>
+          <div class="utang-total-val">${fmt(totalSisa)}</div>
+        </div>
+      </div>`;
+  }
+
+  async function tandaiLunas(id) {
+    const tx = allTx.find(t=>t.id===id);
+    if (!tx) return;
+    if (!confirm(`Tandai "${tx.keterangan}" sebagai Lunas?\nSisa: ${fmt((parseInt(tx.jumlah)||0)-(parseInt(tx.dp_dibayar)||0))}`)) return;
+    const { error } = await sb.from('cashflow_entries').update({ status:'lunas', dp_dibayar: tx.jumlah }).eq('id', id);
+    if (error) { showToast('❌ Gagal update.'); return; }
+    tx.status = 'lunas';
+    tx.dp_dibayar = tx.jumlah;
+    showToast('✅ Lunas!');
+    renderSummary();
+    renderList();
   }
 
   function renderList() {
@@ -324,22 +401,18 @@
     body.innerHTML = data.map(t=>`
       <tr>
         <td class="tx-date">${fmtDate(t.tanggal)}</td>
-        <td>${t.keterangan||'—'}${(t.periode_mulai||t.periode_akhir)?`<div style="font-size:10px;color:var(--text3);margin-top:2px;">Aktif${t.periode_mulai?` ${fmtDate(t.periode_mulai)}`:''}${t.periode_akhir?` s/d ${fmtDate(t.periode_akhir)}`:''}</div>`:''}</td>
+        <td>${t.keterangan||'—'}</td>
         <td><span class="tx-cat">${t.kategori||'—'}</span></td>
         <td>${t.status==='dp'
           ? `<span class="tx-status status-dp">DP ${fmt(t.dp_dibayar)}</span>`
           : `<span class="tx-status status-lunas">Lunas</span>`}</td>
         <td class="tx-amount ${t.jenis}">${t.jenis==='in'?'+':'−'} ${fmt(t.jumlah)}</td>
-        <td style="white-space:nowrap;text-align:right;">
-          <button class="tx-del" onclick="editTx('${t.id}')" title="Edit" style="color:var(--text2);">✎</button>
-          <button class="tx-del" onclick="deleteTx('${t.id}')" title="Hapus">×</button>
-        </td>
+        <td><button class="tx-del" onclick="deleteTx('${t.id}')" title="Hapus">×</button></td>
       </tr>`).join('');
   }
 
   function openModal(type) {
     modalType = type;
-    editingId = null;
     document.getElementById('modal-title').textContent = type==='in' ? 'Tambah Pemasukan' : 'Tambah Pengeluaran';
     const cats = type==='in' ? CATS_IN : CATS_OUT;
     document.getElementById('m-cat').innerHTML = cats.map(c=>`<option value="${c}">${c}</option>`).join('');
@@ -348,32 +421,10 @@
     document.getElementById('m-amount').value = '';
     document.getElementById('m-status').value = 'lunas';
     document.getElementById('m-dp').value = '';
-    document.getElementById('m-periode-mulai').value = '';
-    document.getElementById('m-periode-akhir').value = '';
     toggleDp();
     document.getElementById('modal').classList.add('show');
   }
-
-  function editTx(id) {
-    const t = allTx.find(x=>String(x.id)===String(id));
-    if (!t) return;
-    editingId = id;
-    modalType = t.jenis;
-    document.getElementById('modal-title').textContent = 'Edit Transaksi';
-    const cats = t.jenis==='in' ? CATS_IN : CATS_OUT;
-    document.getElementById('m-cat').innerHTML = cats.map(c=>`<option value="${c}" ${c===t.kategori?'selected':''}>${c}</option>`).join('');
-    document.getElementById('m-date').value = t.tanggal||'';
-    document.getElementById('m-desc').value = t.keterangan||'';
-    document.getElementById('m-amount').value = t.jumlah||'';
-    document.getElementById('m-status').value = t.status||'lunas';
-    document.getElementById('m-dp').value = t.dp_dibayar||'';
-    document.getElementById('m-periode-mulai').value = t.periode_mulai||'';
-    document.getElementById('m-periode-akhir').value = t.periode_akhir||'';
-    toggleDp();
-    document.getElementById('modal').classList.add('show');
-  }
-
-  function closeModal() { document.getElementById('modal').classList.remove('show'); editingId = null; }
+  function closeModal() { document.getElementById('modal').classList.remove('show'); }
 
   function toggleDp() {
     const isDp = document.getElementById('m-status').value === 'dp';
@@ -394,17 +445,11 @@
     const jumlah = parseInt(document.getElementById('m-amount').value)||0;
     const status = document.getElementById('m-status').value;
     const dp_dibayar = status==='dp' ? (parseInt(document.getElementById('m-dp').value)||0) : jumlah;
-    const periode_mulai = document.getElementById('m-periode-mulai').value || null;
-    const periode_akhir = document.getElementById('m-periode-akhir').value || null;
     if (!tanggal || !jumlah) { showToast('⚠️ Tanggal dan jumlah wajib diisi.'); return; }
     if (status==='dp' && dp_dibayar >= jumlah) { showToast('⚠️ DP harus lebih kecil dari total. Kalau lunas, pilih Lunas.'); return; }
-    const payload = { tanggal, keterangan, kategori, jumlah, jenis: modalType, status, dp_dibayar, periode_mulai, periode_akhir };
-    let error;
-    if (editingId) {
-      ({ error } = await sb.from('cashflow_entries').update(payload).eq('id', editingId));
-    } else {
-      ({ error } = await sb.from('cashflow_entries').insert(payload));
-    }
+    const { error } = await sb.from('cashflow_entries').insert({
+      tanggal, keterangan, kategori, jumlah, jenis: modalType, status, dp_dibayar
+    });
     if (error) { showToast('❌ Gagal menyimpan.'); return; }
     closeModal();
     showToast('✅ Transaksi tersimpan.');
