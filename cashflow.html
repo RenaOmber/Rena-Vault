@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#34d399" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="RO Vault" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rena Omber — Cashflow</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="theme.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #060f0a; --bg2: #0d1f14; --bg3: #122b1a;
+      --border: rgba(52,211,153,0.12); --border-hover: rgba(52,211,153,0.28);
+      --text: #e6f4ec; --text2: #7aab90; --text3: #3d6b52;
+      --accent: #34d399; --accent-dim: rgba(52,211,153,0.12);
+      --red: #f87171; --red-dim: rgba(248,113,113,0.1);
+      --yellow: #fbbf24; --yellow-dim: rgba(251,191,36,0.12);
+    }
+    html, body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; min-height: 100vh; }
+
+    /* GATE */
+    #gate { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
+    .gate-mark { width: 40px; height: 4px; background: var(--accent); border-radius: 2px; margin: 0 auto 16px; }
+    .gate-form { display: flex; gap: 8px; margin-top: 8px; }
+    .gate-form input { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 14px; padding: 10px 14px; width: 220px; outline: none; }
+    .gate-form button { background: var(--accent); border: none; border-radius: 6px; color: #04150c; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600; padding: 10px 18px; }
+    .gate-error { font-size: 12px; color: var(--red); min-height: 16px; text-align: center; }
+
+    /* MAIN */
+    #main { display: none; }
+    .top-bar { display: flex; align-items: center; justify-content: space-between; padding: 16px 28px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(6,15,10,0.92); backdrop-filter: blur(12px); z-index: 10; }
+    .top-left { display: flex; align-items: center; gap: 10px; }
+    .top-mark { width: 22px; height: 3px; background: var(--accent); border-radius: 2px; }
+    .top-name { font-size: 13px; font-weight: 600; }
+    .top-sub { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; }
+    .top-right { display: flex; gap: 8px; align-items: center; }
+    .btn-ghost { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text2); cursor: pointer; font-family: inherit; font-size: 12px; padding: 6px 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: border-color 0.15s; }
+    .btn-ghost:hover { border-color: var(--border-hover); color: var(--text); }
+
+    .content { padding: 28px 36px; max-width: 1100px; margin: 0 auto; }
+
+    /* SUMMARY CARDS */
+    .summary-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 28px; }
+    .sum-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+    .sum-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+    .sum-value { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+    .sum-value.in { color: var(--accent); }
+    .sum-value.out { color: var(--red); }
+    .sum-value.bal { color: var(--text); }
+    .sum-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+    /* ADD BUTTON ROW */
+    .action-row { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+    .btn-add { border: none; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600; padding: 9px 18px; transition: opacity 0.15s; }
+    .btn-add:hover { opacity: 0.88; }
+    .btn-in { background: var(--accent); color: #04150c; }
+    .btn-out { background: var(--red); color: #fff; }
+    .filter-select { margin-left: auto; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: inherit; font-size: 12px; padding: 8px 12px; outline: none; cursor: pointer; }
+
+    /* TABLE */
+    .tx-table { width: 100%; border-collapse: collapse; background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .tx-table th { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--border); font-weight: 600; }
+    .tx-table td { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .tx-table tr:last-child td { border-bottom: none; }
+    .tx-table tr:hover td { background: var(--bg3); }
+    .tx-date { color: var(--text3); font-size: 12px; white-space: nowrap; }
+    .tx-cat { font-size: 10px; padding: 3px 9px; border-radius: 10px; font-weight: 500; white-space: nowrap; background: var(--bg3); color: var(--text2); }
+    .tx-amount { font-weight: 600; text-align: right; white-space: nowrap; }
+    .tx-amount.in { color: var(--accent); }
+    .tx-amount.out { color: var(--red); }
+    .tx-status { font-size: 10px; padding: 3px 9px; border-radius: 10px; font-weight: 500; white-space: nowrap; }
+    .status-lunas { background: var(--accent-dim); color: var(--accent); }
+    .status-dp { background: var(--yellow-dim); color: var(--yellow); }
+    .tx-del { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 15px; padding: 2px 6px; border-radius: 4px; transition: color 0.15s; }
+    .tx-del:hover { color: var(--red); }
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--text3); font-size: 13px; }
+
+    /* MODAL */
+    .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+    .modal-bg.show { display: flex; }
+    .modal-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 24px; width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto; }
+    .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 20px; }
+    .form-group { margin-bottom: 14px; }
+    .form-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+    .form-input { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: inherit; font-size: 13px; padding: 10px 12px; outline: none; transition: border-color 0.15s; }
+    .form-input:focus { border-color: var(--border-hover); }
+    .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .dp-row { display: none; }
+    .dp-row.show { display: block; }
+    .modal-actions { display: flex; gap: 8px; margin-top: 20px; }
+    .btn-save { flex: 1; background: var(--accent); border: none; border-radius: 8px; color: #04150c; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600; padding: 11px; }
+    .btn-cancel { background: none; border: 1px solid var(--border); border-radius: 8px; color: var(--text2); cursor: pointer; font-family: inherit; font-size: 13px; padding: 11px 20px; }
+
+    /* TOAST */
+    .toast { position: fixed; bottom: 24px; right: 24px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; font-size: 13px; z-index: 999; opacity: 0; transform: translateY(8px); transition: all 0.2s; pointer-events: none; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 720px) {
+      .content { padding: 16px; }
+      .summary-grid { grid-template-columns: 1fr; }
+      .tx-table th:nth-child(4), .tx-table td:nth-child(4) { display: none; }
+      .top-bar { padding: 10px 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="gate">
+  <div>
+    <div class="gate-mark"></div>
+    <div style="font-size:18px;font-weight:500;text-align:center;">Rena Omber</div>
+    <div style="font-size:12px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;text-align:center;margin-top:4px;">Cashflow</div>
+  </div>
+  <div>
+    <div class="gate-form">
+      <input type="password" id="pw-input" placeholder="Password" onkeydown="if(event.key==='Enter')checkPw()" />
+      <button onclick="checkPw()">Masuk</button>
+    </div>
+    <div class="gate-error" id="pw-error"></div>
+  </div>
+</div>
+
+<div id="main">
+  <div class="top-bar">
+    <div class="top-left">
+      <div class="top-mark"></div>
+      <div>
+        <div class="top-name">Rena Omber</div>
+        <div class="top-sub">Cashflow</div>
+      </div>
+    </div>
+    <div class="top-right">
+      <button class="theme-toggle-btn btn-ghost" onclick="toggleTheme()">☀️</button>
+      <a href="index.html" class="btn-ghost">← Vault</a>
+      <button class="btn-ghost" onclick="logout()">Keluar</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="summary-grid">
+      <div class="sum-card">
+        <div class="sum-label">Total Masuk</div>
+        <div class="sum-value in" id="sum-in">Rp 0</div>
+        <div class="sum-sub" id="sum-in-sub">0 transaksi</div>
+      </div>
+      <div class="sum-card">
+        <div class="sum-label">Total Keluar</div>
+        <div class="sum-value out" id="sum-out">Rp 0</div>
+        <div class="sum-sub" id="sum-out-sub">0 transaksi</div>
+      </div>
+      <div class="sum-card">
+        <div class="sum-label">Saldo</div>
+        <div class="sum-value bal" id="sum-bal">Rp 0</div>
+        <div class="sum-sub" id="sum-dp-sub"></div>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <button class="btn-add btn-in" onclick="openModal('in')">+ Pemasukan</button>
+      <button class="btn-add btn-out" onclick="openModal('out')">− Pengeluaran</button>
+      <select class="filter-select" id="filter-cat" onchange="renderList()">
+        <option value="">Semua kategori</option>
+        <option value="Belanja Bahan">Belanja Bahan</option>
+        <option value="Operasional">Operasional</option>
+        <option value="Marketing">Marketing</option>
+        <option value="Gaji">Gaji</option>
+        <option value="Penjualan">Penjualan</option>
+        <option value="Lain-lain">Lain-lain</option>
+      </select>
+    </div>
+
+    <table class="tx-table">
+      <thead>
+        <tr>
+          <th>Tanggal</th>
+          <th>Keterangan</th>
+          <th>Kategori</th>
+          <th>Status</th>
+          <th style="text-align:right;">Jumlah</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tx-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-title">Tambah Transaksi</div>
+    <div class="form-group">
+      <div class="form-label">Tanggal</div>
+      <input type="date" class="form-input" id="m-date" />
+    </div>
+    <div class="form-group">
+      <div class="form-label">Keterangan</div>
+      <input class="form-input" id="m-desc" placeholder="cth: Beli roll label woven, Subs Claude Juli" />
+    </div>
+    <div class="form-row-2">
+      <div class="form-group">
+        <div class="form-label">Kategori</div>
+        <select class="form-input" id="m-cat"></select>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Jumlah (Rp)</div>
+        <input type="number" min="0" class="form-input" id="m-amount" placeholder="0" oninput="syncDpMax()" />
+      </div>
+    </div>
+    <div class="form-group" id="status-group">
+      <div class="form-label">Status Pembayaran</div>
+      <select class="form-input" id="m-status" onchange="toggleDp()">
+        <option value="lunas">Lunas</option>
+        <option value="dp">DP (bayar sebagian)</option>
+      </select>
+    </div>
+    <div class="form-group dp-row" id="dp-row">
+      <div class="form-label">Sudah dibayar (DP) — Rp</div>
+      <input type="number" min="0" class="form-input" id="m-dp" placeholder="0" />
+      <div style="font-size:11px;color:var(--text3);margin-top:6px;" id="dp-sisa"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-save" onclick="saveTx()">Simpan</button>
+      <button class="btn-cancel" onclick="closeModal()">Batal</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ─── CONFIG ────────────────────────────────────────────────
+  const SUPABASE_URL  = 'https://fqvfnohhilkzvijqukfg.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxdmZub2hoaWxrenZpanF1a2ZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDU4NjAsImV4cCI6MjA5ODEyMTg2MH0.er10SEsmDlnx1yRLGJK2fKtLhQR40vFOXVJzH9yakCg';
+  const PASSWORD_HASH = '3f0e57f3e719957119f0ba621629a3ae0ed1ec95d1ad8a91bd980b2896b679e4';
+  // ───────────────────────────────────────────────────────────
+
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  const CATS_OUT = ['Belanja Bahan','Operasional','Marketing','Gaji','Lain-lain'];
+  const CATS_IN  = ['Penjualan','Lain-lain'];
+  let allTx = [];
+  let modalType = 'out';
+
+  async function sha256(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+  async function checkPw() {
+    const val = document.getElementById('pw-input').value.trim();
+    if ((await sha256(val)) === PASSWORD_HASH) {
+      sessionStorage.setItem('ro_auth','1');
+      showMain();
+    } else {
+      document.getElementById('pw-error').textContent = 'Password salah.';
+      document.getElementById('pw-input').value = '';
+    }
+  }
+  function logout() { sessionStorage.removeItem('ro_auth'); location.reload(); }
+  async function showMain() {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+    await loadTx();
+  }
+  if (sessionStorage.getItem('ro_auth') === '1') showMain();
+
+  async function loadTx() {
+    const { data } = await sb.from('cashflow_entries').select('*').order('tanggal', { ascending: false });
+    allTx = data || [];
+    renderSummary();
+    renderList();
+  }
+
+  function fmt(n) { return 'Rp ' + (parseInt(n)||0).toLocaleString('id-ID'); }
+  function fmtDate(d) {
+    if (!d) return '';
+    const [y,m,day] = d.split('-');
+    const bulan = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
+    return `${parseInt(day)} ${bulan[parseInt(m)-1]} ${y}`;
+  }
+
+  function renderSummary() {
+    const masuk = allTx.filter(t=>t.jenis==='in');
+    const keluar = allTx.filter(t=>t.jenis==='out');
+    const totalIn = masuk.reduce((s,t)=>s+(parseInt(t.jumlah)||0),0);
+    const totalOut = keluar.reduce((s,t)=>s+(parseInt(t.jumlah)||0),0);
+    // DP: uang yang benar-benar sudah keluar = dp kalau status dp, full kalau lunas
+    const realOut = keluar.reduce((s,t)=>s+(t.status==='dp'?(parseInt(t.dp_dibayar)||0):(parseInt(t.jumlah)||0)),0);
+    const realIn = masuk.reduce((s,t)=>s+(t.status==='dp'?(parseInt(t.dp_dibayar)||0):(parseInt(t.jumlah)||0)),0);
+    const sisaDp = keluar.filter(t=>t.status==='dp').reduce((s,t)=>s+((parseInt(t.jumlah)||0)-(parseInt(t.dp_dibayar)||0)),0);
+
+    document.getElementById('sum-in').textContent = fmt(totalIn);
+    document.getElementById('sum-in-sub').textContent = `${masuk.length} transaksi`;
+    document.getElementById('sum-out').textContent = fmt(totalOut);
+    document.getElementById('sum-out-sub').textContent = `${keluar.length} transaksi`;
+    document.getElementById('sum-bal').textContent = fmt(realIn - realOut);
+    document.getElementById('sum-dp-sub').textContent = sisaDp>0 ? `Sisa DP belum dibayar: ${fmt(sisaDp)}` : 'Saldo kas aktual';
+  }
+
+  function renderList() {
+    const filter = document.getElementById('filter-cat').value;
+    let data = allTx;
+    if (filter) data = data.filter(t=>t.kategori===filter);
+    const body = document.getElementById('tx-body');
+    if (!data.length) {
+      body.innerHTML = '<tr><td colspan="6"><div class="empty-state">Belum ada transaksi.</div></td></tr>';
+      return;
+    }
+    body.innerHTML = data.map(t=>`
+      <tr>
+        <td class="tx-date">${fmtDate(t.tanggal)}</td>
+        <td>${t.keterangan||'—'}</td>
+        <td><span class="tx-cat">${t.kategori||'—'}</span></td>
+        <td>${t.status==='dp'
+          ? `<span class="tx-status status-dp">DP ${fmt(t.dp_dibayar)}</span>`
+          : `<span class="tx-status status-lunas">Lunas</span>`}</td>
+        <td class="tx-amount ${t.jenis}">${t.jenis==='in'?'+':'−'} ${fmt(t.jumlah)}</td>
+        <td><button class="tx-del" onclick="deleteTx('${t.id}')" title="Hapus">×</button></td>
+      </tr>`).join('');
+  }
+
+  function openModal(type) {
+    modalType = type;
+    document.getElementById('modal-title').textContent = type==='in' ? 'Tambah Pemasukan' : 'Tambah Pengeluaran';
+    const cats = type==='in' ? CATS_IN : CATS_OUT;
+    document.getElementById('m-cat').innerHTML = cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+    document.getElementById('m-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('m-desc').value = '';
+    document.getElementById('m-amount').value = '';
+    document.getElementById('m-status').value = 'lunas';
+    document.getElementById('m-dp').value = '';
+    toggleDp();
+    document.getElementById('modal').classList.add('show');
+  }
+  function closeModal() { document.getElementById('modal').classList.remove('show'); }
+
+  function toggleDp() {
+    const isDp = document.getElementById('m-status').value === 'dp';
+    document.getElementById('dp-row').classList.toggle('show', isDp);
+    syncDpMax();
+  }
+  function syncDpMax() {
+    const total = parseInt(document.getElementById('m-amount').value)||0;
+    const dp = parseInt(document.getElementById('m-dp').value)||0;
+    const sisa = total - dp;
+    document.getElementById('dp-sisa').textContent = total ? `Sisa belum dibayar: ${fmt(Math.max(0,sisa))}` : '';
+  }
+
+  async function saveTx() {
+    const tanggal = document.getElementById('m-date').value;
+    const keterangan = document.getElementById('m-desc').value.trim();
+    const kategori = document.getElementById('m-cat').value;
+    const jumlah = parseInt(document.getElementById('m-amount').value)||0;
+    const status = document.getElementById('m-status').value;
+    const dp_dibayar = status==='dp' ? (parseInt(document.getElementById('m-dp').value)||0) : jumlah;
+    if (!tanggal || !jumlah) { showToast('⚠️ Tanggal dan jumlah wajib diisi.'); return; }
+    if (status==='dp' && dp_dibayar >= jumlah) { showToast('⚠️ DP harus lebih kecil dari total. Kalau lunas, pilih Lunas.'); return; }
+    const { error } = await sb.from('cashflow_entries').insert({
+      tanggal, keterangan, kategori, jumlah, jenis: modalType, status, dp_dibayar
+    });
+    if (error) { showToast('❌ Gagal menyimpan.'); return; }
+    closeModal();
+    showToast('✅ Transaksi tersimpan.');
+    await loadTx();
+  }
+
+  async function deleteTx(id) {
+    if (!confirm('Hapus transaksi ini?')) return;
+    await sb.from('cashflow_entries').delete().eq('id', id);
+    showToast('🗑 Transaksi dihapus.');
+    await loadTx();
+  }
+
+  function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(()=>el.classList.remove('show'), 2500);
+  }
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+  }
+</script>
+</body>
+</html>
