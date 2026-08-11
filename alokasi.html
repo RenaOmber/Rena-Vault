@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#34d399" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="RO Vault" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rena Omber — Alokasi Profit</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="theme.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #060f0a; --bg2: #0d1f14; --bg3: #122b1a;
+      --border: rgba(52,211,153,0.12); --border-hover: rgba(52,211,153,0.28);
+      --text: #e6f4ec; --text2: #7aab90; --text3: #3d6b52;
+      --accent: #34d399; --accent-dim: rgba(52,211,153,0.12);
+      --red: #f87171; --red-dim: rgba(248,113,113,0.1);
+      --yellow: #fbbf24; --blue: #60a5fa; --purple: #a78bfa;
+    }
+    html, body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; min-height: 100vh; }
+
+    #gate { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
+    .gate-mark { width: 40px; height: 4px; background: var(--accent); border-radius: 2px; margin: 0 auto 16px; }
+    .gate-form { display: flex; gap: 8px; margin-top: 8px; }
+    .gate-form input { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 14px; padding: 10px 14px; width: 220px; outline: none; }
+    .gate-form button { background: var(--accent); border: none; border-radius: 6px; color: #04150c; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600; padding: 10px 18px; }
+    .gate-error { font-size: 12px; color: var(--red); min-height: 16px; text-align: center; }
+
+    #main { display: none; }
+    .top-bar { display: flex; align-items: center; justify-content: space-between; padding: 16px 28px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(6,15,10,0.92); backdrop-filter: blur(12px); z-index: 10; }
+    .top-left { display: flex; align-items: center; gap: 10px; }
+    .top-mark { width: 22px; height: 3px; background: var(--accent); border-radius: 2px; }
+    .top-name { font-size: 13px; font-weight: 600; }
+    .top-sub { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; }
+    .top-right { display: flex; gap: 8px; align-items: center; }
+    .btn-ghost { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text2); cursor: pointer; font-family: inherit; font-size: 12px; padding: 6px 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: border-color 0.15s; }
+    .btn-ghost:hover { border-color: var(--border-hover); color: var(--text); }
+
+    .content { padding: 32px 36px; max-width: 900px; margin: 0 auto; }
+
+    /* INPUT BAR */
+    .input-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 24px; margin-bottom: 28px; }
+    .input-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+    .input-group { flex: 1; min-width: 160px; }
+    .input-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+    .input-field { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: inherit; font-size: 15px; padding: 11px 13px; outline: none; transition: border-color 0.15s; }
+    .input-field:focus { border-color: var(--border-hover); }
+    .input-prefix { position: relative; }
+    .input-prefix span { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--text3); }
+    .input-prefix input { padding-left: 34px; }
+    .btn-save { background: var(--accent); border: none; border-radius: 8px; color: #04150c; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600; padding: 11px 22px; white-space: nowrap; transition: opacity 0.15s; }
+    .btn-save:hover { opacity: 0.88; }
+
+    /* BUCKET GRID */
+    .bucket-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 28px; }
+    .bucket-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 18px; border-top: 2px solid; }
+    .bucket-label { font-size: 12px; color: var(--text2); margin-bottom: 2px; }
+    .bucket-pct { font-size: 10px; color: var(--text3); }
+    .bucket-value { font-size: 20px; font-weight: 700; margin: 8px 0 4px; letter-spacing: -0.01em; }
+    .bucket-note { font-size: 11px; color: var(--text3); }
+
+    .section-title { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin: 28px 0 14px; }
+
+    /* PER PERSON */
+    .person-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+    .person-name { min-width: 60px; font-size: 14px; font-weight: 500; }
+    .person-bar-wrap { flex: 1; height: 26px; background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+    .person-bar { height: 100%; background: var(--accent); border-radius: 6px; transition: width 0.3s; opacity: 0.85; }
+    .person-pct { min-width: 44px; font-size: 12px; color: var(--text3); text-align: right; }
+    .person-val { min-width: 110px; text-align: right; font-size: 14px; font-weight: 600; }
+
+    /* HISTORY */
+    .hist-table { width: 100%; border-collapse: collapse; background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-top: 8px; }
+    .hist-table th { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--border); font-weight: 600; }
+    .hist-table td { padding: 11px 14px; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .hist-table tr:last-child td { border-bottom: none; }
+    .hist-table tr:hover td { background: var(--bg3); }
+    .hist-del { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 15px; padding: 2px 6px; }
+    .hist-del:hover { color: var(--red); }
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--text3); font-size: 13px; }
+
+    .toast { position: fixed; bottom: 24px; right: 24px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; font-size: 13px; z-index: 999; opacity: 0; transform: translateY(8px); transition: all 0.2s; pointer-events: none; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 720px) {
+      .content { padding: 16px; }
+      .bucket-grid { grid-template-columns: 1fr 1fr; }
+      .top-bar { padding: 10px 14px; }
+      .person-pct { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="gate">
+  <div>
+    <div class="gate-mark"></div>
+    <div style="font-size:18px;font-weight:500;text-align:center;">Rena Omber</div>
+    <div style="font-size:12px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;text-align:center;margin-top:4px;">Alokasi Profit</div>
+  </div>
+  <div>
+    <div class="gate-form">
+      <input type="password" id="pw-input" placeholder="Password" onkeydown="if(event.key==='Enter')checkPw()" />
+      <button onclick="checkPw()">Masuk</button>
+    </div>
+    <div class="gate-error" id="pw-error"></div>
+  </div>
+</div>
+
+<div id="main">
+  <div class="top-bar">
+    <div class="top-left">
+      <div class="top-mark"></div>
+      <div>
+        <div class="top-name">Rena Omber</div>
+        <div class="top-sub">Alokasi Profit</div>
+      </div>
+    </div>
+    <div class="top-right">
+      <button class="theme-toggle-btn btn-ghost" onclick="toggleTheme()">☀️</button>
+      <a href="index.html" class="btn-ghost">← Vault</a>
+      <button class="btn-ghost" onclick="logout()">Keluar</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="input-card">
+      <div class="input-row">
+        <div class="input-group">
+          <div class="input-label">Bulan</div>
+          <input type="month" class="input-field" id="in-bulan" />
+        </div>
+        <div class="input-group">
+          <div class="input-label">Net Profit bulan ini</div>
+          <div class="input-prefix">
+            <span>Rp</span>
+            <input type="number" min="0" class="input-field" id="in-profit" placeholder="0" oninput="renderPreview()" />
+          </div>
+        </div>
+        <button class="btn-save" onclick="saveAlokasi()">Simpan Bulan Ini</button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:12px;">Net profit = revenue − COGS − biaya operasional. Isi manual dari hasil hitung Finance & Cashflow.</div>
+    </div>
+
+    <div class="bucket-grid">
+      <div class="bucket-card" style="border-top-color:var(--yellow);">
+        <div class="bucket-label">Operasional Reserve</div>
+        <div class="bucket-pct">15% · buffer kas</div>
+        <div class="bucket-value" style="color:var(--yellow);" id="b-reserve">Rp 0</div>
+        <div class="bucket-note">Tidak dibagikan</div>
+      </div>
+      <div class="bucket-card" style="border-top-color:var(--blue);">
+        <div class="bucket-label">Scale-Up Fund</div>
+        <div class="bucket-pct">20% · reinvestasi</div>
+        <div class="bucket-value" style="color:var(--blue);" id="b-scale">Rp 0</div>
+        <div class="bucket-note">Keputusan Rena + Nom</div>
+      </div>
+      <div class="bucket-card" style="border-top-color:var(--accent);">
+        <div class="bucket-label">Profit Sharing</div>
+        <div class="bucket-pct">40% · dibagi 6 orang</div>
+        <div class="bucket-value" style="color:var(--accent);" id="b-share">Rp 0</div>
+        <div class="bucket-note">Bulanan</div>
+      </div>
+      <div class="bucket-card" style="border-top-color:var(--purple);">
+        <div class="bucket-label">Dividen Pool</div>
+        <div class="bucket-pct">25% · tahunan</div>
+        <div class="bucket-value" style="color:var(--purple);" id="b-div">Rp 0</div>
+        <div class="bucket-note">Dibagi akhir tahun</div>
+      </div>
+    </div>
+
+    <div class="section-title">Profit Sharing per Orang (dari 40% pool)</div>
+    <div id="per-person"></div>
+
+    <div class="section-title" style="margin-top:32px;">Riwayat Alokasi</div>
+    <table class="hist-table">
+      <thead>
+        <tr>
+          <th>Bulan</th>
+          <th style="text-align:right;">Net Profit</th>
+          <th style="text-align:right;">Reserve</th>
+          <th style="text-align:right;">Scale-Up</th>
+          <th style="text-align:right;">Sharing</th>
+          <th style="text-align:right;">Dividen</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="hist-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ─── CONFIG ────────────────────────────────────────────────
+  const SUPABASE_URL  = 'https://fqvfnohhilkzvijqukfg.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVneWxpbml5dnJ5eHlncXp3a2FrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU5MDQ5MTIsImV4cCI6MjEwMTQ4MDkxMn0.7t1ldalFI2h-BMeuwuEjWnGfmD3olgTOav5Hyd9E-zw';
+  const PASSWORD_HASH = '323d50ece76235b74e5c1da0c46bfa9995619482acadaeac2ef28cbb68bbb6dc';
+  // ───────────────────────────────────────────────────────────
+
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+  // Bucket persentase (Pasal 3.1)
+  const BUCKETS = { reserve: 0.15, scale: 0.20, share: 0.40, div: 0.25 };
+  // Proporsi profit sharing per orang (Pasal 3.2) — bukan ownership!
+  const SHARES = [['Rena',20],['Nom',18],['Gapl',16],['Jee',16],['Pix',15],['Tok',15]];
+
+  let allAlokasi = [];
+
+  async function sha256(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+  async function checkPw() {
+    const val = document.getElementById('pw-input').value.trim();
+    if ((await sha256(val)) === PASSWORD_HASH) {
+      sessionStorage.setItem('ro_auth','1');
+      showMain();
+    } else {
+      document.getElementById('pw-error').textContent = 'Password salah.';
+      document.getElementById('pw-input').value = '';
+    }
+  }
+  function logout() { sessionStorage.removeItem('ro_auth'); location.reload(); }
+  async function showMain() {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+    document.getElementById('in-bulan').value = new Date().toISOString().slice(0,7);
+    await loadAlokasi();
+    renderPreview();
+  }
+  if (sessionStorage.getItem('ro_auth') === '1') showMain();
+
+  function fmt(n) { return 'Rp ' + Math.round(parseInt(n)||0).toLocaleString('id-ID'); }
+  function fmtBulan(b) {
+    if (!b) return '—';
+    const [y,m] = b.split('-');
+    const bulan = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
+    return `${bulan[parseInt(m)-1]} ${y}`;
+  }
+
+  function renderPreview() {
+    const profit = parseInt(document.getElementById('in-profit').value)||0;
+    const reserve = profit*BUCKETS.reserve;
+    const scale = profit*BUCKETS.scale;
+    const share = profit*BUCKETS.share;
+    const div = profit*BUCKETS.div;
+
+    document.getElementById('b-reserve').textContent = fmt(reserve);
+    document.getElementById('b-scale').textContent = fmt(scale);
+    document.getElementById('b-share').textContent = fmt(share);
+    document.getElementById('b-div').textContent = fmt(div);
+
+    const cont = document.getElementById('per-person');
+    const maxVal = share * (SHARES[0][1]/100) || 1;
+    cont.innerHTML = SHARES.map(([name,pct])=>{
+      const val = share*(pct/100);
+      return `<div class="person-row">
+        <span class="person-name">${name}</span>
+        <div class="person-bar-wrap"><div class="person-bar" style="width:${val/maxVal*100}%;"></div></div>
+        <span class="person-pct">${pct}%</span>
+        <span class="person-val">${fmt(val)}</span>
+      </div>`;
+    }).join('');
+  }
+
+  async function loadAlokasi() {
+    const { data } = await sb.from('profit_alokasi').select('*').order('bulan', { ascending: false });
+    allAlokasi = data || [];
+    renderHist();
+  }
+
+  function renderHist() {
+    const body = document.getElementById('hist-body');
+    if (!allAlokasi.length) {
+      body.innerHTML = '<tr><td colspan="7"><div class="empty-state">Belum ada data alokasi.</div></td></tr>';
+      return;
+    }
+    body.innerHTML = allAlokasi.map(a=>{
+      const p = parseInt(a.net_profit)||0;
+      return `<tr>
+        <td>${fmtBulan(a.bulan)}</td>
+        <td style="text-align:right;font-weight:600;">${fmt(p)}</td>
+        <td style="text-align:right;color:var(--yellow);">${fmt(p*BUCKETS.reserve)}</td>
+        <td style="text-align:right;color:var(--blue);">${fmt(p*BUCKETS.scale)}</td>
+        <td style="text-align:right;color:var(--accent);">${fmt(p*BUCKETS.share)}</td>
+        <td style="text-align:right;color:var(--purple);">${fmt(p*BUCKETS.div)}</td>
+        <td><button class="hist-del" onclick="deleteAlokasi('${a.id}')" title="Hapus">×</button></td>
+      </tr>`;
+    }).join('');
+  }
+
+  async function saveAlokasi() {
+    const bulan = document.getElementById('in-bulan').value;
+    const net_profit = parseInt(document.getElementById('in-profit').value)||0;
+    if (!bulan || !net_profit) { showToast('⚠️ Bulan dan net profit wajib diisi.'); return; }
+    // upsert per bulan — kalau bulan sama, timpa
+    const { error } = await sb.from('profit_alokasi').upsert({ bulan, net_profit }, { onConflict: 'bulan' });
+    if (error) { showToast('❌ Gagal menyimpan.'); return; }
+    showToast('✅ Alokasi bulan ' + fmtBulan(bulan) + ' tersimpan.');
+    await loadAlokasi();
+  }
+
+  async function deleteAlokasi(id) {
+    if (!confirm('Hapus data alokasi bulan ini?')) return;
+    await sb.from('profit_alokasi').delete().eq('id', id);
+    showToast('🗑 Data dihapus.');
+    await loadAlokasi();
+  }
+
+  function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(()=>el.classList.remove('show'), 2500);
+  }
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+  }
+</script>
+</body>
+</html>
