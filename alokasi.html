@@ -56,14 +56,24 @@
     .input-prefix input { padding-left: 34px; }
     .btn-save { background: var(--accent); border: none; border-radius: 8px; color: #04150c; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600; padding: 11px 22px; white-space: nowrap; transition: opacity 0.15s; }
     .btn-save:hover { opacity: 0.88; }
+    .preview-strip { font-size: 12px; color: var(--text3); margin-top: 14px; line-height: 1.6; }
+    .preview-strip b { color: var(--text2); font-weight: 600; }
 
     /* BUCKET GRID */
-    .bucket-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 28px; }
+    .bucket-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 12px; }
     .bucket-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 18px; border-top: 2px solid; }
     .bucket-label { font-size: 12px; color: var(--text2); margin-bottom: 2px; }
     .bucket-pct { font-size: 10px; color: var(--text3); }
     .bucket-value { font-size: 20px; font-weight: 700; margin: 8px 0 4px; letter-spacing: -0.01em; }
     .bucket-note { font-size: 11px; color: var(--text3); }
+    .bucket-sub { font-size: 10px; color: var(--text3); margin-top: 6px; display: flex; justify-content: space-between; gap: 6px; }
+    .bucket-sub .in { color: var(--text2); }
+    .bucket-sub .out { color: var(--red); }
+
+    .total-strip { display: flex; align-items: baseline; justify-content: space-between; background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; margin-bottom: 28px; }
+    .total-strip .lbl { font-size: 12px; color: var(--text2); }
+    .total-strip .lbl small { display: block; font-size: 10px; color: var(--text3); margin-top: 3px; }
+    .total-strip .val { font-size: 22px; font-weight: 700; color: var(--accent); letter-spacing: -0.01em; }
 
     .section-title { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin: 28px 0 14px; }
 
@@ -75,6 +85,12 @@
     .person-pct { min-width: 44px; font-size: 12px; color: var(--text3); text-align: right; }
     .person-val { min-width: 110px; text-align: right; font-size: 14px; font-weight: 600; }
 
+    /* WITHDRAW CARD */
+    .draw-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 22px; margin-top: 8px; }
+    .draw-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+    .draw-group { flex: 1; min-width: 130px; }
+    select.input-field { appearance: none; cursor: pointer; }
+
     /* HISTORY */
     .hist-table { width: 100%; border-collapse: collapse; background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-top: 8px; }
     .hist-table th { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--border); font-weight: 600; }
@@ -83,6 +99,7 @@
     .hist-table tr:hover td { background: var(--bg3); }
     .hist-del { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 15px; padding: 2px 6px; }
     .hist-del:hover { color: var(--red); }
+    .tag { font-size: 10px; padding: 3px 9px; border-radius: 10px; font-weight: 600; white-space: nowrap; }
     .empty-state { text-align: center; padding: 40px 20px; color: var(--text3); font-size: 13px; }
 
     .toast { position: fixed; bottom: 24px; right: 24px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; font-size: 13px; z-index: 999; opacity: 0; transform: translateY(8px); transition: all 0.2s; pointer-events: none; }
@@ -93,6 +110,7 @@
       .bucket-grid { grid-template-columns: 1fr 1fr; }
       .top-bar { padding: 10px 14px; }
       .person-pct { display: none; }
+      .hist-hide-sm { display: none; }
     }
   </style>
 </head>
@@ -130,6 +148,7 @@
   </div>
 
   <div class="content">
+    <!-- INPUT NET PROFIT -->
     <div class="input-card">
       <div class="input-row">
         <div class="input-group">
@@ -143,51 +162,87 @@
             <input type="number" min="0" class="input-field" id="in-profit" placeholder="0" oninput="renderPreview()" />
           </div>
         </div>
-        <button class="btn-save" onclick="saveAlokasi()">Simpan Bulan Ini</button>
+        <button class="btn-save" onclick="saveAlokasi()">Alokasikan Bulan Ini</button>
       </div>
-      <div style="font-size:11px;color:var(--text3);margin-top:12px;">Net profit = revenue − COGS − biaya operasional. Isi manual dari hasil hitung Finance & Cashflow.</div>
+      <div class="preview-strip" id="preview-strip">Net profit = revenue − COGS − biaya operasional. Isi manual dari hasil hitung Finance & Cashflow.</div>
     </div>
 
-    <div class="bucket-grid">
-      <div class="bucket-card" style="border-top-color:var(--yellow);">
-        <div class="bucket-label">Operasional Reserve</div>
-        <div class="bucket-pct">15% · buffer kas</div>
-        <div class="bucket-value" style="color:var(--yellow);" id="b-reserve">Rp 0</div>
-        <div class="bucket-note">Tidak dibagikan</div>
-      </div>
-      <div class="bucket-card" style="border-top-color:var(--blue);">
-        <div class="bucket-label">Scale-Up Fund</div>
-        <div class="bucket-pct">20% · reinvestasi</div>
-        <div class="bucket-value" style="color:var(--blue);" id="b-scale">Rp 0</div>
-        <div class="bucket-note">Keputusan Rena + Nom</div>
-      </div>
-      <div class="bucket-card" style="border-top-color:var(--accent);">
-        <div class="bucket-label">Profit Sharing</div>
-        <div class="bucket-pct">40% · dibagi 6 orang</div>
-        <div class="bucket-value" style="color:var(--accent);" id="b-share">Rp 0</div>
-        <div class="bucket-note">Bulanan</div>
-      </div>
-      <div class="bucket-card" style="border-top-color:var(--purple);">
-        <div class="bucket-label">Dividen Pool</div>
-        <div class="bucket-pct">25% · tahunan</div>
-        <div class="bucket-value" style="color:var(--purple);" id="b-div">Rp 0</div>
-        <div class="bucket-note">Dibagi akhir tahun</div>
-      </div>
+    <!-- SALDO BERJALAN PER BUCKET -->
+    <div class="section-title">Saldo Berjalan per Bucket</div>
+    <div class="bucket-grid" id="bucket-grid"></div>
+
+    <div class="total-strip">
+      <div class="lbl">Total dana teralokasi (belum dipakai)<small>Bagian dari saldo ATM yang sudah punya tujuan</small></div>
+      <div class="val" id="total-alokasi">Rp 0</div>
     </div>
 
-    <div class="section-title">Profit Sharing per Orang (dari 40% pool)</div>
+    <!-- PER PERSON -->
+    <div class="section-title">Profit Sharing per Orang — dari saldo pool sekarang</div>
     <div id="per-person"></div>
 
-    <div class="section-title" style="margin-top:32px;">Riwayat Alokasi</div>
+    <!-- TARIK / SESUAIKAN -->
+    <div class="section-title" style="margin-top:32px;">Tarik / Sesuaikan Dana Bucket</div>
+    <div class="draw-card">
+      <div class="draw-row">
+        <div class="draw-group">
+          <div class="input-label">Bucket</div>
+          <select class="input-field" id="d-bucket"></select>
+        </div>
+        <div class="draw-group" style="max-width:130px;">
+          <div class="input-label">Jenis</div>
+          <select class="input-field" id="d-jenis">
+            <option value="out">Tarik (−)</option>
+            <option value="in">Tambah (+)</option>
+          </select>
+        </div>
+        <div class="draw-group">
+          <div class="input-label">Jumlah</div>
+          <div class="input-prefix">
+            <span>Rp</span>
+            <input type="number" min="0" class="input-field" id="d-jumlah" placeholder="0" />
+          </div>
+        </div>
+        <div class="draw-group" style="max-width:150px;">
+          <div class="input-label">Tanggal</div>
+          <input type="date" class="input-field" id="d-tanggal" />
+        </div>
+      </div>
+      <div class="draw-row" style="margin-top:12px;">
+        <div class="draw-group" style="min-width:220px;">
+          <div class="input-label">Keterangan</div>
+          <input type="text" class="input-field" id="d-ket" placeholder="mis. Bagi hasil Nov, beli mesin, dll" />
+        </div>
+        <button class="btn-save" onclick="saveLedger()">Simpan</button>
+      </div>
+      <div class="preview-strip">Tarik = uang keluar dari bucket (dana dipakai). Tambah = koreksi manual / setoran ke bucket. Saldo ATM fisik tetap satu — ini cuma catatan komposisinya.</div>
+    </div>
+
+    <!-- LEDGER HISTORY -->
+    <div class="section-title" style="margin-top:32px;">Riwayat Penarikan &amp; Koreksi</div>
+    <table class="hist-table">
+      <thead>
+        <tr>
+          <th>Tanggal</th>
+          <th>Bucket</th>
+          <th>Keterangan</th>
+          <th style="text-align:right;">Nilai</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="ledger-body"></tbody>
+    </table>
+
+    <!-- ALLOCATION HISTORY -->
+    <div class="section-title" style="margin-top:32px;">Riwayat Alokasi Bulanan</div>
     <table class="hist-table">
       <thead>
         <tr>
           <th>Bulan</th>
           <th style="text-align:right;">Net Profit</th>
-          <th style="text-align:right;">Reserve</th>
-          <th style="text-align:right;">Scale-Up</th>
+          <th style="text-align:right;" class="hist-hide-sm">Reserve</th>
+          <th style="text-align:right;" class="hist-hide-sm">Scale-Up</th>
           <th style="text-align:right;">Sharing</th>
-          <th style="text-align:right;">Dividen</th>
+          <th style="text-align:right;" class="hist-hide-sm">Dividen</th>
           <th></th>
         </tr>
       </thead>
@@ -209,10 +264,18 @@
 
   // Bucket persentase (Pasal 3.1)
   const BUCKETS = { reserve: 0.15, scale: 0.20, share: 0.40, div: 0.25 };
+  const BUCKET_META = {
+    reserve: { label:'Operasional Reserve', color:'var(--yellow)', pct:'15%', note:'buffer kas' },
+    scale:   { label:'Scale-Up Fund',       color:'var(--blue)',   pct:'20%', note:'reinvestasi' },
+    share:   { label:'Profit Sharing',      color:'var(--accent)', pct:'40%', note:'dibagi 6 orang' },
+    div:     { label:'Dividen Pool',        color:'var(--purple)', pct:'25%', note:'tahunan' },
+  };
+  const BUCKET_ORDER = ['reserve','scale','share','div'];
   // Proporsi profit sharing per orang (Pasal 3.2) — bukan ownership!
   const SHARES = [['Rena',20],['Nom',18],['Gapl',16],['Jee',16],['Pix',15],['Tok',15]];
 
   let allAlokasi = [];
+  let allLedger  = [];
 
   async function sha256(str) {
     const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
@@ -233,35 +296,112 @@
     document.getElementById('gate').style.display = 'none';
     document.getElementById('main').style.display = 'block';
     document.getElementById('in-bulan').value = new Date().toISOString().slice(0,7);
-    await loadAlokasi();
+    document.getElementById('d-tanggal').value = new Date().toISOString().slice(0,10);
+    // isi dropdown bucket
+    document.getElementById('d-bucket').innerHTML = BUCKET_ORDER
+      .map(k => `<option value="${k}">${BUCKET_META[k].label}</option>`).join('');
+    await loadAll();
     renderPreview();
   }
   if (sessionStorage.getItem('ro_auth') === '1') showMain();
 
-  function fmt(n) { return 'Rp ' + Math.round(parseInt(n)||0).toLocaleString('id-ID'); }
+  function fmt(n) {
+    const v = Math.round(parseFloat(n)||0);
+    return 'Rp ' + v.toLocaleString('id-ID');
+  }
   function fmtBulan(b) {
     if (!b) return '—';
     const [y,m] = b.split('-');
     const bulan = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
     return `${bulan[parseInt(m)-1]} ${y}`;
   }
+  function fmtTgl(s) {
+    if (!s) return '—';
+    const [y,m,d] = s.split('-');
+    const bulan = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
+    return `${parseInt(d)} ${bulan[parseInt(m)-1]} ${y}`;
+  }
 
+  // ── HITUNG SALDO ──────────────────────────────────────────
+  function totalAllocated() {
+    const s = { reserve:0, scale:0, share:0, div:0 };
+    allAlokasi.forEach(a => {
+      const p = parseInt(a.net_profit)||0;
+      s.reserve += p*BUCKETS.reserve;
+      s.scale   += p*BUCKETS.scale;
+      s.share   += p*BUCKETS.share;
+      s.div     += p*BUCKETS.div;
+    });
+    return s;
+  }
+  function ledgerNet() {
+    const s = { reserve:0, scale:0, share:0, div:0 };
+    allLedger.forEach(l => {
+      const j = parseInt(l.jumlah)||0;
+      const sign = l.jenis === 'in' ? 1 : -1;
+      if (s[l.bucket] !== undefined) s[l.bucket] += sign*j;
+    });
+    return s;
+  }
+  function balances() {
+    const a = totalAllocated(), l = ledgerNet();
+    const out = {};
+    BUCKET_ORDER.forEach(k => out[k] = a[k] + l[k]);
+    return out;
+  }
+
+  // ── PREVIEW BULAN INI ─────────────────────────────────────
   function renderPreview() {
     const profit = parseInt(document.getElementById('in-profit').value)||0;
-    const reserve = profit*BUCKETS.reserve;
-    const scale = profit*BUCKETS.scale;
-    const share = profit*BUCKETS.share;
-    const div = profit*BUCKETS.div;
+    const strip = document.getElementById('preview-strip');
+    if (!profit) {
+      strip.innerHTML = 'Net profit = revenue − COGS − biaya operasional. Isi manual dari hasil hitung Finance & Cashflow.';
+    } else {
+      strip.innerHTML = `Bulan ini akan menambah &rarr; ` +
+        `<b>Reserve</b> ${fmt(profit*BUCKETS.reserve)} · ` +
+        `<b>Scale-Up</b> ${fmt(profit*BUCKETS.scale)} · ` +
+        `<b>Sharing</b> ${fmt(profit*BUCKETS.share)} · ` +
+        `<b>Dividen</b> ${fmt(profit*BUCKETS.div)}`;
+    }
+    renderBuckets();
+    renderPerPerson();
+  }
 
-    document.getElementById('b-reserve').textContent = fmt(reserve);
-    document.getElementById('b-scale').textContent = fmt(scale);
-    document.getElementById('b-share').textContent = fmt(share);
-    document.getElementById('b-div').textContent = fmt(div);
+  // ── RENDER SALDO BUCKET ───────────────────────────────────
+  function renderBuckets() {
+    const bal = balances();
+    const alloc = totalAllocated();
+    const led = ledgerNet();
+    const grid = document.getElementById('bucket-grid');
+    grid.innerHTML = BUCKET_ORDER.map(k => {
+      const m = BUCKET_META[k];
+      const inTotal = alloc[k] + allLedger.filter(l=>l.bucket===k && l.jenis==='in')
+        .reduce((a,l)=>a+(parseInt(l.jumlah)||0),0);
+      const outTotal = allLedger.filter(l=>l.bucket===k && l.jenis!=='in')
+        .reduce((a,l)=>a+(parseInt(l.jumlah)||0),0);
+      return `<div class="bucket-card" style="border-top-color:${m.color};">
+        <div class="bucket-label">${m.label}</div>
+        <div class="bucket-pct">${m.pct} · ${m.note}</div>
+        <div class="bucket-value" style="color:${m.color};">${fmt(bal[k])}</div>
+        <div class="bucket-sub">
+          <span class="in">masuk ${fmt(inTotal)}</span>
+          <span class="out">−${fmt(outTotal)}</span>
+        </div>
+      </div>`;
+    }).join('');
 
+    const total = BUCKET_ORDER.reduce((a,k)=>a+bal[k],0);
+    document.getElementById('total-alokasi').textContent = fmt(total);
+  }
+
+  // ── RENDER PER ORANG (dari saldo share sekarang) ──────────
+  function renderPerPerson() {
+    const shareBal = balances().share;
     const cont = document.getElementById('per-person');
-    const maxVal = share * (SHARES[0][1]/100) || 1;
+    const base = Math.max(shareBal, 0);
+    const maxVal = base * (SHARES[0][1]/100) || 1;
     cont.innerHTML = SHARES.map(([name,pct])=>{
-      const val = share*(pct/100);
+      const val = base*(pct/100);
       return `<div class="person-row">
         <span class="person-name">${name}</span>
         <div class="person-bar-wrap"><div class="person-bar" style="width:${val/maxVal*100}%;"></div></div>
@@ -271,10 +411,18 @@
     }).join('');
   }
 
-  async function loadAlokasi() {
-    const { data } = await sb.from('profit_alokasi').select('*').order('bulan', { ascending: false });
-    allAlokasi = data || [];
+  // ── LOAD ──────────────────────────────────────────────────
+  async function loadAll() {
+    const [aRes, lRes] = await Promise.all([
+      sb.from('profit_alokasi').select('*').order('bulan', { ascending: false }),
+      sb.from('bucket_ledger').select('*').order('tanggal', { ascending: false })
+    ]);
+    allAlokasi = aRes.data || [];
+    allLedger  = lRes.data || [];
+    renderBuckets();
+    renderPerPerson();
     renderHist();
+    renderLedger();
   }
 
   function renderHist() {
@@ -288,31 +436,85 @@
       return `<tr>
         <td>${fmtBulan(a.bulan)}</td>
         <td style="text-align:right;font-weight:600;">${fmt(p)}</td>
-        <td style="text-align:right;color:var(--yellow);">${fmt(p*BUCKETS.reserve)}</td>
-        <td style="text-align:right;color:var(--blue);">${fmt(p*BUCKETS.scale)}</td>
+        <td style="text-align:right;color:var(--yellow);" class="hist-hide-sm">${fmt(p*BUCKETS.reserve)}</td>
+        <td style="text-align:right;color:var(--blue);" class="hist-hide-sm">${fmt(p*BUCKETS.scale)}</td>
         <td style="text-align:right;color:var(--accent);">${fmt(p*BUCKETS.share)}</td>
-        <td style="text-align:right;color:var(--purple);">${fmt(p*BUCKETS.div)}</td>
+        <td style="text-align:right;color:var(--purple);" class="hist-hide-sm">${fmt(p*BUCKETS.div)}</td>
         <td><button class="hist-del" onclick="deleteAlokasi('${a.id}')" title="Hapus">×</button></td>
       </tr>`;
     }).join('');
   }
 
+  function renderLedger() {
+    const body = document.getElementById('ledger-body');
+    if (!allLedger.length) {
+      body.innerHTML = '<tr><td colspan="5"><div class="empty-state">Belum ada penarikan atau koreksi.</div></td></tr>';
+      return;
+    }
+    body.innerHTML = allLedger.map(l=>{
+      const m = BUCKET_META[l.bucket] || { label:l.bucket, color:'var(--text2)' };
+      const isIn = l.jenis === 'in';
+      const j = parseInt(l.jumlah)||0;
+      return `<tr>
+        <td>${fmtTgl(l.tanggal)}</td>
+        <td><span class="tag" style="background:var(--bg3);color:${m.color};">${m.label}</span></td>
+        <td>${l.keterangan||'—'}</td>
+        <td style="text-align:right;font-weight:600;color:${isIn?'var(--accent)':'var(--red)'};">${isIn?'+':'−'} ${fmt(j)}</td>
+        <td><button class="hist-del" onclick="deleteLedger('${l.id}')" title="Hapus">×</button></td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ── SIMPAN ALOKASI BULANAN ────────────────────────────────
   async function saveAlokasi() {
     const bulan = document.getElementById('in-bulan').value;
     const net_profit = parseInt(document.getElementById('in-profit').value)||0;
     if (!bulan || !net_profit) { showToast('⚠️ Bulan dan net profit wajib diisi.'); return; }
-    // upsert per bulan — kalau bulan sama, timpa
     const { error } = await sb.from('profit_alokasi').upsert({ bulan, net_profit }, { onConflict: 'bulan' });
     if (error) { showToast('❌ Gagal menyimpan.'); return; }
-    showToast('✅ Alokasi bulan ' + fmtBulan(bulan) + ' tersimpan.');
-    await loadAlokasi();
+    showToast('✅ Alokasi ' + fmtBulan(bulan) + ' tersimpan.');
+    document.getElementById('in-profit').value = '';
+    renderPreview();
+    await loadAll();
   }
 
   async function deleteAlokasi(id) {
-    if (!confirm('Hapus data alokasi bulan ini?')) return;
+    if (!confirm('Hapus data alokasi bulan ini? Saldo bucket akan berkurang sesuai jumlah bulan itu.')) return;
     await sb.from('profit_alokasi').delete().eq('id', id);
-    showToast('🗑 Data dihapus.');
-    await loadAlokasi();
+    showToast('🗑 Data alokasi dihapus.');
+    await loadAll();
+  }
+
+  // ── SIMPAN PENARIKAN / KOREKSI ────────────────────────────
+  async function saveLedger() {
+    const bucket = document.getElementById('d-bucket').value;
+    const jenis  = document.getElementById('d-jenis').value;
+    const jumlah = parseInt(document.getElementById('d-jumlah').value)||0;
+    const tanggal = document.getElementById('d-tanggal').value;
+    const keterangan = document.getElementById('d-ket').value.trim();
+    if (!jumlah || !tanggal) { showToast('⚠️ Jumlah dan tanggal wajib diisi.'); return; }
+
+    // Peringatan kalau tarik melebihi saldo bucket
+    if (jenis === 'out') {
+      const bal = balances()[bucket] || 0;
+      if (jumlah > bal) {
+        if (!confirm(`Saldo ${BUCKET_META[bucket].label} cuma ${fmt(bal)}. Tarik ${fmt(jumlah)} akan bikin saldo minus. Lanjut?`)) return;
+      }
+    }
+
+    const { error } = await sb.from('bucket_ledger').insert({ bucket, jenis, jumlah, tanggal, keterangan });
+    if (error) { showToast('❌ Gagal menyimpan.'); return; }
+    showToast((jenis==='out'?'📤 Penarikan':'📥 Koreksi') + ' tersimpan.');
+    document.getElementById('d-jumlah').value = '';
+    document.getElementById('d-ket').value = '';
+    await loadAll();
+  }
+
+  async function deleteLedger(id) {
+    if (!confirm('Hapus catatan ini? Saldo bucket akan menyesuaikan.')) return;
+    await sb.from('bucket_ledger').delete().eq('id', id);
+    showToast('🗑 Catatan dihapus.');
+    await loadAll();
   }
 
   function showToast(msg) {
