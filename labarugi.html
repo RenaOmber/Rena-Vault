@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#34d399" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="RO Vault" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rena Omber — Laba Rugi</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="theme.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #060f0a; --bg2: #0d1f14; --bg3: #122b1a;
+      --border: rgba(52,211,153,0.12); --border-hover: rgba(52,211,153,0.28);
+      --text: #e6f4ec; --text2: #7aab90; --text3: #3d6b52;
+      --accent: #34d399; --accent-dim: rgba(52,211,153,0.12);
+      --red: #f87171; --red-dim: rgba(248,113,113,0.1);
+      --yellow: #fbbf24; --blue: #60a5fa; --purple: #a78bfa;
+    }
+    html, body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; min-height: 100vh; }
+
+    #gate { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
+    .gate-mark { width: 40px; height: 4px; background: var(--accent); border-radius: 2px; margin: 0 auto 16px; }
+    .gate-form { display: flex; gap: 8px; margin-top: 8px; }
+    .gate-form input { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 14px; padding: 10px 14px; width: 220px; outline: none; }
+    .gate-form button { background: var(--accent); border: none; border-radius: 6px; color: #04150c; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600; padding: 10px 18px; }
+    .gate-error { font-size: 12px; color: var(--red); min-height: 16px; text-align: center; }
+
+    #main { display: none; }
+    .top-bar { display: flex; align-items: center; justify-content: space-between; padding: 16px 28px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(6,15,10,0.92); backdrop-filter: blur(12px); z-index: 10; }
+    .top-left { display: flex; align-items: center; gap: 10px; }
+    .top-mark { width: 22px; height: 3px; background: var(--accent); border-radius: 2px; }
+    .top-name { font-size: 13px; font-weight: 600; }
+    .top-sub { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; }
+    .top-right { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .btn-ghost { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text2); cursor: pointer; font-family: inherit; font-size: 12px; padding: 6px 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: border-color 0.15s; }
+    .btn-ghost:hover { border-color: var(--border-hover); color: var(--text); }
+
+    .content { padding: 28px 36px; max-width: 860px; margin: 0 auto; }
+
+    .month-nav { display: flex; align-items: center; gap: 14px; margin-bottom: 26px; flex-wrap: wrap; }
+    .nav-btn { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; color: var(--text2); cursor: pointer; font-size: 18px; padding: 6px 14px; transition: border-color 0.15s; }
+    .nav-btn:hover { border-color: var(--border-hover); color: var(--text); }
+    .month-label { font-size: 18px; font-weight: 700; }
+    .month-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+    /* P&L STATEMENT */
+    .pnl-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 8px 24px; margin-bottom: 20px; }
+    .pnl-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border); }
+    .pnl-row:last-child { border-bottom: none; }
+    .pnl-row .lbl { font-size: 14px; color: var(--text2); }
+    .pnl-row .lbl small { display: block; font-size: 11px; color: var(--text3); margin-top: 2px; }
+    .pnl-row .val { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+    .pnl-row.sub .lbl { padding-left: 16px; color: var(--text3); font-size: 13px; }
+    .pnl-row.sub .val { font-size: 14px; color: var(--text2); font-weight: 500; }
+    .pnl-row.subtotal { background: var(--bg3); margin: 0 -24px; padding-left: 24px; padding-right: 24px; }
+    .pnl-row.subtotal .lbl { font-weight: 600; color: var(--text); }
+    .pnl-row.subtotal .val { font-weight: 700; }
+    .pnl-row.final { margin: 0 -24px; padding: 18px 24px; background: var(--accent-dim); }
+    .pnl-row.final .lbl { font-size: 15px; font-weight: 700; color: var(--text); }
+    .pnl-row.final .val { font-size: 24px; font-weight: 700; }
+    .pos { color: var(--accent); } .neg { color: var(--red); }
+    .green { color: var(--accent); } .red { color: var(--red); } .yellow { color: var(--yellow); }
+
+    .copy-hint { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; padding: 12px 16px; background: var(--bg2); border: 1px dashed var(--border-hover); border-radius: 10px; font-size: 12px; color: var(--text2); }
+    .copy-btn { background: var(--accent); border: none; border-radius: 6px; color: #04150c; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 600; padding: 7px 14px; white-space: nowrap; }
+
+    .section-title { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin: 30px 0 12px; }
+
+    /* INFO (di luar L/R) */
+    .info-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; margin-bottom: 8px; }
+    .info-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 7px 0; }
+    .info-row + .info-row { border-top: 1px solid var(--border); }
+    .info-row .lbl { font-size: 13px; color: var(--text2); }
+    .info-row .lbl small { display: block; font-size: 11px; color: var(--text3); margin-top: 2px; }
+    .info-row .val { font-size: 14px; font-weight: 600; color: var(--text2); }
+
+    /* TAX / OMZET */
+    .tax-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 8px; }
+    .tax-top { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; }
+    .tax-label { font-size: 12px; color: var(--text2); }
+    .tax-value { font-size: 22px; font-weight: 700; color: var(--accent); }
+    .tax-bar-wrap { position: relative; height: 12px; background: var(--bg3); border-radius: 6px; overflow: visible; margin: 22px 0 8px; }
+    .tax-bar { height: 100%; border-radius: 6px; background: var(--accent); transition: width 0.4s; }
+    .tax-mark { position: absolute; top: -6px; width: 2px; height: 24px; background: var(--text3); }
+    .tax-mark span { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 9px; color: var(--text3); white-space: nowrap; }
+    .tax-note { font-size: 11px; color: var(--text3); line-height: 1.6; margin-top: 12px; }
+
+    /* YEAR TABLE */
+    .yr-table { width: 100%; border-collapse: collapse; background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .yr-table th { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; text-align: right; padding: 11px 14px; border-bottom: 1px solid var(--border); font-weight: 600; }
+    .yr-table th:first-child { text-align: left; }
+    .yr-table td { padding: 11px 14px; border-bottom: 1px solid var(--border); font-size: 13px; text-align: right; }
+    .yr-table td:first-child { text-align: left; font-weight: 500; }
+    .yr-table tr:last-child td { border-bottom: none; }
+    .yr-table tr.total-row td { font-weight: 700; border-top: 2px solid var(--border); background: var(--bg3); }
+    .yr-table tr:hover td { background: var(--bg3); }
+    .yr-cur { cursor: pointer; }
+    .yr-cur.active td { background: var(--accent-dim); }
+
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--text3); font-size: 13px; }
+    .toast { position: fixed; bottom: 24px; right: 24px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; font-size: 13px; z-index: 999; opacity: 0; transform: translateY(8px); transition: all 0.2s; pointer-events: none; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 720px) {
+      .content { padding: 16px; }
+      .top-bar { padding: 10px 14px; }
+      .pnl-card { padding: 6px 16px; }
+      .pnl-row.subtotal, .pnl-row.final { margin: 0 -16px; padding-left: 16px; padding-right: 16px; }
+      .month-label { font-size: 16px; }
+      .yr-hide-sm { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="gate">
+  <div>
+    <div class="gate-mark"></div>
+    <div style="font-size:18px;font-weight:500;text-align:center;">Rena Omber</div>
+    <div style="font-size:12px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;text-align:center;margin-top:4px;">Laba Rugi</div>
+  </div>
+  <div>
+    <div class="gate-form">
+      <input type="password" id="pw-input" placeholder="Password" onkeydown="if(event.key==='Enter')checkPw()" />
+      <button onclick="checkPw()">Masuk</button>
+    </div>
+    <div class="gate-error" id="pw-error"></div>
+  </div>
+</div>
+
+<div id="main">
+  <div class="top-bar">
+    <div class="top-left">
+      <div class="top-mark"></div>
+      <div>
+        <div class="top-name">Rena Omber</div>
+        <div class="top-sub">Laba Rugi</div>
+      </div>
+    </div>
+    <div class="top-right">
+      <a href="finance.html" class="btn-ghost">Finance</a>
+      <a href="alokasi.html" class="btn-ghost">Alokasi</a>
+      <a href="index.html" class="btn-ghost">← Vault</a>
+      <button class="theme-toggle-btn btn-ghost" onclick="toggleTheme()">☀️</button>
+      <button class="btn-ghost" onclick="logout()">Keluar</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="month-nav">
+      <button class="nav-btn" onclick="shiftMonth(-1)">←</button>
+      <div>
+        <div class="month-label" id="month-label"></div>
+        <div class="month-sub" id="month-sub"></div>
+      </div>
+      <button class="nav-btn" onclick="shiftMonth(1)">→</button>
+      <button class="btn-ghost" onclick="goThisMonth()">Bulan Ini</button>
+    </div>
+
+    <div id="pnl-body"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ─── CONFIG ────────────────────────────────────────────────
+  const SUPABASE_URL  = 'https://fqvfnohhilkzvijqukfg.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxdmZub2hoaWxrenZpanF1a2ZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDU4NjAsImV4cCI6MjA5ODEyMTg2MH0.er10SEsmDlnx1yRLGJK2fKtLhQR40vFOXVJzH9yakCg';
+  const PASSWORD_HASH = '3f0e57f3e719957119f0ba621629a3ae0ed1ec95d1ad8a91bd980b2896b679e4';
+  // ───────────────────────────────────────────────────────────
+
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  const SIZES = ['S','M','L','XL','XXL'];
+  const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
+
+  // Opex = cashflow keluar KECUALI ini:
+  //  - Belanja Bahan → sudah kehitung di COGS (masuk stok, bukan biaya)
+  //  - Gaji          → sekarang isinya profit-sharing = distribusi laba, bukan biaya (dialokasikan di alokasi.html)
+  const EXCLUDE_OPEX = ['Belanja Bahan','Gaji'];
+
+  // Ambang pajak WP Orang Pribadi UMKM
+  const TAX_FREE = 500000000;      // omzet <= 500jt/th: bebas PPh
+  const TAX_LIMIT = 4800000000;    // omzet > 4.8M/th: wajib pembukuan normal
+
+  let allProducts = [], allVendors = [], allSalesTx = [], allCashflow = [];
+  let financeData = {};
+  let viewYM = new Date().toISOString().slice(0,7); // 'YYYY-MM'
+
+  async function sha256(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+  async function checkPw() {
+    const val = document.getElementById('pw-input').value.trim();
+    if ((await sha256(val)) === PASSWORD_HASH) {
+      sessionStorage.setItem('ro_auth','1');
+      showMain();
+    } else {
+      document.getElementById('pw-error').textContent = 'Password salah.';
+      document.getElementById('pw-input').value = '';
+    }
+  }
+  function logout() { sessionStorage.removeItem('ro_auth'); location.reload(); }
+  async function showMain() {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+    await loadAll();
+    render();
+  }
+  if (sessionStorage.getItem('ro_auth') === '1') showMain();
+
+  function fmt(n) { const v = Math.round(parseFloat(n)||0); return 'Rp ' + v.toLocaleString('id-ID'); }
+  function fmtShort(n) {
+    const v = Math.round(parseFloat(n)||0);
+    if (Math.abs(v) >= 1e9) return (v/1e9).toFixed(1).replace('.0','') + 'M';
+    if (Math.abs(v) >= 1e6) return (v/1e6).toFixed(1).replace('.0','') + 'jt';
+    if (Math.abs(v) >= 1e3) return (v/1e3).toFixed(0) + 'rb';
+    return String(v);
+  }
+
+  async function loadAll() {
+    const [prodRes, vendorRes, finRes, salesRes, cashRes] = await Promise.all([
+      sb.from('products').select('*').order('created_at'),
+      sb.from('vendors').select('*'),
+      sb.from('finance_entries').select('*'),
+      sb.from('sales_transactions').select('*'),
+      sb.from('cashflow_entries').select('*')
+    ]);
+    allProducts = (prodRes.data||[]).map(r => ({ id: String(r.id), name: r.name, batches: r.data?.batches||[] }));
+    allVendors  = vendorRes.data||[];
+    allSalesTx  = salesRes.data||[];
+    allCashflow = cashRes.data||[];
+    financeData = {};
+    (finRes.data||[]).forEach(r => { financeData[r.batch_key] = r; });
+  }
+
+  // ── COGS resep — SAMA PERSIS dengan finance/produk/biaya ──
+  function sumHadiah(a) {
+    if (Array.isArray(a.hadiahItems) && a.hadiahItems.length) {
+      return a.hadiahItems.reduce((s,h) => s + (parseInt(h.harga)||0) * (parseInt(h.qty)||1), 0);
+    }
+    return parseInt(a.biayaHadiah)||0;
+  }
+  function artikelCOGS(a) {
+    return (parseInt(a.hargaKaosManual)||0)
+      + (parseInt(a.biayaLabelWoven)||0)
+      + (parseInt(a.biayaWashTag)||0)
+      + (parseInt(a.biayaHangtag)||0)
+      + (parseInt(a.biayaZiplock)||0)
+      + (parseInt(a.biayaPolymailer)||0)
+      + sumHadiah(a);
+  }
+
+  function findArtikel(prodId, batchIdx, artikelName) {
+    const p = allProducts.find(p => p.id === String(prodId));
+    if (!p) return null;
+    const b = p.batches?.[batchIdx];
+    if (!b) return null;
+    return b.artikels?.find(x => x.name === artikelName) || null;
+  }
+  function hargaJual(prodId, batchIdx, artikelName) {
+    const key = `${String(prodId)}_${batchIdx}`;
+    return parseInt(financeData[key]?.harga_jual?.[artikelName]) || 0;
+  }
+
+  // ── Revenue & COGS dari transaksi yang TERJUAL (matched) ──
+  function pnlFromSales(txList) {
+    let rev = 0, cogs = 0, unitSold = 0, missingPrice = 0;
+    txList.forEach(t => {
+      const a = findArtikel(t.product_id, t.batch_idx, t.artikel_name);
+      const qty = parseInt(t.qty) || 0;
+      const hj = hargaJual(t.product_id, t.batch_idx, t.artikel_name);
+      rev += qty * hj;
+      cogs += qty * (a ? artikelCOGS(a) : 0);
+      unitSold += qty;
+      if (qty > 0 && !hj) missingPrice += qty;
+    });
+    return { rev, cogs, unitSold, missingPrice };
+  }
+
+  function paidOut(t) { return t.status === 'dp' ? (parseInt(t.dp_dibayar)||0) : (parseInt(t.jumlah)||0); }
+
+  function opexForMonth(ym) {
+    const rows = {}; let total = 0;
+    allCashflow
+      .filter(t => t.jenis === 'out' && (t.tanggal||'').slice(0,7) === ym && !EXCLUDE_OPEX.includes(t.kategori))
+      .forEach(t => { const amt = paidOut(t); rows[t.kategori] = (rows[t.kategori]||0) + amt; total += amt; });
+    return { rows, total };
+  }
+  function sumCashOut(ym, kategori) {
+    return allCashflow
+      .filter(t => t.jenis === 'out' && (t.tanggal||'').slice(0,7) === ym && t.kategori === kategori)
+      .reduce((s,t) => s + paidOut(t), 0);
+  }
+
+  function shiftMonth(dir) {
+    const [y,m] = viewYM.split('-').map(Number);
+    const d = new Date(y, m-1+dir, 1);
+    viewYM = d.toISOString().slice(0,7);
+    render();
+  }
+  function goThisMonth() { viewYM = new Date().toISOString().slice(0,7); render(); }
+
+  function render() {
+    const [yr, mo] = viewYM.split('-').map(Number);
+    document.getElementById('month-label').textContent = `${MONTHS[mo-1]} ${yr}`;
+    const isThis = viewYM === new Date().toISOString().slice(0,7);
+    document.getElementById('month-sub').textContent = isThis ? 'Bulan berjalan' : '';
+
+    // ── P&L bulan ini ──
+    const monthTx = allSalesTx.filter(t => (t.sold_at||'').slice(0,7) === viewYM);
+    const { rev, cogs, unitSold, missingPrice } = pnlFromSales(monthTx);
+    const labaKotor = rev - cogs;
+    const { rows: opexRows, total: opex } = opexForMonth(viewYM);
+    const labaBersih = labaKotor - opex;
+    const marginPct = rev ? Math.round((labaBersih/rev)*100) : null;
+
+    const distribusi = sumCashOut(viewYM, 'Gaji');
+    const belanjaBahan = sumCashOut(viewYM, 'Belanja Bahan');
+
+    // opex breakdown rows
+    const opexHtml = Object.keys(opexRows).length
+      ? Object.entries(opexRows).sort((a,b)=>b[1]-a[1]).map(([k,v]) =>
+          `<div class="pnl-row sub"><div class="lbl">${k}</div><div class="val">−${fmt(v)}</div></div>`).join('')
+      : `<div class="pnl-row sub"><div class="lbl" style="color:var(--text3);">Tidak ada biaya operasional bulan ini</div><div class="val">—</div></div>`;
+
+    let html = `
+      <div class="pnl-card">
+        <div class="pnl-row">
+          <div class="lbl">Revenue <small>${unitSold} unit terjual bulan ini</small></div>
+          <div class="val green">${fmt(rev)}</div>
+        </div>
+        <div class="pnl-row">
+          <div class="lbl">COGS <small>biaya bahan barang yang terjual</small></div>
+          <div class="val red">−${fmt(cogs)}</div>
+        </div>
+        <div class="pnl-row subtotal">
+          <div class="lbl">Laba Kotor</div>
+          <div class="val ${labaKotor>=0?'pos':'neg'}">${fmt(labaKotor)}</div>
+        </div>
+        <div class="pnl-row" style="border-bottom:none;padding-bottom:4px;">
+          <div class="lbl">Biaya Operasional</div>
+          <div class="val red">−${fmt(opex)}</div>
+        </div>
+        ${opexHtml}
+        <div class="pnl-row final">
+          <div class="lbl">Laba Bersih${marginPct!==null?` · margin ${marginPct}%`:''}</div>
+          <div class="val ${labaBersih>=0?'pos':'neg'}">${fmt(labaBersih)}</div>
+        </div>
+      </div>
+
+      <div class="copy-hint">
+        <span>Angka <b>Laba Bersih</b> ini yang diinput ke Alokasi Profit untuk ${MONTHS[mo-1]} ${yr}.</span>
+        <button class="copy-btn" onclick="copyNet(${labaBersih})">Salin angka</button>
+      </div>`;
+
+    if (missingPrice > 0) {
+      html += `<div class="copy-hint" style="border-color:var(--yellow);color:var(--yellow);">
+        ⚠️ ${missingPrice} unit terjual belum ada harga jual-nya di Finance — revenue kemungkinan lebih rendah dari aslinya. Isi harga jual di finance.html.
+      </div>`;
+    }
+
+    // ── Di luar L/R ──
+    html += `<div class="section-title">Di Luar Laba Rugi (info — tidak mengurangi laba)</div>
+      <div class="info-card">
+        <div class="info-row">
+          <div class="lbl">Bagi Hasil / Distribusi <small>kategori "Gaji" di cashflow — distribusi laba, dialokasikan di Alokasi</small></div>
+          <div class="val">${fmt(distribusi)}</div>
+        </div>
+        <div class="info-row">
+          <div class="lbl">Belanja Bahan <small>tukar kas jadi stok — jadi biaya (COGS) saat barang terjual</small></div>
+          <div class="val">${fmt(belanjaBahan)}</div>
+        </div>
+      </div>`;
+
+    // ── Omzet tahunan + pajak ──
+    const yearTx = allSalesTx.filter(t => (t.sold_at||'').slice(0,4) === String(yr));
+    const yearRev = pnlFromSales(yearTx).rev;
+    const pctToLimit = Math.min(yearRev / TAX_LIMIT * 100, 100);
+    const taxState = yearRev <= TAX_FREE
+      ? { txt: `Masih di bawah Rp500 jt — belum kena PPh.`, col: 'var(--accent)' }
+      : yearRev <= TAX_LIMIT
+      ? { txt: `Di atas Rp500 jt — omzet mulai kena PPh Final 0,5%.`, col: 'var(--yellow)' }
+      : { txt: `Di atas Rp4,8 M — wajib pindah ke pembukuan normal (butuh akuntan).`, col: 'var(--red)' };
+
+    html += `<div class="section-title">Omzet ${yr} — Pantauan Ambang Pajak</div>
+      <div class="tax-card">
+        <div class="tax-top">
+          <div class="tax-label">Omzet tahun berjalan (peredaran bruto)</div>
+          <div class="tax-value">${fmt(yearRev)}</div>
+        </div>
+        <div class="tax-bar-wrap">
+          <div class="tax-bar" style="width:${pctToLimit}%;background:${taxState.col};"></div>
+          <div class="tax-mark" style="left:${TAX_FREE/TAX_LIMIT*100}%;"><span>500jt</span></div>
+          <div class="tax-mark" style="left:100%;"><span>4,8M</span></div>
+        </div>
+        <div class="tax-note">
+          <span style="color:${taxState.col};">●</span> ${taxState.txt}<br>
+          Ambang: <b>Rp500 jt</b> bebas pajak (WP orang pribadi) · <b>Rp4,8 M</b> batas PPh Final 0,5%, di atasnya wajib pembukuan.
+        </div>
+      </div>`;
+
+    // ── Rekap 12 bulan tahun ini ──
+    html += `<div class="section-title">Rekap Bulanan ${yr}</div>${renderYearTable(yr)}`;
+
+    document.getElementById('pnl-body').innerHTML = html;
+  }
+
+  function renderYearTable(yr) {
+    let rows = '';
+    let tR=0, tG=0, tO=0, tN=0, any=false;
+    for (let m=1; m<=12; m++) {
+      const ym = `${yr}-${String(m).padStart(2,'0')}`;
+      const monthTx = allSalesTx.filter(t => (t.sold_at||'').slice(0,7) === ym);
+      const { rev, cogs } = pnlFromSales(monthTx);
+      const opex = opexForMonth(ym).total;
+      const gross = rev - cogs;
+      const net = gross - opex;
+      const hasData = rev || cogs || opex;
+      if (hasData) any = true;
+      tR+=rev; tG+=gross; tO+=opex; tN+=net;
+      const isCur = ym === viewYM;
+      rows += `<tr class="yr-cur${isCur?' active':''}" onclick="jumpMonth('${ym}')">
+        <td>${MONTHS_SHORT[m-1]}</td>
+        <td class="yr-hide-sm">${rev?fmtShort(rev):'—'}</td>
+        <td class="yr-hide-sm ${gross>=0?'':'red'}">${(rev||cogs)?fmtShort(gross):'—'}</td>
+        <td class="yr-hide-sm">${opex?fmtShort(opex):'—'}</td>
+        <td class="${net>=0?'green':'red'}" style="font-weight:600;">${hasData?fmt(net):'—'}</td>
+      </tr>`;
+    }
+    if (!any) return '<div class="info-card"><div class="empty-state">Belum ada data penjualan di tahun ini.</div></div>';
+    return `<table class="yr-table">
+      <thead><tr>
+        <th>Bulan</th>
+        <th class="yr-hide-sm">Revenue</th>
+        <th class="yr-hide-sm">Laba Kotor</th>
+        <th class="yr-hide-sm">Opex</th>
+        <th>Laba Bersih</th>
+      </tr></thead>
+      <tbody>${rows}
+        <tr class="total-row">
+          <td>Total ${yr}</td>
+          <td class="yr-hide-sm">${fmtShort(tR)}</td>
+          <td class="yr-hide-sm ${tG>=0?'':'red'}">${fmtShort(tG)}</td>
+          <td class="yr-hide-sm">${fmtShort(tO)}</td>
+          <td class="${tN>=0?'green':'red'}">${fmt(tN)}</td>
+        </tr>
+      </tbody></table>`;
+  }
+
+  function jumpMonth(ym) { viewYM = ym; render(); }
+
+  function copyNet(val) {
+    const rounded = Math.round(val);
+    navigator.clipboard?.writeText(String(rounded)).then(
+      () => showToast('✅ ' + fmt(rounded) + ' disalin — paste di Alokasi.'),
+      () => showToast('Angka: ' + rounded)
+    );
+  }
+
+  function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(()=>el.classList.remove('show'), 2600);
+  }
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+  }
+</script>
+</body>
+</html>
