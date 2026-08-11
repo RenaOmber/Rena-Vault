@@ -371,10 +371,10 @@
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
 
   // ─── CONFIG ────────────────────────────────────────────────
-  const SUPABASE_URL  = 'https://fqvfnohhilkzvijqukfg.supabase.co';
-  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxdmZub2hoaWxrenZpanF1a2ZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDU4NjAsImV4cCI6MjA5ODEyMTg2MH0.er10SEsmDlnx1yRLGJK2fKtLhQR40vFOXVJzH9yakCg';
+  const SUPABASE_URL  = 'YOUR_SUPABASE_URL';
+  const SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY';
   const BUCKET        = 'vault-docs';
-  const PASSWORD_HASH = '3f0e57f3e719957119f0ba621629a3ae0ed1ec95d1ad8a91bd980b2896b679e4';
+  const PASSWORD_HASH = 'YOUR_PASSWORD_HASH';
 
   const CATEGORIES = [
     { id: 'lore',      label: 'Lore',        sub: 'World Bible',  icon: 'ti-book-2',         color: '#a78bfa', bg: 'rgba(167,139,250,0.12)' },
@@ -523,6 +523,13 @@
           </div>
           <div class="landing-card-name">Cashflow</div>
           <div class="landing-card-sub">Uang masuk & keluar, DP, saldo</div>
+        </div>
+        <div class="landing-card" onclick="window.location.href='alokasi.html'">
+          <div class="landing-card-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7.5 14.25v2.25m3-4.5v4.5m3-6.75v6.75m3-9v9M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z"/></svg>
+          </div>
+          <div class="landing-card-name">Alokasi Profit</div>
+          <div class="landing-card-sub">4 bucket + sharing 6 orang</div>
         </div>
         <div class="landing-card" onclick="window.location.href='analytics.html'">
           <div class="landing-card-icon">
