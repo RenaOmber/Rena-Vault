@@ -193,7 +193,7 @@
 
   let allProducts = [], allVendors = [], allSalesTx = [], allCashflow = [];
   let financeData = {};
-  let viewYM = new Date().toISOString().slice(0,7); // 'YYYY-MM'
+  let viewYM; // 'YYYY-MM' — set in showMain via ymNow()
 
   async function sha256(str) {
     const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
@@ -213,6 +213,7 @@
   async function showMain() {
     document.getElementById('gate').style.display = 'none';
     document.getElementById('main').style.display = 'block';
+    viewYM = ymNow();
     await loadAll();
     render();
   }
@@ -302,18 +303,24 @@
       .reduce((s,t) => s + paidOut(t), 0);
   }
 
+  function ymNow() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  }
   function shiftMonth(dir) {
-    const [y,m] = viewYM.split('-').map(Number);
-    const d = new Date(y, m-1+dir, 1);
-    viewYM = d.toISOString().slice(0,7);
+    let [y,m] = viewYM.split('-').map(Number);
+    m += dir;
+    while (m > 12) { m -= 12; y++; }
+    while (m < 1)  { m += 12; y--; }
+    viewYM = `${y}-${String(m).padStart(2,'0')}`;
     render();
   }
-  function goThisMonth() { viewYM = new Date().toISOString().slice(0,7); render(); }
+  function goThisMonth() { viewYM = ymNow(); render(); }
 
   function render() {
     const [yr, mo] = viewYM.split('-').map(Number);
     document.getElementById('month-label').textContent = `${MONTHS[mo-1]} ${yr}`;
-    const isThis = viewYM === new Date().toISOString().slice(0,7);
+    const isThis = viewYM === ymNow();
     document.getElementById('month-sub').textContent = isThis ? 'Bulan berjalan' : '';
 
     // ── P&L bulan ini ──
