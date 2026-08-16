@@ -73,19 +73,6 @@
     .person-bar-wrap { flex: 1; height: 26px; background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
     .person-bar { height: 100%; background: var(--accent); border-radius: 6px; transition: width 0.3s; opacity: 0.85; }
     .person-pct { min-width: 44px; font-size: 12px; color: var(--text3); text-align: right; }
-
-    /* PROPORSI EDITOR */
-    .proporsi-panel { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; display: none; }
-    .proporsi-panel.open { display: block; }
-    .proporsi-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-    .proporsi-name { min-width: 60px; font-size: 13px; font-weight: 500; }
-    .proporsi-input { width: 70px; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 13px; padding: 7px 10px; outline: none; text-align: right; transition: border-color 0.15s; }
-    .proporsi-input:focus { border-color: var(--border-hover); }
-    .proporsi-total { font-size: 13px; font-weight: 600; padding: 6px 0; }
-    .proporsi-total.ok { color: var(--accent); }
-    .proporsi-total.err { color: var(--red); }
-    .btn-edit { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text2); cursor: pointer; font-family: inherit; font-size: 11px; padding: 4px 12px; transition: border-color 0.15s; }
-    .btn-edit:hover { border-color: var(--border-hover); color: var(--text); }
     .person-val { min-width: 110px; text-align: right; font-size: 14px; font-weight: 600; }
 
     /* HISTORY */
@@ -161,47 +148,65 @@
       <div style="font-size:11px;color:var(--text3);margin-top:12px;">Net profit = revenue − COGS − biaya operasional. Isi manual dari hasil hitung Finance & Cashflow.</div>
     </div>
 
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;">Alokasi Bucket</div>
+      <button style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--text2);cursor:pointer;font-family:inherit;font-size:11px;padding:4px 12px;transition:border-color 0.15s;" onmouseover="this.style.borderColor='var(--border-hover)'" onmouseout="this.style.borderColor=''" onclick="toggleBucketEdit()">✎ Edit %</button>
+    </div>
+
+    <div id="bucket-edit-panel" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px;">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:14px;">Total harus 100%. Preview langsung berubah.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+        <div>
+          <div style="font-size:11px;color:var(--yellow);margin-bottom:6px;">Reserve (%)</div>
+          <input type="number" min="0" max="100" step="0.5" id="be-reserve" class="input-field" style="font-size:13px;padding:8px 10px;" oninput="updateBucketTotal()" />
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--blue);margin-bottom:6px;">Scale-Up (%)</div>
+          <input type="number" min="0" max="100" step="0.5" id="be-scale" class="input-field" style="font-size:13px;padding:8px 10px;" oninput="updateBucketTotal()" />
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--accent);margin-bottom:6px;">Profit Sharing (%)</div>
+          <input type="number" min="0" max="100" step="0.5" id="be-share" class="input-field" style="font-size:13px;padding:8px 10px;" oninput="updateBucketTotal()" />
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--purple);margin-bottom:6px;">Dividen (%)</div>
+          <input type="number" min="0" max="100" step="0.5" id="be-div" class="input-field" style="font-size:13px;padding:8px 10px;" oninput="updateBucketTotal()" />
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid var(--border);">
+        <div id="bucket-total" style="font-size:13px;font-weight:600;">Total: 100%</div>
+        <button class="btn-save" onclick="saveBuckets()">Simpan</button>
+      </div>
+    </div>
+
     <div class="bucket-grid">
       <div class="bucket-card" style="border-top-color:var(--yellow);">
         <div class="bucket-label">Operasional Reserve</div>
-        <div class="bucket-pct">15% · buffer kas</div>
+        <div class="bucket-pct" id="bp-reserve">15% · buffer kas</div>
         <div class="bucket-value" style="color:var(--yellow);" id="b-reserve">Rp 0</div>
         <div class="bucket-note">Tidak dibagikan</div>
       </div>
       <div class="bucket-card" style="border-top-color:var(--blue);">
         <div class="bucket-label">Scale-Up Fund</div>
-        <div class="bucket-pct">20% · reinvestasi</div>
+        <div class="bucket-pct" id="bp-scale">20% · reinvestasi</div>
         <div class="bucket-value" style="color:var(--blue);" id="b-scale">Rp 0</div>
         <div class="bucket-note">Keputusan Rena + Nom</div>
       </div>
       <div class="bucket-card" style="border-top-color:var(--accent);">
         <div class="bucket-label">Profit Sharing</div>
-        <div class="bucket-pct">40% · dibagi 6 orang</div>
+        <div class="bucket-pct" id="bp-share">40% · dibagi 6 orang</div>
         <div class="bucket-value" style="color:var(--accent);" id="b-share">Rp 0</div>
         <div class="bucket-note">Bulanan</div>
       </div>
       <div class="bucket-card" style="border-top-color:var(--purple);">
         <div class="bucket-label">Dividen Pool</div>
-        <div class="bucket-pct">25% · tahunan</div>
+        <div class="bucket-pct" id="bp-div">25% · tahunan</div>
         <div class="bucket-value" style="color:var(--purple);" id="b-div">Rp 0</div>
         <div class="bucket-note">Dibagi akhir tahun</div>
       </div>
     </div>
 
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-      <div class="section-title" style="margin:0;">Profit Sharing per Orang (dari 40% pool)</div>
-      <button class="btn-edit" onclick="toggleProporsi()">✎ Edit Proporsi</button>
-    </div>
-
-    <div class="proporsi-panel" id="proporsi-panel">
-      <div style="font-size:11px;color:var(--text3);margin-bottom:14px;">Total harus 100%. Perubahan langsung berlaku ke preview dan tersimpan.</div>
-      <div id="proporsi-inputs"></div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
-        <div class="proporsi-total" id="proporsi-total">Total: 100%</div>
-        <button class="btn-save" onclick="saveProporsi()">Simpan Proporsi</button>
-      </div>
-    </div>
-
+    <div class="section-title">Profit Sharing per Orang (dari 40% pool)</div>
     <div id="per-person"></div>
 
     <div class="section-title" style="margin-top:32px;">Riwayat Alokasi</div>
@@ -227,7 +232,7 @@
 <script>
   // ─── CONFIG ────────────────────────────────────────────────
   const SUPABASE_URL  = 'https://fqvfnohhilkzvijqukfg.supabase.co';
-  const SUPABASE_ANON = 'YOeyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxdmZub2hoaWxrenZpanF1a2ZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDU4NjAsImV4cCI6MjA5ODEyMTg2MH0.er10SEsmDlnx1yRLGJK2fKtLhQR40vFOXVJzH9yakCgUR_SUPABASE_ANON_KEY';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxdmZub2hoaWxrenZpanF1a2ZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDU4NjAsImV4cCI6MjA5ODEyMTg2MH0.er10SEsmDlnx1yRLGJK2fKtLhQR40vFOXVJzH9yakCg';
   const PASSWORD_HASH = '3f0e57f3e719957119f0ba621629a3ae0ed1ec95d1ad8a91bd980b2896b679e4';
   // ───────────────────────────────────────────────────────────
 
@@ -235,8 +240,8 @@
 
   // Bucket persentase (Pasal 3.1)
   const BUCKETS = { reserve: 0.15, scale: 0.20, share: 0.40, div: 0.25 };
-  // Proporsi default — dipakai kalau belum ada di DB
-  let SHARES = [['Rena',20],['Nom',18],['Gapl',16],['Jee',16],['Pix',15],['Tok',15]];
+  // Proporsi profit sharing per orang (Pasal 3.2) — bukan ownership!
+  const SHARES = [['Rena',20],['Nom',18],['Gapl',16],['Jee',16],['Pix',15],['Tok',15]];
 
   let allAlokasi = [];
 
@@ -259,11 +264,73 @@
     document.getElementById('gate').style.display = 'none';
     document.getElementById('main').style.display = 'block';
     document.getElementById('in-bulan').value = new Date().toISOString().slice(0,7);
-    await loadProporsi();
+    await loadBuckets();
     await loadAlokasi();
     renderPreview();
   }
   if (sessionStorage.getItem('ro_auth') === '1') showMain();
+
+  async function loadBuckets() {
+    const { data } = await sb.from('app_settings').select('value').eq('key','bucket_pcts').single();
+    if (data?.value) {
+      try {
+        const saved = JSON.parse(data.value);
+        BUCKETS.reserve = saved.reserve;
+        BUCKETS.scale = saved.scale;
+        BUCKETS.share = saved.share;
+        BUCKETS.div = saved.div;
+      } catch(e) {}
+    }
+    // Isi input panel dengan nilai saat ini
+    const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = Math.round(val*1000)/10; };
+    setVal('be-reserve', BUCKETS.reserve);
+    setVal('be-scale', BUCKETS.scale);
+    setVal('be-share', BUCKETS.share);
+    setVal('be-div', BUCKETS.div);
+    updateBucketLabels();
+  }
+
+  function toggleBucketEdit() {
+    const panel = document.getElementById('bucket-edit-panel');
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  }
+
+  function updateBucketTotal() {
+    const r = parseFloat(document.getElementById('be-reserve').value)||0;
+    const s = parseFloat(document.getElementById('be-scale').value)||0;
+    const sh = parseFloat(document.getElementById('be-share').value)||0;
+    const d = parseFloat(document.getElementById('be-div').value)||0;
+    const total = r+s+sh+d;
+    const rounded = Math.round(total*10)/10;
+    const el = document.getElementById('bucket-total');
+    el.textContent = `Total: ${rounded}%`;
+    el.style.color = Math.abs(total-100)<0.1 ? 'var(--accent)' : 'var(--red)';
+    // Update BUCKETS live buat preview
+    BUCKETS.reserve = r/100; BUCKETS.scale = s/100; BUCKETS.share = sh/100; BUCKETS.div = d/100;
+    updateBucketLabels();
+    renderPreview();
+  }
+
+  function updateBucketLabels() {
+    const pct = (v) => Math.round(v*1000)/10;
+    const el = (id) => document.getElementById(id);
+    if(el('bp-reserve')) el('bp-reserve').textContent = `${pct(BUCKETS.reserve)}% · buffer kas`;
+    if(el('bp-scale')) el('bp-scale').textContent = `${pct(BUCKETS.scale)}% · reinvestasi`;
+    if(el('bp-share')) el('bp-share').textContent = `${pct(BUCKETS.share)}% · dibagi 6 orang`;
+    if(el('bp-div')) el('bp-div').textContent = `${pct(BUCKETS.div)}% · tahunan`;
+  }
+
+  async function saveBuckets() {
+    const total = BUCKETS.reserve+BUCKETS.scale+BUCKETS.share+BUCKETS.div;
+    if (Math.abs(total-1) > 0.001) { showToast('⚠️ Total harus 100% sebelum disimpan.'); return; }
+    const { error } = await sb.from('app_settings').upsert(
+      { key: 'bucket_pcts', value: JSON.stringify(BUCKETS) },
+      { onConflict: 'key' }
+    );
+    if (error) { showToast('❌ Gagal simpan.'); return; }
+    showToast('✅ Persentase bucket tersimpan.');
+    document.getElementById('bucket-edit-panel').style.display = 'none';
+  }
 
   function fmt(n) { return 'Rp ' + Math.round(parseInt(n)||0).toLocaleString('id-ID'); }
   function fmtBulan(b) {
@@ -271,61 +338,6 @@
     const [y,m] = b.split('-');
     const bulan = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
     return `${bulan[parseInt(m)-1]} ${y}`;
-  }
-
-  async function loadProporsi() {
-    const { data } = await sb.from('app_settings').select('value').eq('key','profit_shares').single();
-    if (data?.value) {
-      try { SHARES = JSON.parse(data.value); } catch(e) {}
-    }
-    renderProporsiInputs();
-  }
-
-  function toggleProporsi() {
-    const panel = document.getElementById('proporsi-panel');
-    panel.classList.toggle('open');
-  }
-
-  function renderProporsiInputs() {
-    const cont = document.getElementById('proporsi-inputs');
-    if (!cont) return;
-    cont.innerHTML = SHARES.map(([name, pct], idx) => `
-      <div class="proporsi-row">
-        <span class="proporsi-name">${name}</span>
-        <input type="number" min="0" max="100" step="0.1" class="proporsi-input"
-          id="pshare-${idx}" value="${pct}" oninput="updateProporsiTotal()" />
-        <span style="font-size:12px;color:var(--text3);">%</span>
-      </div>`).join('');
-    updateProporsiTotal();
-  }
-
-  function updateProporsiTotal() {
-    const total = SHARES.reduce((s, _, idx) => {
-      const el = document.getElementById(`pshare-${idx}`);
-      return s + (parseFloat(el?.value)||0);
-    }, 0);
-    const el = document.getElementById('proporsi-total');
-    const rounded = Math.round(total*10)/10;
-    el.textContent = `Total: ${rounded}%`;
-    el.className = 'proporsi-total ' + (Math.abs(total-100) < 0.1 ? 'ok' : 'err');
-    // update preview live
-    SHARES = SHARES.map(([name], idx) => {
-      const v = parseFloat(document.getElementById(`pshare-${idx}`)?.value)||0;
-      return [name, v];
-    });
-    renderPreview();
-  }
-
-  async function saveProporsi() {
-    const total = SHARES.reduce((s,[,p])=>s+p, 0);
-    if (Math.abs(total-100) >= 0.1) { showToast('⚠️ Total harus 100% sebelum disimpan.'); return; }
-    const { error } = await sb.from('app_settings').upsert(
-      { key: 'profit_shares', value: JSON.stringify(SHARES) },
-      { onConflict: 'key' }
-    );
-    if (error) { showToast('❌ Gagal simpan proporsi.'); return; }
-    showToast('✅ Proporsi tersimpan.');
-    document.getElementById('proporsi-panel').classList.remove('open');
   }
 
   function renderPreview() {
