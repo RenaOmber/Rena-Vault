@@ -17,6 +17,8 @@
 .gate-form input{background:var(--s2);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-family:inherit;font-size:14px;padding:10px 14px;width:220px;outline:none;}
 .gate-form button{background:var(--accent);border:none;border-radius:var(--r);color:#000;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;padding:10px 18px;}
 .gate-error{font-size:12px;color:var(--red);min-height:16px;text-align:center;}
+.dv-tab{background:var(--s2);border:1px solid var(--border2);border-radius:var(--r);color:var(--t2);cursor:pointer;font-family:inherit;font-size:12px;font-weight:500;padding:7px 14px;transition:all .15s;}
+.dv-tab.dv-active{background:rgba(167,139,250,.15);border-color:rgba(167,139,250,.4);color:#a78bfa;}
 .vault-link{position:fixed;top:12px;right:12px;z-index:999;background:rgba(0,0,0,0.5);border:1px solid var(--border2);border-radius:var(--r);color:var(--t2);cursor:pointer;font-family:inherit;font-size:12px;padding:5px 12px;text-decoration:none;}
 .vault-link:hover{color:var(--text);}
 .save-indicator{position:fixed;bottom:14px;right:14px;font-size:11px;color:var(--t3);z-index:999;transition:opacity 0.3s;}
@@ -219,7 +221,7 @@ tfoot td:first-child{text-align:left}
             <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px"><span style="color:var(--t2)">Operasional reserve</span><div style="display:flex;align-items:center;gap:4px"><input type="number" oninput="calcKalk()" id="b-ops" value="15" style="width:50px;padding:4px 6px;font-size:12px"><span style="color:var(--t3)">%</span></div></div>
             <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px"><span style="color:var(--t2)">Scale-up fund</span><div style="display:flex;align-items:center;gap:4px"><input type="number" oninput="calcKalk()" id="b-scaleup" value="20" style="width:50px;padding:4px 6px;font-size:12px"><span style="color:var(--t3)">%</span></div></div>
             <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px"><span style="color:var(--t2)">Profit sharing pool</span><div style="display:flex;align-items:center;gap:4px"><input type="number" oninput="calcKalk()" id="b-pool" value="40" style="width:50px;padding:4px 6px;font-size:12px"><span style="color:var(--t3)">%</span></div></div>
-            <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px"><span style="color:var(--t2)">Dividen pool</span><div style="display:flex;align-items:center;gap:4px"><input type="number" oninput="calcKalk()" id="b-dividen" value="25" style="width:50px;padding:4px 6px;font-size:12px"><span style="color:var(--t3)">%</span></div></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px"><span style="color:var(--t2)">Dividen pool</span><div style="display:flex;align-items:center;gap:4px"><input type="number" oninput="calcKalk();calcDivTahunan()" id="b-dividen" value="25" style="width:50px;padding:4px 6px;font-size:12px"><span style="color:var(--t3)">%</span></div></div>
           </div>
         </div>
       </div>
@@ -664,9 +666,11 @@ function calcKalk(){
   var bOps=distBase*bops/100, bSc=distBase*bsc/100, bPl=distBase*bpl/100, bDv=distBase*bdv/100;
   var pool=bPl;
 
-  // kas setelah distribusi = kas di tangan - semua yang dialokasikan
-  // operasional reserve tetap di kas brand, scale-up masuk reinvestasi, dividen dikumpul
-  var kasSetelahDist = kasBersih - bSc - bPl - bDv; // ops reserve tetap di rekening brand
+  // Total uang yang TETAP di tangan brand setelah bagi hasil ke founder.
+  // = revenue penuh − profit sharing pool (yang keluar ke 6 founder)
+  // Isinya: balikan COGS + ops reserve + scale-up + dividen. Cuma pool yang keluar.
+  var kasSetelahDist = d.rev - bPl;
+  var balikCOGS = d.tc; // modal produksi yang kembali saat barang terjual
 
   var dist=distBase<=0?'<div style="color:var(--t3);font-size:13px">Net profit harus positif dulu.</div>'
     :'<div style="margin-bottom:12px">'
@@ -681,17 +685,18 @@ function calcKalk(){
         +'<div style="font-family:monospace;font-size:14px;font-weight:500;color:var(--green)">'+f(b.v)+'</div></div>';
     }).join('')
     +'</div>'
-    // kas brand setelah distribusi
+    // total uang tetap di tangan brand
     +'<div style="background:rgba(200,255,0,.06);border:1px solid rgba(200,255,0,.2);border-radius:8px;padding:.75rem;margin-bottom:8px">'
-    +'<div style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Kas brand setelah distribusi</div>'
+    +'<div style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Total uang di tangan brand</div>'
     +'<div style="font-family:monospace;font-size:20px;font-weight:500;color:'+(kasSetelahDist>=0?'var(--accent)':'var(--red)')+'">'+f(kasSetelahDist)+'</div>'
-    +'<div style="font-size:11px;color:var(--t3);margin-top:3px">kas di tangan − scale-up − pool − dividen (ops reserve tetap di brand)</div>'
+    +'<div style="font-size:11px;color:var(--t3);margin-top:3px">revenue '+f(d.rev)+' − profit sharing '+f(bPl)+' (yang dibagi ke founder). Sisanya masih uangmu, terpecah di bawah:</div>'
     +'</div>'
-    // pembedahan kas brand
-    +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">'
+    // pembedahan uang brand — 4 kotak (balikan cogs + 3 pos)
+    +'<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px">'
     +[
-      {l:'Ops Reserve',v:bOps,s:'Tetap di rekening,\nbuffer operasional',c:'rgba(251,191,36,.15)',b:'rgba(251,191,36,.35)',t:'#fbbf24'},
-      {l:'Scale-Up Fund',v:bSc,s:'Ditandai reinvestasi\n(Rena + Nom kelola)',c:'rgba(96,165,250,.12)',b:'rgba(96,165,250,.3)',t:'#60a5fa'},
+      {l:'Balikan Modal (COGS)',v:balikCOGS,s:'Modal produksi yang kembali —\nsiap dipakai bikin batch lagi',c:'rgba(52,211,153,.12)',b:'rgba(52,211,153,.3)',t:'#34d399'},
+      {l:'Ops Reserve',v:bOps,s:'Buffer operasional,\ntetap di rekening',c:'rgba(251,191,36,.15)',b:'rgba(251,191,36,.35)',t:'#fbbf24'},
+      {l:'Scale-Up Fund',v:bSc,s:'Reinvestasi\n(Rena + Nom kelola)',c:'rgba(96,165,250,.12)',b:'rgba(96,165,250,.3)',t:'#60a5fa'},
       {l:'Dividen Pool',v:bDv,s:'Dikumpul,\nbagi tahunan',c:'rgba(167,139,250,.12)',b:'rgba(167,139,250,.3)',t:'#a78bfa'},
     ].map(function(box){
       return '<div style="background:'+box.c+';border:1px solid '+box.b+';border-radius:8px;padding:10px 12px;">'
@@ -867,28 +872,67 @@ function exportJSON(){
 }
 
 // ── DIVIDEN TAHUNAN ──────────────────────────────────────────────
+var divVesting = false; // false = tanpa vesting (full), true = pakai vesting cliff
+var divVestPct = 25;    // % aktif kalau vesting: 25/50/75/100 (tahun ke-1/2/3/4)
+
+function setDivVesting(on){
+  divVesting = on;
+  document.getElementById('dv-tab-no').classList.toggle('dv-active', !on);
+  document.getElementById('dv-tab-yes').classList.toggle('dv-active', on);
+  document.getElementById('dv-vest-picker').style.display = on ? 'flex' : 'none';
+  calcDivTahunan();
+}
+function setDivVestPct(pct){
+  divVestPct = pct;
+  ['25','50','75','100'].forEach(function(p){
+    document.getElementById('dv-y'+p).classList.toggle('dv-active', +p===pct);
+  });
+  calcDivTahunan();
+}
+
 function calcDivTahunan(){
   var perBulan = parseFloat((document.getElementById('div-perbulan').value||'').replace(/\./g,''))||0;
   var bdv = v('b-dividen')||25;
   var totalDivPool = perBulan * bdv/100 * 12;
   var el = document.getElementById('div-tahunan-result');
   if(!perBulan){ el.innerHTML='<div style="color:var(--t3);font-size:13px">Isi net profit per bulan dulu.</div>'; return; }
-  var founders=[
-    {n:'Rena',p:20},{n:'Nom',p:18},{n:'Gapl',p:16},{n:'Jee',p:16},{n:'Pix',p:15},{n:'Tok',p:15}
+
+  // OWNERSHIP (Pasal 1 & 2) — dividen ikut ownership, bukan profit-sharing
+  var owners=[
+    {n:'Rena',p:48},{n:'Nom',p:19},{n:'Gapl',p:10},{n:'Jee',p:9},{n:'Pix',p:7},{n:'Tok',p:7}
   ];
-  var rows = founders.map(function(fo){
-    var bagian = totalDivPool * fo.p/100;
+  var vestFactor = divVesting ? divVestPct/100 : 1;
+  var poolDibagi = totalDivPool * vestFactor;
+  var sisaKeBrand = totalDivPool - poolDibagi; // porsi belum vest → balik ke brand/pool
+
+  var rows = owners.map(function(o){
+    var bagian = poolDibagi * o.p/100;
     return '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">'
-      +'<span style="font-size:12px;color:var(--t2)">'+fo.n+' <span style="color:var(--t3)">('+fo.p+'%)</span></span>'
+      +'<span style="font-size:12px;color:var(--t2)">'+o.n+' <span style="color:var(--t3)">('+o.p+'%)</span></span>'
       +'<span style="font-family:monospace;font-weight:500;color:#a78bfa">'+f(bagian)+'</span></div>';
   }).join('');
+
   el.innerHTML=''
-    +'<div style="background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.3);border-radius:8px;padding:12px;margin-bottom:10px">'
-    +'<div style="font-size:10px;color:#a78bfa;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Total Dividen Pool 12 Bulan</div>'
-    +'<div style="font-family:monospace;font-size:22px;font-weight:700;color:#a78bfa">'+f(totalDivPool)+'</div>'
-    +'<div style="font-size:11px;color:var(--t3);margin-top:3px">'+f(perBulan)+'/bln × '+bdv+'% dividen × 12 bulan</div>'
+    // toggle vesting
+    +'<div style="display:flex;gap:6px;margin-bottom:10px">'
+    +'<button id="dv-tab-no" class="dv-tab dv-active" onclick="setDivVesting(false)">Tanpa Vesting</button>'
+    +'<button id="dv-tab-yes" class="dv-tab" onclick="setDivVesting(true)">Dengan Vesting</button>'
     +'</div>'
-    +'<div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);margin-bottom:6px">Per founder (proporsional)</div>'
+    // vesting year picker (hidden kalau tanpa vesting)
+    +'<div id="dv-vest-picker" style="display:'+(divVesting?'flex':'none')+';gap:5px;margin-bottom:10px">'
+    +[['25','Th 1'],['50','Th 2'],['75','Th 3'],['100','Th 4']].map(function(y){
+      return '<button id="dv-y'+y[0]+'" class="dv-tab'+(+y[0]===divVestPct?' dv-active':'')+'" onclick="setDivVestPct('+y[0]+')" style="flex:1">'+y[1]+' ('+y[0]+'%)</button>';
+    }).join('')
+    +'</div>'
+    // pool box
+    +'<div style="background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.3);border-radius:8px;padding:12px;margin-bottom:10px">'
+    +'<div style="font-size:10px;color:#a78bfa;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">'+(divVesting?'Dividen Dibagi ('+divVestPct+'% aktif)':'Total Dividen Pool 12 Bulan')+'</div>'
+    +'<div style="font-family:monospace;font-size:22px;font-weight:700;color:#a78bfa">'+f(poolDibagi)+'</div>'
+    +'<div style="font-size:11px;color:var(--t3);margin-top:3px">'+f(perBulan)+'/bln × '+bdv+'% dividen × 12 bulan = '+f(totalDivPool)
+      +(divVesting?' · '+divVestPct+'% aktif':'')+'</div>'
+    +(divVesting && sisaKeBrand>0 ? '<div style="font-size:11px;color:var(--t3);margin-top:4px">Sisa '+f(sisaKeBrand)+' (belum vest) balik ke pool/brand.</div>' : '')
+    +'</div>'
+    +'<div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);margin-bottom:6px">Per founder (ownership'+(divVesting?' × vesting':'')+')</div>'
     +rows;
 }
 
