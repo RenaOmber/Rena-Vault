@@ -124,12 +124,32 @@
     .utang-total-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; }
     .utang-total-val { font-size: 15px; font-weight: 700; color: var(--yellow); }
 
+    /* PENGELUARAN PER POS */
+    .pos-section { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; margin-bottom: 28px; }
+    .pos-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+    .pos-title { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+    .pos-total-badge { font-size: 12px; font-weight: 700; color: var(--red); background: var(--red-dim); border-radius: 8px; padding: 3px 10px; }
+    .pos-tabs { display: flex; gap: 4px; background: var(--bg3, rgba(0,0,0,0.2)); border: 1px solid var(--border); border-radius: 8px; padding: 3px; }
+    .pos-tab { background: none; border: none; border-radius: 6px; color: var(--text2); cursor: pointer; font-family: inherit; font-size: 11px; font-weight: 500; padding: 5px 12px; transition: all 0.15s; }
+    .pos-tab.active { background: var(--accent-dim); color: var(--accent); }
+    .pos-row { display: grid; grid-template-columns: 120px 1fr 40px 110px; align-items: center; gap: 12px; padding: 7px 0; }
+    .pos-row + .pos-row { border-top: 1px solid var(--border); }
+    .pos-cat { font-size: 13px; color: var(--text); display: flex; align-items: center; gap: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pos-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .pos-bar-wrap { height: 8px; background: var(--bg3, rgba(0,0,0,0.25)); border-radius: 4px; overflow: hidden; }
+    .pos-bar { height: 100%; border-radius: 4px; transition: width 0.3s; opacity: 0.85; }
+    .pos-pct { font-size: 11px; color: var(--text3); text-align: right; }
+    .pos-val { font-size: 13px; font-weight: 600; text-align: right; }
+    .pos-empty { text-align: center; padding: 20px; color: var(--text3); font-size: 12px; }
+
     @media (max-width: 720px) {
       .content { padding: 16px; }
       .summary-grid { grid-template-columns: 1fr; }
       .tx-table th:nth-child(4), .tx-table td:nth-child(4) { display: none; }
       .top-bar { padding: 10px 14px; }
       .utang-numbers { gap: 12px; }
+      .pos-row { grid-template-columns: 100px 1fr 90px; }
+      .pos-pct { display: none; }
     }
   </style>
 </head>
@@ -183,6 +203,17 @@
         <div class="sum-value bal" id="sum-bal">Rp 0</div>
         <div class="sum-sub" id="sum-dp-sub"></div>
       </div>
+    </div>
+
+    <div class="pos-section">
+      <div class="pos-header">
+        <div class="pos-title">Pengeluaran per Pos <span id="pos-total" class="pos-total-badge">Rp 0</span></div>
+        <div class="pos-tabs">
+          <button id="pos-tab-month" class="pos-tab active" onclick="setPosScope('month')">Bulan Ini</button>
+          <button id="pos-tab-all" class="pos-tab" onclick="setPosScope('all')">Semua Waktu</button>
+        </div>
+      </div>
+      <div id="pos-body"></div>
     </div>
 
     <div class="action-row">
@@ -341,6 +372,7 @@
     allTx = data || [];
     renderSummary();
     renderList();
+    renderPerPos();
   }
 
   function fmt(n) { return 'Rp ' + (parseInt(n)||0).toLocaleString('id-ID'); }
@@ -349,6 +381,55 @@
     const [y,m,day] = d.split('-');
     const bulan = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
     return `${parseInt(day)} ${bulan[parseInt(m)-1]} ${y}`;
+  }
+
+  // ── PENGELUARAN PER POS ───────────────────────────────────
+  let posScope = 'month'; // 'month' | 'all'
+  const POS_COLORS = {
+    'Belanja Bahan': '#60a5fa',
+    'Operasional':   'var(--yellow)',
+    'Marketing':     'var(--accent)',
+    'Gaji':          '#a78bfa',
+    'Lain-lain':     'var(--text2)'
+  };
+  function posYmNow() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  }
+  function setPosScope(s) {
+    posScope = s;
+    document.getElementById('pos-tab-month').classList.toggle('active', s==='month');
+    document.getElementById('pos-tab-all').classList.toggle('active', s==='all');
+    renderPerPos();
+  }
+  function renderPerPos() {
+    const ym = posYmNow();
+    const out = allTx.filter(t => t.jenis==='out' && (posScope==='all' || (t.tanggal||'').slice(0,7)===ym));
+    const byCat = {}; let total = 0;
+    out.forEach(t => {
+      const amt = t.status==='dp' ? (parseInt(t.dp_dibayar)||0) : (parseInt(t.jumlah)||0);
+      const cat = t.kategori || 'Lain-lain';
+      byCat[cat] = (byCat[cat]||0) + amt;
+      total += amt;
+    });
+    const entries = Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
+    const body = document.getElementById('pos-body');
+    document.getElementById('pos-total').textContent = fmt(total);
+    if (!entries.length) {
+      body.innerHTML = `<div class="pos-empty">Belum ada pengeluaran ${posScope==='month'?'bulan ini':'tercatat'}.</div>`;
+      return;
+    }
+    const max = entries[0][1] || 1;
+    body.innerHTML = entries.map(([cat,val]) => {
+      const color = POS_COLORS[cat] || 'var(--text2)';
+      const pct = total ? Math.round(val/total*100) : 0;
+      return `<div class="pos-row">
+        <div class="pos-cat"><span class="pos-dot" style="background:${color};"></span>${cat}</div>
+        <div class="pos-bar-wrap"><div class="pos-bar" style="width:${val/max*100}%;background:${color};"></div></div>
+        <div class="pos-pct">${pct}%</div>
+        <div class="pos-val" style="color:${color};">${fmt(val)}</div>
+      </div>`;
+    }).join('');
   }
 
   function renderSummary() {
