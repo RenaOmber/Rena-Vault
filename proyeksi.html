@@ -640,7 +640,7 @@ function calcKalk(){
   // kas di tangan = modal + revenue - bayar hutang
   // Kas di tangan = revenue yang masuk − ops selama periode jual
   // (investasi ke brand = uang sendiri, sudah keluar, tidak perlu dikurangi lagi)
-  var kasBersih = d.rev - totalOps;
+  var kasBersih = netProfit; // kas riil = net profit (revenue − COGS − ops)
 
   el('kalk-kpis').innerHTML=[
     {label:'Unit produksi',val:Math.round(d.unit)+' pcs',cls:'',sub:d.pr+' PR'},
@@ -650,7 +650,7 @@ function calcKalk(){
     {label:'Margin kotor',val:f(d.mg),cls:d.mg>=0?'ok':'bad',sub:Math.round(d.mgPct*100)+'%'},
     {label:'Total ops ('+bulan+' bln)',val:f(totalOps),cls:'bad',sub:f(opsPerBulan)+'/bln'},
     {label:'Net profit',val:f(netProfit),cls:netProfit>=0?'ok':'bad',sub:'margin − ops'},
-    {label:'Kas di tangan',val:f(kasBersih),cls:kasBersih>=0?'ok':'bad',sub:'setelah jual & bayar hutang'},
+    {label:'Kas di tangan',val:f(kasBersih),cls:kasBersih>=0?'ok':'bad',sub:'revenue − COGS − ops'},
     {label:'BEP unit terjual',val:bep+' unit',cls:'',sub:'titik balik modal'},
   ].map(function(k){return '<div class="kpi" style="padding:.75rem"><div class="kpi-label">'+k.label+'</div><div class="kpi-val '+k.cls+'" style="font-size:16px">'+k.val+'</div><div class="kpi-sub">'+k.sub+'</div></div>';}).join('');
 
