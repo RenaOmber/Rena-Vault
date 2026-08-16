@@ -228,6 +228,15 @@ tfoot td:first-child{text-align:left}
       <div class="panel" style="margin-bottom:10px"><div class="panel-title">Hasil kalkulasi</div><div class="kpi-grid" id="kalk-kpis" style="margin-bottom:0"></div></div>
       <div id="kalk-alert" class="alert" style="display:none"></div>
       <div class="panel"><div class="panel-title">Distribusi net profit</div><div id="kalk-dist"></div></div>
+      <div class="panel" style="margin-top:10px">
+        <div class="panel-title">Proyeksi Dividen Tahunan</div>
+        <div style="font-size:12px;color:var(--t3);margin-bottom:10px;">Simulasi: kalau net profit per bulan segini, berapa dividen yang terkumpul setahun dan per founder-nya.</div>
+        <div class="field" style="margin-bottom:10px;">
+          <label>Net profit rata-rata per bulan (Rp)</label>
+          <input type="number" oninput="calcDivTahunan()" id="div-perbulan" value="0" />
+        </div>
+        <div id="div-tahunan-result"></div>
+      </div>
     </div>
   </div>
   <div class="sec" style="margin-top:.5rem">Sensitivitas</div>
@@ -673,10 +682,24 @@ function calcKalk(){
     }).join('')
     +'</div>'
     // kas brand setelah distribusi
-    +'<div style="background:rgba(200,255,0,.06);border:1px solid rgba(200,255,0,.2);border-radius:8px;padding:.75rem;margin-bottom:12px">'
+    +'<div style="background:rgba(200,255,0,.06);border:1px solid rgba(200,255,0,.2);border-radius:8px;padding:.75rem;margin-bottom:8px">'
     +'<div style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Kas brand setelah distribusi</div>'
     +'<div style="font-family:monospace;font-size:20px;font-weight:500;color:'+(kasSetelahDist>=0?'var(--accent)':'var(--red)')+'">'+f(kasSetelahDist)+'</div>'
     +'<div style="font-size:11px;color:var(--t3);margin-top:3px">kas di tangan − scale-up − pool − dividen (ops reserve tetap di brand)</div>'
+    +'</div>'
+    // pembedahan kas brand
+    +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">'
+    +[
+      {l:'Ops Reserve',v:bOps,s:'Tetap di rekening,\nbuffer operasional',c:'rgba(251,191,36,.15)',b:'rgba(251,191,36,.35)',t:'#fbbf24'},
+      {l:'Scale-Up Fund',v:bSc,s:'Ditandai reinvestasi\n(Rena + Nom kelola)',c:'rgba(96,165,250,.12)',b:'rgba(96,165,250,.3)',t:'#60a5fa'},
+      {l:'Dividen Pool',v:bDv,s:'Dikumpul,\nbagi tahunan',c:'rgba(167,139,250,.12)',b:'rgba(167,139,250,.3)',t:'#a78bfa'},
+    ].map(function(box){
+      return '<div style="background:'+box.c+';border:1px solid '+box.b+';border-radius:8px;padding:10px 12px;">'
+        +'<div style="font-size:10px;color:'+box.t+';text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">'+box.l+'</div>'
+        +'<div style="font-family:monospace;font-size:16px;font-weight:600;color:'+box.t+'">'+f(box.v)+'</div>'
+        +'<div style="font-size:10px;color:var(--t3);margin-top:4px;line-height:1.4">'+box.s+'</div>'
+        +'</div>';
+    }).join('')
     +'</div>'
     // founder breakdown
     +'<div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);margin-bottom:6px">Profit sharing pool → per founder (bulan ini)</div>'
@@ -841,6 +864,32 @@ function destroyChart(id){ if(charts[id]&&charts[id].destroy){charts[id].destroy
 function exportJSON(){
   var blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
   var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='omber.json'; a.click();
+}
+
+// ── DIVIDEN TAHUNAN ──────────────────────────────────────────────
+function calcDivTahunan(){
+  var perBulan = parseFloat((document.getElementById('div-perbulan').value||'').replace(/\./g,''))||0;
+  var bdv = v('b-dividen')||25;
+  var totalDivPool = perBulan * bdv/100 * 12;
+  var el = document.getElementById('div-tahunan-result');
+  if(!perBulan){ el.innerHTML='<div style="color:var(--t3);font-size:13px">Isi net profit per bulan dulu.</div>'; return; }
+  var founders=[
+    {n:'Rena',p:20},{n:'Nom',p:18},{n:'Gapl',p:16},{n:'Jee',p:16},{n:'Pix',p:15},{n:'Tok',p:15}
+  ];
+  var rows = founders.map(function(fo){
+    var bagian = totalDivPool * fo.p/100;
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">'
+      +'<span style="font-size:12px;color:var(--t2)">'+fo.n+' <span style="color:var(--t3)">('+fo.p+'%)</span></span>'
+      +'<span style="font-family:monospace;font-weight:500;color:#a78bfa">'+f(bagian)+'</span></div>';
+  }).join('');
+  el.innerHTML=''
+    +'<div style="background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.3);border-radius:8px;padding:12px;margin-bottom:10px">'
+    +'<div style="font-size:10px;color:#a78bfa;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Total Dividen Pool 12 Bulan</div>'
+    +'<div style="font-family:monospace;font-size:22px;font-weight:700;color:#a78bfa">'+f(totalDivPool)+'</div>'
+    +'<div style="font-size:11px;color:var(--t3);margin-top:3px">'+f(perBulan)+'/bln × '+bdv+'% dividen × 12 bulan</div>'
+    +'</div>'
+    +'<div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);margin-bottom:6px">Per founder (proporsional)</div>'
+    +rows;
 }
 
 // ── INIT ─────────────────────────────────────────────────────────
