@@ -334,6 +334,11 @@ async function loadState() {
       // merge — jaga idCtr paling besar
       Object.assign(S, saved);
       if (saved.idCtr) S.idCtr = Math.max(S.idCtr, saved.idCtr);
+      // restore DOM inputs yang dibaca via v() bukan dari S render
+      ['modal','keluar','dp'].forEach(function(k){
+        var el = document.getElementById('ops-'+k);
+        if (el && S[k] !== undefined) el.value = S[k];
+      });
     }
   } catch(e) { /* pakai default S */ }
   updateSidebar();
@@ -546,7 +551,12 @@ function renderOps(){
   fmtDynamic(el('onetime-rows'));
   el('onetime-total').textContent=f(S.onetimeRows.reduce(function(s,x){return s+x.amt;},0));
 }
-function updateOps(){ scheduleSave(); updateSidebar(); }
+function updateOps(){
+  S.modal  = v('ops-modal');
+  S.keluar = v('ops-keluar');
+  S.dp     = v('ops-dp');
+  scheduleSave(); updateSidebar();
+}
 function addOpsRow(){ S.opsRows.push({id:nid(),name:'Biaya baru',amt:0}); scheduleSave(); renderOps(); }
 function addOnetimeRow(){ S.onetimeRows.push({id:nid(),name:'Pengeluaran baru',amt:0}); scheduleSave(); renderOps(); }
 
