@@ -350,11 +350,14 @@ async function loadState() {
         var el = document.getElementById('ops-'+k);
         if (el && S[k] !== undefined) el.value = S[k];
       });
+      if (typeof restoreKalk === 'function') restoreKalk();
     }
   } catch(e) { /* pakai default S */ }
   updateSidebar();
   renderOverview();
   renderOps();
+  if (typeof calcKalk === 'function') calcKalk();
+  if (typeof calcDivTahunan === 'function') calcDivTahunan();
 }
 function setSaveInd(msg) {
   var el = document.getElementById('save-ind');
@@ -628,7 +631,28 @@ function getKalkInputs(){
   return {unit:unit,sell:sell,terjual:terjual,cogs:cogs,harga:harga,pr:pr,str:str,tc:tc,rev:rev,mg:mg,mgPct:mgPct};
 }
 
+function snapshotKalk(){
+  S.kalk = {
+    mode: kalkMode,
+    main: v('kalk-main'), cogs: v('kalk-cogs'), harga: v('kalk-harga'),
+    pr: v('kalk-pr'), str: v('kalk-str'), ops: v('kalk-ops'), bulan: v('kalk-bulan'),
+    bops: v('b-ops'), bsc: v('b-scaleup'), bpl: v('b-pool'), bdv: v('b-dividen'),
+    divPerbulan: (function(){ var e=document.getElementById('div-perbulan'); return e?parseFloat((e.value||'').replace(/\./g,''))||0:0; })()
+  };
+  if (typeof scheduleSave === 'function') scheduleSave();
+}
+function restoreKalk(){
+  if (!S.kalk) return;
+  var k = S.kalk, setv = function(id,val){ var e=document.getElementById(id); if(e&&val!==undefined) e.value=val; };
+  if (k.mode) { kalkMode = k.mode; }
+  setv('kalk-main',k.main); setv('kalk-cogs',k.cogs); setv('kalk-harga',k.harga);
+  setv('kalk-pr',k.pr); setv('kalk-str',k.str); setv('kalk-ops',k.ops); setv('kalk-bulan',k.bulan);
+  setv('b-ops',k.bops); setv('b-scaleup',k.bsc); setv('b-pool',k.bpl); setv('b-dividen',k.bdv);
+  setv('div-perbulan',k.divPerbulan);
+}
+
 function calcKalk(){
+  snapshotKalk();
   var d=getKalkInputs();
   var bops=v('b-ops'), bsc=v('b-scaleup'), bpl=v('b-pool'), bdv=v('b-dividen');
   var pool=d.mg*bpl/100;
@@ -891,6 +915,7 @@ function setDivVestPct(pct){
 }
 
 function calcDivTahunan(){
+  if (typeof snapshotKalk === 'function') snapshotKalk();
   var perBulan = parseFloat((document.getElementById('div-perbulan').value||'').replace(/\./g,''))||0;
   var bdv = v('b-dividen')||25;
   var totalDivPool = perBulan * bdv/100 * 12;
