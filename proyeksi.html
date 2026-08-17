@@ -922,20 +922,28 @@ function calcDivTahunan(){
   var el = document.getElementById('div-tahunan-result');
   if(!perBulan){ el.innerHTML='<div style="color:var(--t3);font-size:13px">Isi net profit per bulan dulu.</div>'; return; }
 
-  // OWNERSHIP (Pasal 1 & 2) — dividen ikut ownership, bukan profit-sharing
-  var owners=[
+  // OWNERSHIP (Pasal 1 & 2) — dividen ikut ownership, bukan profit-sharing. Editable, tersimpan di S.
+  if(!S.ownership) S.ownership=[
     {n:'Rena',p:48},{n:'Nom',p:19},{n:'Gapl',p:10},{n:'Jee',p:9},{n:'Pix',p:7},{n:'Tok',p:7}
   ];
+  var owners=S.ownership;
+  var ownTotal=owners.reduce(function(s,o){return s+(parseFloat(o.p)||0);},0);
   var vestFactor = divVesting ? divVestPct/100 : 1;
   var poolDibagi = totalDivPool * vestFactor;
   var sisaKeBrand = totalDivPool - poolDibagi; // porsi belum vest → balik ke brand/pool
 
-  var rows = owners.map(function(o){
-    var bagian = poolDibagi * o.p/100;
-    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">'
-      +'<span style="font-size:12px;color:var(--t2)">'+o.n+' <span style="color:var(--t3)">('+o.p+'%)</span></span>'
-      +'<span style="font-family:monospace;font-weight:500;color:#a78bfa">'+f(bagian)+'</span></div>';
+  var rows = owners.map(function(o,idx){
+    var bagian = poolDibagi * (parseFloat(o.p)||0)/100;
+    return '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)">'
+      +'<span style="font-size:12px;color:var(--t2);min-width:44px">'+o.n+'</span>'
+      +'<div style="display:flex;align-items:center;gap:4px">'
+      +'<input type="number" min="0" max="100" step="0.5" value="'+o.p+'" onchange="updateOwnership('+idx+',this.value)" style="width:56px;padding:4px 6px;font-size:12px;text-align:right;background:var(--s2);border:1px solid var(--border2);border-radius:var(--r);color:var(--text)">'
+      +'<span style="color:var(--t3);font-size:11px">%</span></div>'
+      +'<span style="font-family:monospace;font-weight:500;color:#a78bfa;flex:1;text-align:right">'+f(bagian)+'</span></div>';
   }).join('');
+  var totalWarn = Math.abs(ownTotal-100)>0.1
+    ? '<div style="font-size:11px;color:var(--red);margin-top:6px">⚠ Total ownership '+(Math.round(ownTotal*10)/10)+'% — harus 100%.</div>'
+    : '<div style="font-size:11px;color:var(--accent);margin-top:6px">Total 100% ✓</div>';
 
   el.innerHTML=''
     // toggle vesting
@@ -958,7 +966,16 @@ function calcDivTahunan(){
     +(divVesting && sisaKeBrand>0 ? '<div style="font-size:11px;color:var(--t3);margin-top:4px">Sisa '+f(sisaKeBrand)+' (belum vest) balik ke pool/brand.</div>' : '')
     +'</div>'
     +'<div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);margin-bottom:6px">Per founder (ownership'+(divVesting?' × vesting':'')+')</div>'
-    +rows;
+    +rows
+    +totalWarn;
+}
+
+// ubah 1 baris ownership + simpan
+function updateOwnership(idx,val){
+  if(!S.ownership||!S.ownership[idx]) return;
+  S.ownership[idx].p = parseFloat(val)||0;
+  if(typeof scheduleSave==='function') scheduleSave();
+  calcDivTahunan();
 }
 
 // ── INIT ─────────────────────────────────────────────────────────
