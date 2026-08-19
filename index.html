@@ -187,14 +187,18 @@
     .dream-submit-btn:hover { opacity: 0.85; }
     .dream-submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .dream-entries { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; }
-    .dream-entry { background: rgba(14,14,14,0.35); padding: 24px; position: relative; transition: background 0.15s; }
-    .dream-entry:hover { background: rgba(14,14,14,0.55); }
+    .dream-entry { background: rgba(14,14,14,0.35); padding: 24px; position: relative; transition: background 0.15s; }    .dream-entry:hover { background: rgba(14,14,14,0.55); }
     .dream-entry:hover .dream-delete { opacity: 1; }
     .dream-entry-who { font-size: 10px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; }
     .dream-entry-text { font-size: 22px; font-weight: 500; color: var(--text); line-height: 1.3; letter-spacing: -0.01em; word-break: break-word; }
     .dream-delete { position: absolute; top: 12px; right: 12px; background: none; border: none; color: var(--text3); cursor: pointer; font-size: 16px; opacity: 0; transition: opacity 0.15s, color 0.15s; padding: 2px 6px; border-radius: 4px; }
     .dream-delete:hover { color: var(--red); }
     .dream-empty { text-align: center; padding: 60px 20px; color: var(--text3); font-size: 13px; grid-column: 1/-1; background: var(--bg); }
+    .ethic-marquee { margin-top: 40px; overflow: hidden; white-space: nowrap; border-top: 1px solid rgba(198,255,0,0.2); border-bottom: 1px solid rgba(198,255,0,0.2); padding: 14px 0; -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+    .ethic-track { display: inline-flex; animation: ethic-scroll 38s linear infinite; will-change: transform; }
+    .ethic-marquee:hover .ethic-track { animation-play-state: paused; }
+    .ethic-text { display: inline-block; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; color: #c8ff00; text-shadow: 0 0 12px rgba(198,255,0,0.45); }
+    @keyframes ethic-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
     .drop-zone:hover, .drop-zone.drag { border-color: var(--red); background: var(--red-dim); }
     .drop-zone svg { width: 28px; height: 28px; margin: 0 auto 10px; display: block; opacity: 0.5; }
     .selected-fname { font-size: 11px; color: var(--text2); margin-bottom: 14px; min-height: 16px; }
@@ -1296,6 +1300,12 @@
           <button class="dream-submit-btn" id="dream-btn" onclick="submitDream()">Kirim</button>
         </div>
         <div id="dream-entries"></div>
+        <div class="ethic-marquee">
+          <div class="ethic-track">
+            <span class="ethic-text">OMBER WORK ETHIC: NEVER ACT LIKE YOU ARE MAKING THE MOST IMPORTANT WORK OF ALL TIME. THERE WILL ALWAYS BE THE NEXT WORK. SET THE BAR LOW, TREAT IT LIKE ITS AN EXPERIMENT, BUSY EXPLORING, ENJOYING THE PLAY, AND ALWAYS HAVE FUN.&nbsp;&nbsp;&nbsp;✦&nbsp;&nbsp;&nbsp;</span>
+            <span class="ethic-text" aria-hidden="true">OMBER WORK ETHIC: NEVER ACT LIKE YOU ARE MAKING THE MOST IMPORTANT WORK OF ALL TIME. THERE WILL ALWAYS BE THE NEXT WORK. SET THE BAR LOW, TREAT IT LIKE ITS AN EXPERIMENT, BUSY EXPLORING, ENJOYING THE PLAY, AND ALWAYS HAVE FUN.&nbsp;&nbsp;&nbsp;✦&nbsp;&nbsp;&nbsp;</span>
+          </div>
+        </div>
       </div>`;
     await loadDreamEntries();
   }
